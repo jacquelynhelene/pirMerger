@@ -1,6 +1,13 @@
+devtools::document()
+devtools::install()
 library(pirMerger)
+library(testthat)
 
-working_dir <- tempdir()
+# Read exported data files ----
+
+working_dir <- paste(tempdir(), "pirdata", sep = "/")
+dir.create(working_dir)
+working_dict <- "data_definitions.yml"
 
 required_rds <- c(
   "raw_artists_authority.rds",
@@ -22,7 +29,8 @@ required_rds <- c(
   "raw_us_cpi.rds"
 )
 
-read_all_exports(outdir = working_dir)
-read_all_concordances(outdir = working_dir)
-
-expect_equivalent(dir("data-raw", "*.rds"), required_rds)
+repo_path <- pull_star_exports(out_dir = working_dir, export_repo = "ssh://git@stash.getty.edu:7999/griis/getty-provenance-index.git")
+read_all_exports(out_dir = working_dir, data_dict = working_dict, repo_path = repo_path)
+read_all_concordances(out_dir = working_dir, data_dict = working_dict)
+dir(working_dir)
+testthat::expect_equivalent(dir(working_dir, "*.rds"), required_rds)

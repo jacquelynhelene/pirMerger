@@ -8,6 +8,8 @@ Description: Helper and execution functions to combine
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: git2r,
-    yaml,
-    tidyverse
+Imports: googlesheets,
+    yaml
+Depends: tidyverse
+Suggests: testthat
+RoxygenNote: 6.0.1
