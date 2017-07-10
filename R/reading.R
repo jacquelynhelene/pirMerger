@@ -17,8 +17,8 @@ pull_star_exports <- function(export_repo = "ssh://git@stash.getty.edu:7999/grii
   clone_path
 }
 
-data_definitions <- function() {
-  yaml::yaml.load_file("data-raw/data_definitions.yml")
+data_definitions <- function(definition_path = "data-raw/data_definitions.yml") {
+  yaml::yaml.load_file(definition_path)
 }
 
 read_dat <- function(repo_path, dir_name, file_name, n_files) {
@@ -47,7 +47,7 @@ read_dat <- function(repo_path, dir_name, file_name, n_files) {
   probs <- map(set_names(tdata, csv_paths), problems)
   tdata <- bind_rows(tdata)
 
-  if (sum(map_int(probs, nrow)) / nrow(tdata) > 0.1)
+  if (sum(map_int(probs, nrow)) / nrow(tdata) > 0.01)
     stop("More than 10 percent of the rows in ", base_name, " have readr problems.")
 
   attr(tdata, "problems") <- probs
@@ -55,7 +55,7 @@ read_dat <- function(repo_path, dir_name, file_name, n_files) {
   tdata
 }
 
-walk_through_data <- function(data_files = data_definitions(), repo_path) {
+walk_through_data <- function(data_files = data_definitions()[["star_exports"]], repo_path) {
   walk(data_files, function(x) {
     walk(x[["files"]], function(y) {
       output_data <- read_dat(repo_path = repo_path, dir_name = x[["dir_name"]], file_name = y, n_files = x[["n_files"]])
@@ -65,6 +65,10 @@ walk_through_data <- function(data_files = data_definitions(), repo_path) {
   })
 }
 
+#' Pull the latest STAR exports and parse into dataframes
+#'
+#' The resulting files are stored in the `data-raw` directory. If any files have
+#' more than 1% parsing errors, then an error will be thrown.
 read_all_exports <- function() {
   message("Pulling most recent getty-provenance-index commit...")
   star_repo <- pull_star_exports()
@@ -74,4 +78,16 @@ read_all_exports <- function() {
 
 # Read Google Docs ----
 
+all_google_sheets <- function() {
+  data_definitions()[["google_sheets"]]
+}
+
+read_all_concordances <- function() {
+  walk(all_google_sheets(), function(s) {
+    message("Reading ", s[["name"]])
+    res <- googlesheets::gs_read(googlesheets::gs_url(s[["url"]]), skip = 1, col_names = s[["colnames"]], col_types = s[["coltypes"]])
+    readr::stop_for_problems(res)
+    saveRDS(res, file = paste0("data-raw/", "raw_", s[["name"]], ".rds"))
+  })
+}
 
