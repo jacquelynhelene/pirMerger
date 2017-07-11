@@ -7,14 +7,11 @@
 #' @export
 pull_star_exports <- function(out_dir, export_repo) {
   message("Pulling most recent getty-provenance-index commit...")
-  clone_path <- paste(out_dir, "getty-clone", sep = "/")
-  dir.create(clone_path)
-  clone_file <- paste(clone_path, "archive.zip", sep = "/")
+  clone_file <- paste(out_dir, "archive.zip", sep = "/")
   message("Retrieving repo archive from ", export_repo)
   system2("git", args = c("archive", "--format zip", paste("--remote", export_repo), paste("-o", clone_file), "HEAD"))
-  message("Decompressing archive into ", clone_path)
-  paths <- unzip(clone_file, exdir = clone_path)
-  clone_path
+  message("Decompressing archive into ", out_dir)
+  paths <- unzip(clone_file, exdir = out_dir)
 }
 
 data_definitions <- function(definition_path) {
