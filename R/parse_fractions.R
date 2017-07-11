@@ -4,27 +4,19 @@
 #'
 #' @return Numeric vector
 #' @export
-parse_fraction <- function(s) {
-  is_scalar_character(s)
-
-  frac <- str_extract(s, "\\d+/\\d+")
-
-  if (is.na(frac))
+parse_fraction <- Vectorize(function(s) {
+  if (is.na(s))
+    return(NA_real_)
+  if (!str_detect(s, "/"))
     return(as.numeric(s))
 
-  whole <- as.integer(str_replace(s, fixed(frac), ""))
+  whole <- as.numeric(str_extract(s, "^\\d+"))
+  fraction <- str_extract(s, "\\d/\\d")
+  numerator <- as.numeric(str_extract(fraction, "^\\d"))
+  denominator <- as.numeric(str_extract(fraction, "\\d$"))
 
-  if (is.na(whole))
-    whole <- 0
-
-  num <- as.integer(str_match(frac, "(\\d+)")[,2])
-  den <- as.integer(str_match(frac, "/(\\d+)")[,2])
-
-  if (is.na(num) | is.na(den))
-    return(NA_real_)
-
-  if (num >= den | den > 16)
-    return(NA_real_)
-
-  whole + num / den
-}
+  whole_number <- ifelse(is.na(whole), 0, whole)
+  numerator_number <- ifelse(is.na(numerator), 0, numerator)
+  denominator_number <- ifelse(is.na(denominator), 0, denominator)
+  as.numeric(whole_number) + as.numeric(numerator_number) / as.numeric(denominator_number)
+})
