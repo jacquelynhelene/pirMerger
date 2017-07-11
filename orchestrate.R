@@ -49,4 +49,9 @@ read_all_concordances(out_dir = source_data_dir, data_dict = working_dict)
 expect_equivalent(dir(source_data_dir, "*.rds"), required_rds)
 
 # Process artist authority table
+produce_artists_authority(source_data_dir, intermediate_data_dir)
+expect_true(file.exists(paste(intermediate_data_dir, "artists_authority.rds", sep = "/")))
 
+# Process owner authority table
+produce_owners_authority(source_data_dir, intermediate_data_dir)
+expect_true(file.exists(paste(intermediate_data_dir, "owners_authority.rds", sep = "/")))
