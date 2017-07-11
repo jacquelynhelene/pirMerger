@@ -1,3 +1,36 @@
+#' Wapper of unite/gather/separate to reshape groups of denormalized columns.
+#'
+#' Specify the base names of the columns that are repeated (e.g. \code{c("a",
+#' "b", "c")}), along with the number of times that those columns are repeated.
+#'
+#' @param data A data frame
+#' @param newcol A temporary column name in which new values will be stored
+#' @param base_names Quoted column names that are repeated as a unit. The
+#'   parameter \code{n_reps} will be treated as a suffix for uniting, gathering,
+#'   and separating these columns as groups.
+#' @param n_reps Number of times the \code{base_names} repeat.
+#' @param n_sep_char Delimiter that separates \code{base_names} from \code{n_reps}
+#' @param idcols Quoted names of columns that should be kept as identifiers
+#'   when gathering these column groups.
+#'
+#' @export
+norm_vars <- function(data, newcol = "group_no", base_names, n_reps, n_sep_char = "_", idcols, ...) {
+
+  dd <- reduce(seq_len(n_reps), function(x, y) {
+    unite_(x, col = paste0(newcol, y), from = paste(base_names, y, sep = n_sep_char), sep = "Ω")
+  }, .init = data) %>%
+    select(one_of(c(idcols, paste0(newcol, seq_len(n_reps))))) %>%
+    gather_(key_col = paste0(newcol, "_no"), value_col = "values", gather_cols = paste0(newcol, seq_len(n_reps)), na.rm = TRUE) %>%
+    # select_(paste0("-", newcol, "_no")) %>%
+    separate_("values", into = base_names, sep = "Ω", convert = TRUE)
+
+  valid_cases <- pmap_lgl(map(dd[, base_names], function(x) !is.na(x)), any)
+
+  dd %>%
+    filter(valid_cases) %>%
+    select(-group_no_no)
+}
+
 #' Join a forign table multiple times, once for each reptition of a specified column
 #'
 #' @param df Dataframe. The table on the left side of each join
