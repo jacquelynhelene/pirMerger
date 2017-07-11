@@ -5,7 +5,7 @@ Version: 0.1.0
 Authors@R: person("Matthew", "Lincoln", email =
   "matthew.d.lincoln@gmail.com", role = c("aut", "cre"))
 Description: Helper and execution functions to combine 
-License: MIT + file LICENSE
+License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends: tidyverse
