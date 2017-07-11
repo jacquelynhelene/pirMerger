@@ -10,8 +10,8 @@ Encoding: UTF-8
 LazyData: true
 Depends: tidyverse
 Imports: googlesheets,
-    yaml
-Remotes:
-    mdlincoln/rematch2
+    yaml,
+    rematch2
+Remotes: mdlincoln/rematch2@8276cac
 Suggests: testthat
 RoxygenNote: 6.0.1
