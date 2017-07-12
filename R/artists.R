@@ -7,13 +7,13 @@
 #'
 #' @export
 produce_artists_authority <- function(source_dir, target_dir) {
-  message("Producing artists authority (" , source_dir, "/raw_artists_authority.rds to ", target_dir, "artists_authority.rds", ")")
+  message("Producing artists authority (" , source_dir, "/raw_artists_authority.rds to ", target_dir, "/artists_authority.rds", ")")
   raw_artists_authority <- readRDS(paste(source_dir, "raw_artists_authority.rds", sep = "/"))
 
   artists_authority <- raw_artists_authority %>%
     extract_artist_dates() %>%
     reconcile_artist_dates() %>%
-    generate_display_dates() %>%
+    generate_artist_display_dates() %>%
     # Extract parentheticals from authority name
     bind_cols(re_match(.$artist_authority, " \\((?<parenthetical_text>[^I].+)\\)")) %>%
     mutate(artist_authority_clean = artist_authority) %>%
@@ -77,7 +77,7 @@ reconcile_artist_dates <- function(df) {
     mutate(artist_late = ifelse(artist_early >= artist_late, artist_late + 100, artist_late))
 }
 
-generate_display_dates <- function(df) {
+generate_artist_display_dates <- function(df) {
   message("- Generating display dates")
   df %>%
     # Produce a "display" early/late date

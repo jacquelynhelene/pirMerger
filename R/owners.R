@@ -7,12 +7,14 @@
 #'
 #' @export
 produce_owners_authority <- function(source_dir, target_dir) {
+  message("Producing owners authority (" , source_dir, "/raw_owners_authority.rds to ", target_dir, "/owners_authority.rds", ")")
+
   raw_owners_authority <- readRDS(paste(source_dir, "raw_owners_authority.rds", sep = "/"))
 
   owners_authority <- raw_owners_authority %>%
     extract_owner_dates() %>%
     reconcile_owner_dates() %>%
-    generate_display_dates() %>%
+    generate_owner_display_dates() %>%
     # Extract preceding location - some names, particularly of museums, have the location ending in country code and a period.
     bind_re_match(owner_authority_clean, "^(?<location_from_name>.+?[A-Z]{2,}\\.) +\\w+") %>%
     mutate(owner_authority_clean = ifelse(is.na(location_from_name), owner_authority_clean, str_replace(owner_authority_clean, fixed(location_from_name), ""))) %>%
@@ -25,6 +27,8 @@ produce_owners_authority <- function(source_dir, target_dir) {
 }
 
 extract_owner_dates <- function(df) {
+  message("- Extracting owner dates")
+
   df %>%
     # Extract years from birth_date, death_date, and active_period. Where there
     # are no life dates, the active period will be used as a fallback.
@@ -39,6 +43,7 @@ extract_owner_dates <- function(df) {
 }
 
 reconcile_owner_dates <- function(df) {
+  message("- Reconciling owner dates")
   df %>%
     # For each extracted column, ensure blank or 0-length whitespace is set to NA
   mutate_at(vars(dplyr::contains("birth"), dplyr::contains("death"), dplyr::contains("period")), funs(na_if(str_trim(.), ""))) %>%
@@ -49,7 +54,8 @@ reconcile_owner_dates <- function(df) {
       owner_late = ifelse(is.na(death_year), ifelse(is.na(end_period), century + 100, end_period), death_year))
 }
 
-generate_display_dates <- function(df) {
+generate_owner_display_dates <- function(df) {
+  message("- Generating display dates")
   df %>%
     mutate(owner_display = ifelse(!is.na(birth_year), paste(str_replace_na(birth_prefix, ""), birth_year, str_replace_na(birth_suffix, ""), "-", ifelse(!is.na(death_year), paste(str_replace_na(death_prefix, ""), death_year, str_replace_na(death_suffix, "")), "")), ifelse(!(is.na(start_period) & is.na(end_period)), paste0("Active: ", active_dates), ifelse(!is.na(century), paste("Active: ", century, "s"), "")))) %>%
     mutate(
