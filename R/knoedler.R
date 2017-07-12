@@ -1,33 +1,36 @@
+#' Produce Knoedler table from raw table.
+#'
+#' @param source_dir Path where source RDS files are found
+#' @param target_dir Path where resulting RDS files are saved
+#'
+#' @importFrom rematch2 re_match bind_re_match
+#'
+#' @export
 produce_knoedler <- function(source_dir, target_dir) {
   raw_knoedler <- readRDS(paste(source_dir, "raw_knoedler.rds", sep = "/"))
 
-  raw_knoedler %>%
-    # Remove redundant columns imported from owners/artists authorities
-    select(-art_authority_1, -nationality_1, -art_authority_2, -nationality_2) %>%
-    mutate(
-      has_share = !is.na(joint_own_1),
-      is_commission = str_detect(main_heading, "[Cc]ommiss"),
-      is_consignment = str_detect(main_heading, "[Cc]onsign")) %>%
-    # Pull out numbers (including decimals) from price amount columns. This strips
-    # off editorial brackets, as well as any trailing numbers such as shillings
-    # and pence. Also applies the amonsieurx transformation.
-    mutate(deciphered_purch = amonsieurx(purch_amount),
-           purch_amount = ifelse(deciphered_purch == "", purch_amount, deciphered_purch)) %>%
-    select(-deciphered_purch) %>%
-    mutate_at(vars(purch_amount, knoedpurch_amt, price_amount), funs(as.numeric(str_match(., "(\\d+\\.?\\d*)")[,2]))) %>%
-    mutate(
-      divided_purch_amount = purch_amount / purch_amt_divisor,
-      divided_knoedpurch_amount = knoedpurch_amt / purch_amt_divisor,
-      divided_price_amount = price_amount / price_amt_divisor) %>%
+  knoedler_stocknumber_concordance <- produce_knoedler_stocknumber_concordance(source_dir, source_dir)
+
+  knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
     mutate_at(vars(star_record_no, stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer)) %>%
+    # Remove redundant columns imported from owners/artists authorities
+    select(-art_authority_1, -nationality_1, -art_authority_2, -nationality_2) %>%
+    parse_knoedler_monetary_amounts() %>%
+    identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
+    identify_knoedler_transactions() %>%
+    order_knoedler_object_events() %>%
+    add_count(object_id) %>%
+    arrange(desc(n), object_id, event_order) %>%
     # Where genre or object type is not identified, set to NA
     mutate_at(vars(genre, object_type), funs(na_if(., "[not identified]"))) %>%
     # Where month or day components of entry or sale dates are 0, set to NA
     mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0))) %>%
-    filter(is.na(sale_date_year) | sale_date_year < 1980) %>%
     # Parse fractions
     bind_re_match(dimensions, "(?<dimension1>\\d+ ?\\d*/?\\d*) ? ?\\[?x?X?\\]? ?(?<dimension2>\\d+ ?\\d*/?\\d*)?")
+
+  saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
+  invisible(knoedler)
 }
 
 identify_knoedler_transactions <- function(df) {
@@ -36,7 +39,7 @@ identify_knoedler_transactions <- function(df) {
     # split, first by standardizing all purchase/price notes, then finding matches.
     mutate_at(
       vars(purch_note, knoedpurch_note, price_note),
-      funs(
+      funs(working =
         str_replace_all(., c(
           "(?:shared[,;])|(?:[;,] shared)|(?:shared)" = "",
           " ([&-]) " = "\\1",
@@ -45,20 +48,84 @@ identify_knoedler_transactions <- function(df) {
           na_if(""))) %>%
     # Prefer the purch note over the knoedpurch note, only falling back to
     # knoedpurch when reuglar note is NA
-    mutate(purch_note = if_else(is.na(purch_note), knoedpurch_note, purch_note)) %>%
-    select(-knoedpurch_note) %>%
+    mutate(purch_note_working = if_else(is.na(purch_note_working), knoedpurch_note_working, purch_note_working)) %>%
     # Only keep those notes that refer to prices paid "for" n objects
-    mutate_at(vars(purch_note, price_note),
+    mutate_at(vars(purch_note_working, price_note_working),
               funs(if_else(str_detect(., regex("for", ignore_case = TRUE)), ., NA_character_))) %>%
-    group_by(stock_book_no, purch_note) %>%
+    # Fill in null purchase notes with dummy ids
+    mutate_at(vars(purch_note_working, price_note_working), funs(if_else(is.na(.), as.character(seq_along(.)), .))) %>%
+    # Produce a unique id for unique pairings of purchase notes
+    # TO-DO: distinguish between inventory events and new purchase events
     mutate(
-      purch_amt_divisor = n(),
-      purch_amt_divisor = ifelse(is.na(purch_note), 1L, purch_amt_divisor)) %>%
-    group_by(stock_book_no, price_note) %>%
+      inventory_or_purchase_id = paste("k", "purch", group_indices(., stock_book_no, purch_note_working), sep = "-"),
+      sale_transaction_id = paste("k", "sale", group_indices(., stock_book_no, price_note_working), sep = "-"))
+}
+
+produce_knoedler_stocknumber_concordance <- function(source_dir, target_dir) {
+  raw_knoedler_stocknumber_concordance <- readRDS(paste(source_dir, "raw_knoedler_stocknumber_concordance.rds", sep = "/"))
+
+  # Take the
+  knoedler_stocknumber_concordance <- raw_knoedler_stocknumber_concordance %>%
+    select(sn1, sn2, sn3, sn4) %>%
+    mutate(prime_stock_number = sn1) %>%
+    gather(number_index, stock_number, sn1:sn4, na.rm = TRUE) %>%
+    group_by(stock_number) %>%
+    summarize(prime_stock_number = first(prime_stock_number))
+
+  saveRDS(knoedler_stocknumber_concordance, file = paste(target_dir, "knoedler_stocknumber_concordance.rds", sep = "/"))
+  invisible(knoedler_stocknumber_concordance)
+}
+
+# Produce unique ids for knoedler objects based on their stock numbers
+identify_knoedler_objects <- function(df, knoedler_stocknumber_concordance) {
+  df %>%
+    left_join(knoedler_stocknumber_concordance, by = c("knoedler_number" = "stock_number")) %>%
+    # Because some of the knoedler stock numbers changed or were re-used, we
+    # will consult against a stock number concordance that we can use to create
+    # a "functional" stock number - an identifier that connects objects even
+    # when their nominal stock numbers are different. Those entries without any
+    # stock nubmers at all are assumed to be standalone objects, and given a
+    # unique id.
     mutate(
-      price_amt_divisor = n(),
-      price_amt_divisor = ifelse(is.na(price_note), 1L, price_amt_divisor)) %>%
+      prepped_sn = case_when(
+      is.na(knoedler_number) ~ paste("gennum", as.character(seq_along(knoedler_number)), sep = "-"),
+      knoedler_number %in% names(knoedler_stocknumber_concordance) ~ prime_stock_number,
+      TRUE ~ paste("orignnum", knoedler_number, sep = "-"))) %>%
+    mutate(object_id = paste("k", "object", group_indices(., prepped_sn), sep = "-"))
+}
+
+# For a given object_id, attempt to discern an event order, which can be useful
+# for discerning timespand boundaries as well as figuring out when an object
+# first entered, and then finally left, knoedler's collection.
+order_knoedler_object_events <- function(df) {
+  df %>%
+    # Use the entry date as the primary index of event date, falling back to the sale date if the entry date is not available.
+    mutate(
+      event_year = case_when(
+        is.na(entry_date_year) ~ sale_date_year,
+        TRUE ~ entry_date_year),
+      event_month = case_when(
+        is.na(entry_date_month) ~ sale_date_month,
+        TRUE ~ entry_date_month),
+      event_day = case_when(
+        is.na(entry_date_day) ~ sale_date_day,
+        TRUE ~ entry_date_day)) %>%
+    # Produce an index per object_id based on this event year/month/day, falling
+    # back to position in stock book if there is no year.
+    group_by(object_id) %>%
+    arrange(event_year, event_month, event_day, stock_book_no, page_number, row_number, .by_group = TRUE) %>%
+    mutate(event_order = seq_along(star_record_no)) %>%
     ungroup()
 }
 
-
+# Harmonize monetary amounts and currencies
+parse_knoedler_monetary_amounts <- function(df) {
+  df %>%
+    # Pull out numbers (including decimals) from price amount columns. This strips
+    # off editorial brackets, as well as any trailing numbers such as shillings
+    # and pence. Also applies the amonsieurx transformation.
+    mutate(deciphered_purch = amonsieurx(purch_amount),
+           purch_amount = ifelse(deciphered_purch == "", purch_amount, deciphered_purch)) %>%
+    select(-deciphered_purch) %>%
+    mutate_at(vars(purch_amount, knoedpurch_amt, price_amount), funs(as.numeric(str_match(., "(\\d+\\.?\\d*)")[,2])))
+}
