@@ -12,7 +12,7 @@ LazyData: true
 Depends: tidyverse
 Imports: googlesheets,
     yaml,
-    rematch2
+    rematch2,
     secret
 Remotes: mdlincoln/rematch2@8276cac
 Suggests: testthat
