@@ -13,6 +13,7 @@ Depends: tidyverse
 Imports: googlesheets,
     yaml,
     rematch2
+    secret
 Remotes: mdlincoln/rematch2@8276cac
 Suggests: testthat
 RoxygenNote: 6.0.1
