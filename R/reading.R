@@ -92,3 +92,14 @@ read_all_concordances <- function(out_dir, data_dict) {
   })
 }
 
+#' Pull data from a given directory and name, and load into an object
+#'
+#' @param dir The directory to read from
+#' @param name The name of the file (sans .rds)
+#'
+#' @return An R object stored in that data file
+#'
+#' @export
+get_data <- function(dir, name) {
+  readRDS(paste(dir, paste(name, "rds", sep = "."), sep = "/"))
+}
