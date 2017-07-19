@@ -69,3 +69,28 @@ multi_separate <- function(df, n_reps, into, ...) {
     separate_(x, col = from_name, into = into_names, ...)
   }, .init = df)
 }
+
+#' Detect how many columns to split a single col into
+#'
+#' @param df Data frame.
+#' @param source_col Quoted name of source column
+#' @param sep Character used as a delimiter within the column
+#'
+#' @return A data frame.
+#' @export
+single_separate <- function(df, source_col, sep = ";") {
+  separations_count <- stringr::str_count(df[[source_col]], pattern = sep)
+
+  if (all(is.na(separations_count)))
+    return(df)
+
+  max_separations <- max(separations_count, na.rm = TRUE)
+
+  if (max_separations == 0)
+    return(df)
+
+  target_separations <- max_separations + 1
+
+  df %>%
+    separate_(col = source_col, into = paste(source_col, seq_len(target_separations), sep = "_"), sep = sep, extra = "merge", fill = "right")
+}

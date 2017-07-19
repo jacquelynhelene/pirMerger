@@ -6,18 +6,20 @@ library(testthat)
 # Read exported data files ----
 
 working_dir <- "scratch"
-unlink(working_dir, recursive = TRUE)
 repo_data_dir <- paste(working_dir, "repo_data", sep = "/")
 source_data_dir <- paste(working_dir, "source_data", sep = "/")
 intermediate_data_dir <- paste(working_dir, "intermediate_data", sep = "/")
 pipeline_data_dir <- paste(working_dir, "pipeline_data", sep = "/")
+
+unlink(working_dir, recursive = TRUE)
 dir.create(working_dir)
 dir.create(repo_data_dir)
 dir.create(source_data_dir)
 dir.create(intermediate_data_dir)
 dir.create(pipeline_data_dir)
 
-working_dict <- "data_definitions.yml"
+working_dict <- secret::get_secret("data_definitions")
+repo_url <- secret::get_secret("repo_id")
 
 required_rds <- c(
   "raw_artists_authority.rds",
@@ -40,7 +42,7 @@ required_rds <- c(
 )
 
 # Pull the current STAR exports and extract
-pull_star_exports(out_dir = repo_data_dir, export_repo = "ssh://git@stash.getty.edu:7999/griis/getty-provenance-index.git")
+pull_star_exports(out_dir = repo_data_dir, export_repo = repo_url)
 expect_true(dir.exists(paste(repo_data_dir, "csv", sep = "/")))
 
 # Process export files and Google Sheets files into dataframes

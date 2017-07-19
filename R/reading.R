@@ -8,14 +8,14 @@
 pull_star_exports <- function(out_dir, export_repo) {
   message("Pulling most recent getty-provenance-index commit...")
   clone_file <- paste(out_dir, "archive.zip", sep = "/")
-  message("Retrieving repo archive from ", export_repo)
+  message("Retrieving repo archive...")
   system2("git", args = c("archive", "--format zip", paste("--remote", export_repo), paste("-o", clone_file), "HEAD"))
   message("Decompressing archive into ", out_dir)
   paths <- unzip(clone_file, exdir = out_dir)
 }
 
-data_definitions <- function(definition_path) {
-  yaml::yaml.load_file(definition_path)
+data_definitions <- function(definitions) {
+  yaml::yaml.load(definitions)
 }
 
 #' @import stringr
@@ -86,7 +86,7 @@ read_all_concordances <- function(out_dir, data_dict) {
   data_files <- data_definitions(data_dict)[["google_sheets"]]
   walk(data_files, function(s) {
     message("Reading ", s[["name"]])
-    res <- googlesheets::gs_read(googlesheets::gs_url(s[["url"]]), skip = 1, col_names = s[["colnames"]], col_types = s[["coltypes"]])
+    res <- googlesheets::gs_read(googlesheets::gs_url(s[["url"]], verbose = FALSE), verbose = FALSE, skip = 1, col_names = s[["colnames"]], col_types = s[["coltypes"]])
     readr::stop_for_problems(res)
     saveRDS(res, file = paste0(out_dir, "/", "raw_", s[["name"]], ".rds"))
   })
