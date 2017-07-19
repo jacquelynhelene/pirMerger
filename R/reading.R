@@ -103,3 +103,20 @@ read_all_concordances <- function(out_dir, data_dict) {
 get_data <- function(dir, name) {
   readRDS(paste(dir, paste(name, "rds", sep = "."), sep = "/"))
 }
+
+#' Save an object to working data directory
+#'
+#' The object will be saved as dir/name_of_object.rds
+#'
+#' @param dir The directory to write to
+#' @param obj The object to save
+#'
+#' @return Invisibly returns the path of the saved object
+#'
+#' @export
+save_data <- function(dir, obj) {
+  newpath <- paste(dir, paste(quote(obj), "rds", sep = "."), sep = "/")
+  saveRDS(obj, file = newpath)
+  invisible(newpath)
+}
+
