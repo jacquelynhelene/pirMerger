@@ -4,7 +4,7 @@
 \alias{save_data}
 \title{Save an object to working data directory}
 \usage{
-save_data(dir, obj)
+save_data(dir, obj, objname = NULL)
 }
 \arguments{
 \item{dir}{The directory to write to}

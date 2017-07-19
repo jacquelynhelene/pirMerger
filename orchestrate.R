@@ -57,3 +57,16 @@ expect_true(file.exists(paste(intermediate_data_dir, "artists_authority.rds", se
 # Process owner authority table
 produce_owners_authority(source_data_dir, intermediate_data_dir)
 expect_true(file.exists(paste(intermediate_data_dir, "owners_authority.rds", sep = "/")))
+
+# Process Knoedler and its tables
+required_knoedler <- c(
+  "knoedler.rds",
+  "knoedler_stocknumber_concordance.rds",
+  "knoedler_artists.rds",
+  "knoedler_buyers.rds",
+  "knoedler_joint_owners.rds",
+  "knoedler_sellers.rds"
+)
+produce_knoedler(source_data_dir, intermediate_data_dir)
+expect_true(all(dir(intermediate_data_dir, pattern = "knoedler.*.rds") %in% required_knoedler))
+

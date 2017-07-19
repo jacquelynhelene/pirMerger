@@ -7,15 +7,13 @@
 #'
 #' @export
 produce_knoedler <- function(source_dir, target_dir) {
-  raw_knoedler <- readRDS(paste(source_dir, "raw_knoedler.rds", sep = "/"))
+  raw_knoedler <- get_data(source_dir, "raw_knoedler")
 
-  knoedler_stocknumber_concordance <- produce_knoedler_stocknumber_concordance(source_dir, source_dir)
+  knoedler_stocknumber_concordance <- produce_knoedler_stocknumber_concordance(source_dir, target_dir)
 
   knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
     mutate_at(vars(star_record_no, stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer)) %>%
-    # Remove redundant columns imported from owners/artists authorities
-    select(-art_authority_1, -nationality_1, -art_authority_2, -nationality_2) %>%
     parse_knoedler_monetary_amounts() %>%
     identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
     identify_knoedler_transactions() %>%
@@ -28,6 +26,32 @@ produce_knoedler <- function(source_dir, target_dir) {
     mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0))) %>%
     # Parse fractions
     bind_re_match(dimensions, "(?<dimension1>\\d+ ?\\d*/?\\d*) ? ?\\[?x?X?\\]? ?(?<dimension2>\\d+ ?\\d*/?\\d*)?")
+
+  message("- Extracting knoedler_artists")
+  knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 2, idcols = "star_record_no")
+  knoedler <- knoedler %>%
+    select(-(artist_name_1:star_rec_no_2))
+  saveRDS(knoedler_artists, paste(target_dir, "knoedler_artists.rds", sep = "/"))
+
+  message("- Extracting knoedler_sellers")
+  knoedler_sellers <- norm_vars(knoedler, base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc"), n_reps = 2, idcols = "star_record_no")
+  knoedler <- knoedler %>%
+    select(-(seller_name_1:sell_auth_loc_2))
+  saveRDS(knoedler_sellers, paste(target_dir, "knoedler_sellers.rds", sep = "/"))
+
+  message("- Extracting knoedler_joint_owners")
+  knoedler_joint_owners <- norm_vars(knoedler, base_names = c("joint_own", "joint_own_sh"), n_reps = 4, idcols = "star_record_no")
+  knoedler <- knoedler %>%
+    select(-(joint_own_1:joint_own_sh_4))
+  saveRDS(knoedler_joint_owners, paste(target_dir, "knoedler_joint_owners.rds", sep = "/"))
+
+  message("- Extracting knoedler_buyers")
+  knoedler_buyers <- knoedler %>%
+    add_column(buyer_loc_2 = NA_character_, buy_auth_addr_2 = NA_character_) %>%
+    norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr"), n_reps = 2, idcols = "star_record_no")
+  knoedler <- knoedler %>%
+    select(-(buyer_name_1:buy_auth_name_2))
+  saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
 
   saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
   invisible(knoedler)

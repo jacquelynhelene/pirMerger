@@ -9,7 +9,7 @@
 produce_owners_authority <- function(source_dir, target_dir) {
   message("Producing owners authority (" , source_dir, "/raw_owners_authority.rds to ", target_dir, "/owners_authority.rds", ")")
 
-  raw_owners_authority <- readRDS(paste(source_dir, "raw_owners_authority.rds", sep = "/"))
+  raw_owners_authority <- get_data(source_dir, "raw_owners_authority")
 
   owners_authority <- raw_owners_authority %>%
     extract_owner_dates() %>%
@@ -23,7 +23,7 @@ produce_owners_authority <- function(source_dir, target_dir) {
 
     select(one_of(names(raw_owners_authority)), owner_early, owner_late, owner_display, owner_authority_clean, parenthetical_text, location_from_name)
 
-  saveRDS(owners_authority, file = paste(target_dir, "owners_authority.rds", sep = "/"))
+  save_data(target_dir, owners_authority)
 }
 
 extract_owner_dates <- function(df) {

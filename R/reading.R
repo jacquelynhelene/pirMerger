@@ -68,8 +68,9 @@ read_all_exports <- function(out_dir, data_dict, repo_path) {
   walk(data_files, function(x) {
     walk(x[["files"]], function(y) {
       output_data <- read_dat(repo_path = repo_path, dir_name = x[["dir_name"]], file_name = y, n_files = x[["n_files"]])
-      obj_name <- attr(output_data, "base_name")
-      saveRDS(output_data, file = paste0(out_dir, "/", obj_name, ".rds"))
+      data_name <- attr(output_data, "base_name")
+      message("Assigning ", data_name)
+      save_data(out_dir, output_data, objname = data_name)
     })
   })
 }
@@ -114,9 +115,11 @@ get_data <- function(dir, name) {
 #' @return Invisibly returns the path of the saved object
 #'
 #' @export
-save_data <- function(dir, obj) {
-  newpath <- paste(dir, paste(quote(obj), "rds", sep = "."), sep = "/")
+save_data <- function(dir, obj, objname = NULL) {
+  if (is.null(objname))
+    objname <- as.character(substitute(obj))
+
+  newpath <- paste(dir, paste(objname, "rds", sep = "."), sep = "/")
   saveRDS(obj, file = newpath)
   invisible(newpath)
 }
-
