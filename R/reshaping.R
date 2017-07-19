@@ -79,6 +79,8 @@ multi_separate <- function(df, n_reps, into, ...) {
 #' @return A data frame.
 #' @export
 single_separate <- function(df, source_col, sep = ";") {
+  stopifnot(source_col %in% names(df))
+
   separations_count <- stringr::str_count(df[[source_col]], pattern = sep)
 
   if (all(is.na(separations_count)))
