@@ -52,6 +52,29 @@ multi_join <- function(df, jdf, from, to, n_reps, prefix) {
   }, .init = df)
 }
 
+#' Take a long table of multiple linked columns and reshape to a wide table
+#'
+#' @param df Data frame.
+#' @param idcol Quoted name of a single id column.
+#'
+#' @return Data frame.
+#'
+#' @export
+spread_out <- function(df, idcol) {
+  united_cols <- setdiff(names(df), idcol)
+
+  almost_wide <- df %>%
+    unite_(col = "tempcol", from = united_cols, sep = "Ω") %>%
+    group_by_(.dots = "star_record_no") %>%
+    mutate(group_index = seq_along(tempcol)) %>%
+    spread(group_index, tempcol) %>%
+    ungroup()
+
+  n_new <- ncol(almost_wide) - 1
+
+  multi_separate(almost_wide, n_reps = n_new, into = united_cols, convert = TRUE, fill = "right", sep = "Ω")
+}
+
 #' Repeatedly separate single fields into multiple ones
 #'
 #' This is useful when spreading apart a column that had been previously merged so as to be easier to repeatedly join using multi_join

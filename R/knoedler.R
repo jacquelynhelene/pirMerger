@@ -153,3 +153,61 @@ parse_knoedler_monetary_amounts <- function(df) {
     select(-deciphered_purch) %>%
     mutate_at(vars(purch_amount, knoedpurch_amt, price_amount), funs(as.numeric(str_match(., "(\\d+\\.?\\d*)")[,2])))
 }
+
+produce_knoedler_materials_AAT <- function(source_dir, target_dir) {
+  raw_knoedler_materials_aat <- get_data(source_dir, "raw_knoedler_materials_aat")
+
+  message("- Concordance for object materials")
+  knoedler_materials_object_aat <- raw_knoedler_materials_aat %>%
+    select(materials = knoedler_materials, object_type = knoedler_object_type, aat_materials = made_of_materials) %>%
+    single_separate(source_col = "aat_materials") %>%
+    gather(gcol, aat_materials, -materials, -object_type, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(aat_materials), as.integer)
+  save_data(target_dir, knoedler_materials_object_aat)
+
+  message("- Concordance for support materials")
+  knoedler_materials_support_aat <- raw_knoedler_materials_aat %>%
+    select(materials = knoedler_materials, object_type = knoedler_object_type, aat_support = made_of_support) %>%
+    single_separate(source_col = "aat_support") %>%
+    gather(gcol, aat_support, -materials, -object_type, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(aat_support), as.integer)
+  save_data(target_dir, knoedler_materials_support_aat)
+
+  message("- Concordance for classified_as tags")
+  knoedler_materials_classified_as_aat <- raw_knoedler_materials_aat %>%
+    select(materials = knoedler_materials, object_type = knoedler_object_type, classified_as_1, classified_as_2) %>%
+    single_separate(source_col = "classified_as_1") %>%
+    single_separate(source_col = "classified_as_2") %>%
+    gather(gcol, aat_support, -materials, -object_type, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(aat_support), as.integer)
+  save_data(target_dir, knoedler_materials_classified_as_aat)
+
+  message("- Concordance for techniques")
+  knoedler_materials_technique_as_aat <- raw_knoedler_materials_aat %>%
+    select(materials = knoedler_materials, object_type = knoedler_object_type, aat_technique = technique) %>%
+    single_separate(source_col = "aat_technique") %>%
+    gather(gcol, aat_technique, -materials, -object_type, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(aat_technique), as.integer)
+  save_data(target_dir, knoedler_materials_technique_as_aat)
+}
+
+produce_joined_knoedler <- function(source_dir, target_dir) {
+  knoedler <- get_data(source_dir, "knoedler")
+  knoedler_artists <- get_data(source_dir, "knoedler_artists")
+  knoedler_buyers <- get_data(source_dir, "knoedler_buyers")
+  knoedler_sellers <- get_data(source_dir, "knoedler_sellers")
+  knoedler_joint_owners <- get_data(source_dir, "knoedler_joint_owners")
+  artists_authority <- get_data(source_dir, "artists_authority")
+  owners_authority <- get_data(source_dir, "owners_authority")
+  knoedler_materials_classified_as_aat <- get_data(source_dir, "knoedler_materials_classified_as_aat")
+  knoedler_materials_object_aat <- get_data(source_dir, "knoedler_materials_object_aat")
+  knoedler_materials_support_aat <- get_data(source_dir, "knoedler_materials_support_aat")
+  knoedler_materials_technique_as_aat <- get_data(source_dir, "knoedler_materials_technique_as_aat")
+
+  knoedler %>%
+    left_join(knoedler_artists, from = "star_record_no", to = "star_record_no", n_reps = 2, prefix = "")
+}
