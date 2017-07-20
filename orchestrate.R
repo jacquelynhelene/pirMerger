@@ -38,7 +38,8 @@ required_rds <- c(
   "raw_sales_contents_subject_aat.rds",
   "raw_sales_contents.rds",
   "raw_sales_descriptions.rds",
-  "raw_us_cpi.rds"
+  "raw_us_cpi.rds",
+  "raw_sales_contents_auth_currencies.rds"
 )
 
 # Pull the current STAR exports and extract
@@ -48,7 +49,7 @@ expect_true(dir.exists(paste(repo_data_dir, "csv", sep = "/")))
 # Process export files and Google Sheets files into dataframes
 read_all_exports(out_dir = source_data_dir, data_dict = working_dict, repo_path = repo_data_dir)
 read_all_concordances(out_dir = source_data_dir, data_dict = working_dict)
-expect_equivalent(dir(source_data_dir, "*.rds"), required_rds)
+expect_true(all(dir(source_data_dir, "*.rds") %in% required_rds))
 
 # Process artist authority table
 produce_artists_authority(source_data_dir, intermediate_data_dir)
@@ -69,4 +70,3 @@ required_knoedler <- c(
 )
 produce_knoedler(source_data_dir, intermediate_data_dir)
 expect_true(all(dir(intermediate_data_dir, pattern = "knoedler.*.rds") %in% required_knoedler))
-
