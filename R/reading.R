@@ -2,6 +2,12 @@
 
 #' Pull the latest exports from STAR into a temporary directory
 #'
+#' This will request a zip archive of the HEAD state of the repository, and
+#' decompress those files into out_dir.
+#'
+#' @param out_dir Destination directory for repo files
+#' @param export_repo URL to git repository
+#'
 #' @return Path to temporary directory with the STAR exports
 #'
 #' @export

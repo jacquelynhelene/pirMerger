@@ -6,9 +6,15 @@
 \usage{
 pull_star_exports(out_dir, export_repo)
 }
+\arguments{
+\item{out_dir}{Destination directory for repo files}
+
+\item{export_repo}{URL to git repository}
+}
 \value{
 Path to temporary directory with the STAR exports
 }
 \description{
-Pull the latest exports from STAR into a temporary directory
+This will request a zip archive of the HEAD state of the repository, and
+decompress those files into out_dir.
 }
