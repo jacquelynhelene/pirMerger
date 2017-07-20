@@ -16,6 +16,8 @@ multi_join(df, jdf, from, to, n_reps, prefix)
 \item{to}{Character. Quoted column name with the foreign key in the source data}
 
 \item{n_reps}{Integer. Number of times `to` is repeated}
+
+\item{prefix}{}
 }
 \value{
 A dataframe

@@ -38,6 +38,7 @@ norm_vars <- function(data, newcol = "group_no", base_names, n_reps, n_sep_char 
 #' @param from Character. Quoted column name with the foreign key in the data frame to be joined
 #' @param to Character. Quoted column name with the foreign key in the source data
 #' @param n_reps Integer. Number of times `to` is repeated
+#' @param prefix
 #'
 #' @return A dataframe
 multi_join <- function(df, jdf, from, to, n_reps, prefix) {
