@@ -5,7 +5,14 @@ secret::update_secret("data_definitions", value = paste0(read_clip(), collapse =
 library(tidyverse)
 
 k_aat <- readRDS("scratch/source_data/raw_knoedler_subject_aat.rds")
-sc_aat <- readRDS("scratch/source_data/raw_sales_contents_subject_aat.rds")
+sc_aat <- get_data("scratch/source_data", "raw_sales_contents_subject_aat")
+sc <- get_data("scratch/source_data", "raw_sales_contents")
+
+sc_genres <- sc %>%
+  mutate_at(vars(genre, subject), tolower) %>%
+  count(genre, subject, sort = TRUE) %>%
+  filter(!(is.na(genre) & is.na(subject)))
+
 
 k_class <- k_aat %>%
   single_separate("subject") %>%
@@ -44,4 +51,9 @@ lc_sc_aat <- sc_aat %>%
   arrange(desc(count)) %>%
   select(sales_contents_subject, sales_contents_genre, count, everything())
 
-write_clip(lc_sc_aat)
+re_merged_sc <- sc_genres %>%
+  rename(sales_contents_genre = genre, sales_contents_subject = subject) %>%
+  left_join(lc_sc_aat, by = c("sales_contents_genre", "sales_contents_subject")) %>%
+  select(sales_contents_subject, sales_contents_genre, n, -count, subject:notes)
+
+write_clip(re_merged_sc)
