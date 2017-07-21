@@ -53,6 +53,8 @@ produce_knoedler <- function(source_dir, target_dir) {
     select(-(buyer_name_1:buy_auth_name_2))
   saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
 
+  produce_knoedler_materials_aat(source_dir, target_dir, kdf = knoedler)
+
   saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
   invisible(knoedler)
 }
@@ -154,7 +156,7 @@ parse_knoedler_monetary_amounts <- function(df) {
     mutate_at(vars(purch_amount, knoedpurch_amt, price_amount), funs(as.numeric(str_match(., "(\\d+\\.?\\d*)")[,2])))
 }
 
-produce_knoedler_materials_AAT <- function(source_dir, target_dir) {
+produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
   raw_knoedler_materials_aat <- get_data(source_dir, "raw_knoedler_materials_aat")
 
   message("- Concordance for object materials")
@@ -163,7 +165,9 @@ produce_knoedler_materials_AAT <- function(source_dir, target_dir) {
     single_separate(source_col = "aat_materials") %>%
     gather(gcol, aat_materials, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
-    mutate_at(vars(aat_materials), as.integer)
+    mutate_at(vars(aat_materials), as.integer) %>%
+    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
+    select(-object_type, -materials)
   save_data(target_dir, knoedler_materials_object_aat)
 
   message("- Concordance for support materials")
@@ -172,7 +176,9 @@ produce_knoedler_materials_AAT <- function(source_dir, target_dir) {
     single_separate(source_col = "aat_support") %>%
     gather(gcol, aat_support, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
-    mutate_at(vars(aat_support), as.integer)
+    mutate_at(vars(aat_support), as.integer) %>%
+    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
+    select(-object_type, -materials)
   save_data(target_dir, knoedler_materials_support_aat)
 
   message("- Concordance for classified_as tags")
@@ -180,9 +186,11 @@ produce_knoedler_materials_AAT <- function(source_dir, target_dir) {
     select(materials = knoedler_materials, object_type = knoedler_object_type, classified_as_1, classified_as_2) %>%
     single_separate(source_col = "classified_as_1") %>%
     single_separate(source_col = "classified_as_2") %>%
-    gather(gcol, aat_support, -materials, -object_type, na.rm = TRUE) %>%
+    gather(gcol, aat_classified_as, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
-    mutate_at(vars(aat_support), as.integer)
+    mutate_at(vars(aat_classified_as), as.integer) %>%
+    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
+    select(-object_type, -materials)
   save_data(target_dir, knoedler_materials_classified_as_aat)
 
   message("- Concordance for techniques")
@@ -191,7 +199,9 @@ produce_knoedler_materials_AAT <- function(source_dir, target_dir) {
     single_separate(source_col = "aat_technique") %>%
     gather(gcol, aat_technique, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
-    mutate_at(vars(aat_technique), as.integer)
+    mutate_at(vars(aat_technique), as.integer) %>%
+    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
+    select(-object_type, -materials)
   save_data(target_dir, knoedler_materials_technique_as_aat)
 }
 
