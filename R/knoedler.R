@@ -55,6 +55,7 @@ produce_knoedler <- function(source_dir, target_dir) {
   saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
 
   produce_knoedler_materials_aat(source_dir, target_dir, kdf = knoedler)
+  produce_knoedler_subject_aat(source_dir, target_dir, kdf = knoedler)
 
   saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
   invisible(knoedler)
@@ -210,6 +211,58 @@ produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
   save_data(target_dir, knoedler_materials_technique_as_aat)
 }
 
+produce_knoedler_subject_aat <- function(source_dir, target_dir, kdf) {
+  raw_knoedler_subjects_aat <- get_data(source_dir, "raw_knoedler_subject_aat")
+
+  message("- Concordance for subject")
+  knoedler_subject_aat <- raw_knoedler_subjects_aat %>%
+    select(subject = knoedler_subject, genre = knoedler_genre, aat_subject = subject) %>%
+    single_separate(source_col = "aat_subject") %>%
+    gather(gcol, aat_subject, -subject, -genre, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(aat_subject), as.integer) %>%
+    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
+    select(-subject, -genre) %>%
+    filter(!is.na(star_record_no))
+  save_data(target_dir, knoedler_subject_aat)
+
+  message("- Concordance for sytle")
+  knoedler_style_aat <- raw_knoedler_subjects_aat %>%
+    select(subject = knoedler_subject, genre = knoedler_genre, aat_style = style) %>%
+    single_separate(source_col = "aat_style") %>%
+    gather(gcol, aat_style, -subject, -genre, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(aat_style), as.integer) %>%
+    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
+    select(-subject, -genre) %>%
+    filter(!is.na(star_record_no))
+  save_data(target_dir, knoedler_style_aat)
+
+  message("- Concordance for subject classified_as")
+  knoedler_subject_classified_as_aat <- raw_knoedler_subjects_aat %>%
+    select(subject = knoedler_subject, genre = knoedler_genre, subject_classified_as = classified_as) %>%
+    single_separate(source_col = "subject_classified_as") %>%
+    gather(gcol, subject_classified_as, -subject, -genre, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(subject_classified_as), as.integer) %>%
+    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
+    select(-subject, -genre) %>%
+    filter(!is.na(star_record_no))
+  save_data(target_dir, knoedler_subject_classified_as_aat)
+
+  message("- Concordance for depicts")
+  knoedler_depicts_aat <- raw_knoedler_subjects_aat %>%
+    select(subject = knoedler_subject, genre = knoedler_genre, depicts_aat = depicts) %>%
+    single_separate(source_col = "depicts_aat") %>%
+    gather(gcol, depicts_aat, -subject, -genre, na.rm = TRUE) %>%
+    select(-gcol) %>%
+    mutate_at(vars(depicts_aat), as.integer) %>%
+    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
+    select(-subject, -genre) %>%
+    filter(!is.na(star_record_no))
+  save_data(target_dir, knoedler_depicts_aat)
+}
+
 produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler <- get_data(source_dir, "knoedler")
   knoedler_artists <- get_data(source_dir, "knoedler_artists") %>%
@@ -226,6 +279,10 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_materials_object_aat <- get_data(source_dir, "knoedler_materials_object_aat")
   knoedler_materials_support_aat <- get_data(source_dir, "knoedler_materials_support_aat")
   knoedler_materials_technique_as_aat <- get_data(source_dir, "knoedler_materials_technique_as_aat")
+  knoedler_subject_aat <- get_data(source_dir, "knoedler_subject_aat")
+  knoedler_style_aat <- get_data(source_dir, "knoedler_style_aat")
+  knoedler_subject_classified_as_aat <- get_data(source_dir, "knoedler_subject_classified_as_aat")
+  knoedler_depicts_aat <- get_data(source_dir, "knoedler_depicts_aat")
 
   joined_knoedler <- knoedler %>%
     pipe_message("- Join spread knoedler_artists to knoedler") %>%
@@ -243,7 +300,15 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     pipe_message("- Join spread knoedler_materials_object_aat to knoedler") %>%
     left_join(spread_out(knoedler_materials_object_aat, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_materials_technique_as_aat to knoedler") %>%
-    left_join(spread_out(knoedler_materials_technique_as_aat, "star_record_no"), by = "star_record_no")
+    left_join(spread_out(knoedler_materials_technique_as_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_depicts_aat to knoedler") %>%
+    left_join(spread_out(knoedler_depicts_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_subject_classified_as_aat to knoedler") %>%
+    left_join(spread_out(knoedler_subject_classified_as_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_style_aat to knoedler") %>%
+    left_join(spread_out(knoedler_style_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
+    left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no")
 
   ordered_knoedler_names <- c()
 }

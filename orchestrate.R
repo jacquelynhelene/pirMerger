@@ -70,7 +70,11 @@ required_knoedler <- c(
   "knoedler_materials_classified_as_aat.rds",
   "knoedler_materials_object_aat.rds",
   "knoedler_materials_support_aat.rds",
-  "knoedler_materials_technique_as_aat.rds"
+  "knoedler_materials_technique_as_aat.rds",
+  "knoedler_subject_aat.rds",
+  "knoedler_style_aat.rds",
+  "knoedler_subject_classified_as_aat.rds",
+  "knoedler_depicts_aat.rds"
 )
 produce_knoedler(source_data_dir, intermediate_data_dir)
 expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), sort(required_knoedler))
