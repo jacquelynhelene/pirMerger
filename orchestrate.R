@@ -66,7 +66,11 @@ required_knoedler <- c(
   "knoedler_artists.rds",
   "knoedler_buyers.rds",
   "knoedler_joint_owners.rds",
-  "knoedler_sellers.rds"
+  "knoedler_sellers.rds",
+  "knoedler_materials_classified_as_aat.rds",
+  "knoedler_materials_object_aat.rds",
+  "knoedler_materials_support_aat.rds",
+  "knoedler_materials_technique_as_aat.rds"
 )
 produce_knoedler(source_data_dir, intermediate_data_dir)
-expect_true(all(dir(intermediate_data_dir, pattern = "knoedler.*.rds") %in% required_knoedler))
+expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), sort(required_knoedler))
