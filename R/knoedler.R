@@ -28,7 +28,8 @@ produce_knoedler <- function(source_dir, target_dir) {
     bind_re_match(dimensions, "(?<dimension1>\\d+ ?\\d*/?\\d*) ? ?\\[?x?X?\\]? ?(?<dimension2>\\d+ ?\\d*/?\\d*)?")
 
   message("- Extracting knoedler_artists")
-  knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 2, idcols = "star_record_no")
+  knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 2, idcols = "star_record_no") %>%
+    rename(artist_star_record_no = star_rec_no)
   knoedler <- knoedler %>%
     select(-(artist_name_1:star_rec_no_2))
   saveRDS(knoedler_artists, paste(target_dir, "knoedler_artists.rds", sep = "/"))
