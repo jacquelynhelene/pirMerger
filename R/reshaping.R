@@ -61,6 +61,11 @@ multi_join <- function(df, jdf, from, to, n_reps, prefix) {
 #'
 #' @export
 spread_out <- function(df, idcol) {
+  # If this is an empty data frame, return the original one - otherwise the code
+  # below errors on the assumption that there is at least 1 row.
+  if (nrow(df) < 1)
+    return(df)
+
   united_cols <- setdiff(names(df), idcol)
 
   almost_wide <- df %>%
