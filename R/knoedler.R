@@ -168,7 +168,8 @@ produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
     select(-gcol) %>%
     mutate_at(vars(aat_materials), as.integer) %>%
     left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials)
+    select(-object_type, -materials) %>%
+    filter(!is.na(star_record_no))
   save_data(target_dir, knoedler_materials_object_aat)
 
   message("- Concordance for support materials")
@@ -179,7 +180,8 @@ produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
     select(-gcol) %>%
     mutate_at(vars(aat_support), as.integer) %>%
     left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials)
+    select(-object_type, -materials) %>%
+    filter(!is.na(star_record_no))
   save_data(target_dir, knoedler_materials_support_aat)
 
   message("- Concordance for classified_as tags")
@@ -191,7 +193,8 @@ produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
     select(-gcol) %>%
     mutate_at(vars(aat_classified_as), as.integer) %>%
     left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials)
+    select(-object_type, -materials) %>%
+    filter(!is.na(star_record_no))
   save_data(target_dir, knoedler_materials_classified_as_aat)
 
   message("- Concordance for techniques")
@@ -202,13 +205,18 @@ produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
     select(-gcol) %>%
     mutate_at(vars(aat_technique), as.integer) %>%
     left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials)
+    select(-object_type, -materials) %>%
+    filter(!is.na(star_record_no))
   save_data(target_dir, knoedler_materials_technique_as_aat)
 }
 
 produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler <- get_data(source_dir, "knoedler")
-  knoedler_artists <- get_data(source_dir, "knoedler_artists")
+  knoedler_artists <- get_data(source_dir, "knoedler_artists") %>%
+    # The per-artist star_record_no's in Knoedler are out-of-date and
+    # misaligned; matching is done via the authority name, anyway. This can be
+    # discarded
+    select(-artist_star_record_no)
   knoedler_buyers <- get_data(source_dir, "knoedler_buyers")
   knoedler_sellers <- get_data(source_dir, "knoedler_sellers")
   knoedler_joint_owners <- get_data(source_dir, "knoedler_joint_owners")
@@ -219,6 +227,23 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_materials_support_aat <- get_data(source_dir, "knoedler_materials_support_aat")
   knoedler_materials_technique_as_aat <- get_data(source_dir, "knoedler_materials_technique_as_aat")
 
-  knoedler %>%
-    left_join(knoedler_artists, from = "star_record_no", to = "star_record_no", n_reps = 2, prefix = "")
+  joined_knoedler <- knoedler %>%
+    pipe_message("- Join spread knoedler_artists to knoedler") %>%
+    left_join(spread_out(knoedler_artists, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_buyers to knoedler") %>%
+    left_join(spread_out(knoedler_buyers, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_sellers to knoedler") %>%
+    left_join(spread_out(knoedler_sellers, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_joint_owners to knoedler") %>%
+    left_join(spread_out(knoedler_joint_owners, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_materials_classified_as_aat to knoedler") %>%
+    left_join(spread_out(knoedler_materials_classified_as_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_materials_support_aat to knoedler") %>%
+    left_join(spread_out(knoedler_materials_support_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_materials_object_aat to knoedler") %>%
+    left_join(spread_out(knoedler_materials_object_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join spread knoedler_materials_technique_as_aat to knoedler") %>%
+    left_join(spread_out(knoedler_materials_technique_as_aat, "star_record_no"), by = "star_record_no")
+
+  ordered_knoedler_names <- c()
 }
