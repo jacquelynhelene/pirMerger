@@ -49,7 +49,7 @@ expect_true(dir.exists(paste(repo_data_dir, "csv", sep = "/")))
 # Process export files and Google Sheets files into dataframes
 read_all_exports(out_dir = source_data_dir, data_dict = working_dict, repo_path = repo_data_dir)
 read_all_concordances(out_dir = source_data_dir, data_dict = working_dict)
-expect_true(all(dir(source_data_dir, "*.rds") %in% required_rds))
+expect_equivalent(sort(dir(source_data_dir, "*.rds")), sort(required_rds))
 
 # Process artist authority table
 produce_artists_authority(source_data_dir, intermediate_data_dir)
