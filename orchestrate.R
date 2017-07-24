@@ -78,3 +78,4 @@ required_knoedler <- c(
 )
 produce_knoedler(source_data_dir, intermediate_data_dir)
 expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), sort(required_knoedler))
+jk <- produce_joined_knoedler(intermediate_data_dir, pipeline_data_dir)

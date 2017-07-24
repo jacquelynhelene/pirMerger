@@ -86,7 +86,8 @@ identify_knoedler_transactions <- function(df) {
     # TO-DO: distinguish between inventory events and new purchase events
     mutate(
       inventory_or_purchase_id = paste("k", "purch", group_indices(., stock_book_no, purch_note_working), sep = "-"),
-      sale_transaction_id = paste("k", "sale", group_indices(., stock_book_no, price_note_working), sep = "-"))
+      sale_transaction_id = paste("k", "sale", group_indices(., stock_book_no, price_note_working), sep = "-")) %>%
+    select(-purch_note_working, -knoedpurch_note_working, -price_note_working)
 }
 
 produce_knoedler_stocknumber_concordance <- function(source_dir, target_dir) {
@@ -119,7 +120,8 @@ identify_knoedler_objects <- function(df, knoedler_stocknumber_concordance) {
       is.na(knoedler_number) ~ paste("gennum", as.character(seq_along(knoedler_number)), sep = "-"),
       knoedler_number %in% names(knoedler_stocknumber_concordance) ~ prime_stock_number,
       TRUE ~ paste("orignnum", knoedler_number, sep = "-"))) %>%
-    mutate(object_id = paste("k", "object", group_indices(., prepped_sn), sep = "-"))
+    mutate(object_id = paste("k", "object", group_indices(., prepped_sn), sep = "-")) %>%
+    select(-prime_stock_number, -prepped_sn)
 }
 
 # For a given object_id, attempt to discern an event order, which can be useful
@@ -143,7 +145,9 @@ order_knoedler_object_events <- function(df) {
     group_by(object_id) %>%
     arrange(event_year, event_month, event_day, stock_book_no, page_number, row_number, .by_group = TRUE) %>%
     mutate(event_order = seq_along(star_record_no)) %>%
-    ungroup()
+    ungroup() %>%
+    # Remove intermediate columns
+    select(-event_year, -event_month, -event_day)
 }
 
 # Harmonize monetary amounts and currencies
@@ -263,6 +267,14 @@ produce_knoedler_subject_aat <- function(source_dir, target_dir, kdf) {
   save_data(target_dir, knoedler_depicts_aat)
 }
 
+#' Produce a joined Knoedler table
+#'
+#' @param source_dir Where to load preprocessed Knoedler files.
+#' @param target_dir Where to save the fully joined Knoedler table.
+#'
+#' @return A data frame.
+#'
+#' @export
 produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler <- get_data(source_dir, "knoedler")
   knoedler_artists <- get_data(source_dir, "knoedler_artists") %>%
@@ -310,5 +322,6 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
     left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no")
 
-  ordered_knoedler_names <- c()
+  save_data(target_dir, joined_knoedler)
+  invisible(joined_knoedler)
 }
