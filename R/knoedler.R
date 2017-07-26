@@ -307,13 +307,15 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     "title",
     "description",
     "artist_name_1",
-    "art_authority_1",
-    "nationality_1",
-    "attribution_mod_1",
+    "artist_authority_1",
+    "artist_nationality_1",
+    "artist_attribution_mod_1",
+    "artist_ulan_id_1",
     "artist_name_2",
-    "art_authority_2",
-    "nationality_2",
-    "attribution_mod_2",
+    "artist_authority_2",
+    "artist_nationality_2",
+    "artist_attribution_mod_2",
+    "artist_ulan_id_2",
     "subject",
     "genre",
     "depicts_aat_1",
@@ -373,28 +375,35 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     "buyer_loc_1",
     "buy_auth_name_1",
     "buy_auth_addr_1",
+    "buyer_ulan_id_1",
     "buyer_name_2",
     "buyer_loc_2",
     "buy_auth_name_2",
     "buy_auth_addr_2",
+    "buyer_ulan_id_2",
     "seller_name_1",
     "seller_loc_1",
     "sell_auth_name_1",
     "sell_auth_loc_1",
+    "seller_ulan_id_1",
     "seller_name_2",
     "seller_loc_2",
     "sell_auth_name_2",
-    "sell_auth_loc_2"
+    "sell_auth_loc_2",
+    "seller_ulan_id_2"
   )
 
   joined_knoedler_artists <- knoedler_artists %>%
-    left_join(select(artists_authority, -star_record_no), by = c("art_authority" = "artist_authority"))
+    left_join(select(artists_authority, artist_authority, ulan_id), by = c("art_authority" = "artist_authority")) %>%
+    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod, artist_ulan_id = ulan_id)
 
   joined_knoedler_buyers <- knoedler_buyers %>%
-    left_join(select(owners_authority, -star_record_no), by = c("buy_auth_name" = "owner_authority"))
+    left_join(select(owners_authority, owner_authority, ulan_id), by = c("buy_auth_name" = "owner_authority")) %>%
+    rename(buyer_ulan_id = ulan_id)
 
   joined_knoedler_sellers <- knoedler_sellers %>%
-    left_join(select(owners_authority, -star_record_no), by = c("sell_auth_name" = "owner_authority"))
+    left_join(select(owners_authority, owner_authority, ulan_id), by = c("sell_auth_name" = "owner_authority")) %>%
+    rename(seller_ulan_id = ulan_id)
 
   joined_knoedler <- knoedler %>%
     pipe_message("- Join spread knoedler_artists to knoedler") %>%
