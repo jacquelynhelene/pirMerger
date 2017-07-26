@@ -18,8 +18,6 @@ produce_knoedler <- function(source_dir, target_dir) {
     identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
     identify_knoedler_transactions() %>%
     order_knoedler_object_events() %>%
-    add_count(object_id) %>%
-    arrange(desc(n), object_id, event_order) %>%
     # Where genre or object type is not identified, set to NA
     mutate_at(vars(genre, object_type), funs(na_if(., "[not identified]"))) %>%
     # Where month or day components of entry or sale dates are 0, set to NA
@@ -296,13 +294,115 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_subject_classified_as_aat <- get_data(source_dir, "knoedler_subject_classified_as_aat")
   knoedler_depicts_aat <- get_data(source_dir, "knoedler_depicts_aat")
 
+  knoedler_name_order <- c(
+    "star_record_no",
+    "pi_record_no",
+    "stock_book_no",
+    "knoedler_number",
+    "page_number",
+    "row_number",
+    "consign_no",
+    "consign_name",
+    "consign_loc",
+    "title",
+    "description",
+    "artist_name_1",
+    "art_authority_1",
+    "nationality_1",
+    "attribution_mod_1",
+    "artist_name_2",
+    "art_authority_2",
+    "nationality_2",
+    "attribution_mod_2",
+    "subject",
+    "genre",
+    "depicts_aat_1",
+    "subject_classified_as_1",
+    "subject_classified_as_2",
+    "subject_classified_as_3",
+    "aat_style_1",
+    "aat_subject",
+    "object_type",
+    "materials",
+    "aat_classified_as_1",
+    "aat_classified_as_2",
+    "aat_classified_as_3",
+    "aat_support_1",
+    "aat_support_2",
+    "aat_materials_1",
+    "aat_materials_2",
+    "aat_materials_3",
+    "aat_technique_1",
+    "dimensions",
+    "entry_date_year",
+    "entry_date_month",
+    "entry_date_day",
+    "sale_date_year",
+    "sale_date_month",
+    "sale_date_day",
+    "purch_amount",
+    "purch_currency",
+    "purch_note",
+    "knoedpurch_amt",
+    "knoedpurch_curr",
+    "knoedpurch_note",
+    "price_amount",
+    "price_currency",
+    "price_note",
+    "knoedsale_amt",
+    "knoedsale_curr",
+    "knoedsale_note",
+    "transaction",
+    "folio",
+    "verbatim_notes",
+    "main_heading",
+    "subheading",
+    "object_id",
+    "inventory_or_purchase_id",
+    "sale_transaction_id",
+    "event_order",
+    "joint_own_1",
+    "joint_own_sh_1",
+    "joint_own_2",
+    "joint_own_sh_2",
+    "joint_own_3",
+    "joint_own_sh_3",
+    "joint_own_4",
+    "joint_own_sh_4",
+    "buyer_name_1",
+    "buyer_loc_1",
+    "buy_auth_name_1",
+    "buy_auth_addr_1",
+    "buyer_name_2",
+    "buyer_loc_2",
+    "buy_auth_name_2",
+    "buy_auth_addr_2",
+    "seller_name_1",
+    "seller_loc_1",
+    "sell_auth_name_1",
+    "sell_auth_loc_1",
+    "seller_name_2",
+    "seller_loc_2",
+    "sell_auth_name_2",
+    "sell_auth_loc_2"
+  )
+
+  joined_knoedler_artists <- knoedler_artists %>%
+    left_join(select(artists_authority, -star_record_no), by = c("art_authority" = "artist_authority"))
+
+  joined_knoedler_buyers <- knoedler_buyers %>%
+    left_join(select(owners_authority, -star_record_no), by = c("buy_auth_name" = "owner_authority"))
+
+  joined_knoedler_sellers <- knoedler_sellers %>%
+    left_join(select(owners_authority, -star_record_no), by = c("sell_auth_name" = "owner_authority"))
+
   joined_knoedler <- knoedler %>%
     pipe_message("- Join spread knoedler_artists to knoedler") %>%
-    left_join(spread_out(knoedler_artists, "star_record_no"), by = "star_record_no") %>%
+    left_join(spread_out(joined_knoedler_artists, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_buyers to knoedler") %>%
-    left_join(spread_out(knoedler_buyers, "star_record_no"), by = "star_record_no") %>%
+    left_join(spread_out(joined_knoedler_buyers, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_sellers to knoedler") %>%
-    left_join(spread_out(knoedler_sellers, "star_record_no"), by = "star_record_no") %>%
+    left_join(spread_out(joined_knoedler_sellers, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_joint_owners to knoedler") %>%
     left_join(spread_out(knoedler_joint_owners, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_materials_classified_as_aat to knoedler") %>%
@@ -320,7 +420,8 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     pipe_message("- Join spread knoedler_style_aat to knoedler") %>%
     left_join(spread_out(knoedler_style_aat, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
-    left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no")
+    left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no") %>%
+    select(one_of(knoedler_name_order))
 
   save_data(target_dir, joined_knoedler)
   invisible(joined_knoedler)
