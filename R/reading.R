@@ -93,7 +93,13 @@ read_all_concordances <- function(out_dir, data_dict) {
   data_files <- data_definitions(data_dict)[["google_sheets"]]
   walk(data_files, function(s) {
     message("Reading ", s[["name"]])
-    res <- googlesheets::gs_read(googlesheets::gs_url(s[["url"]], verbose = FALSE), verbose = FALSE, skip = 1, col_names = s[["colnames"]], col_types = s[["coltypes"]])
+
+    # If no worksheet is specified, assume 1
+    sheet <- s[["sheet"]]
+    if (is.null(sheet))
+      sheet <- 1
+
+    res <- googlesheets::gs_read(googlesheets::gs_url(s[["url"]], verbose = FALSE), ws = sheet, verbose = FALSE, skip = 1, col_names = s[["colnames"]], col_types = s[["coltypes"]])
     readr::stop_for_problems(res)
     saveRDS(res, file = paste0(out_dir, "/", "raw_", s[["name"]], ".rds"))
   })
