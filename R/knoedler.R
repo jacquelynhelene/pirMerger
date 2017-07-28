@@ -13,17 +13,7 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
-    mutate_at(vars(star_record_no, stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer)) %>%
-    parse_knoedler_monetary_amounts() %>%
-    identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
-    identify_knoedler_transactions() %>%
-    order_knoedler_object_events() %>%
-    # Where genre or object type is not identified, set to NA
-    mutate_at(vars(genre, object_type), funs(na_if(., "[not identified]"))) %>%
-    # Where month or day components of entry or sale dates are 0, set to NA
-    mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0))) %>%
-    # Parse fractions
-    bind_re_match(dimensions, "(?<dimension1>\\d+ ?\\d*/?\\d*) ? ?\\[?x?X?\\]? ?(?<dimension2>\\d+ ?\\d*/?\\d*)?")
+    mutate_at(vars(star_record_no, stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer))
 
   message("- Extracting knoedler_artists")
   knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 2, idcols = "star_record_no") %>%
@@ -52,11 +42,50 @@ produce_knoedler <- function(source_dir, target_dir) {
     select(-(buyer_name_1:buy_auth_name_2))
   saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
 
+  produce_knoedler_transactions(source_dir, target_dir, kdf = knoedler)
+
+  knoedler <- knoedler %>%
+    parse_knoedler_monetary_amounts() %>%
+    identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
+    identify_knoedler_transactions() %>%
+    order_knoedler_object_events() %>%
+    # Where genre or object type is not identified, set to NA
+    mutate_at(vars(genre, object_type), funs(na_if(., "[not identified]"))) %>%
+    # Where month or day components of entry or sale dates are 0, set to NA
+    mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0))) %>%
+    # Parse fractions
+    bind_re_match(dimensions, "(?<dimension1>\\d+ ?\\d*/?\\d*) ? ?\\[?x?X?\\]? ?(?<dimension2>\\d+ ?\\d*/?\\d*)?")
+
   produce_knoedler_materials_aat(source_dir, target_dir, kdf = knoedler)
   produce_knoedler_subject_aat(source_dir, target_dir, kdf = knoedler)
 
   saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
   invisible(knoedler)
+}
+
+produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
+  knoedler_sellers <- get_data(source_dir, "knoedler_sellers")
+  knoedler_buyers <- get_data(source_dir, "knoedler_buyers")
+  knoedler_joint_owners <- get_data(source_dir, "knoedler_joint_owners")
+
+  knoedler_firm_id <- "500304270"
+
+  knoedler_sales <- kdf %>%
+    identify_knoedler_transactions()
+
+  sale_timespans <- knoedler_sales %>%
+    group_by(sale_transaction_id) %>%
+    summarize_at(vars(sale_date_year, sale_date_month, sale_date_day),
+                 funs(first(na.omit(.))))
+
+  sales_to <- knoedler_sales %>%
+    select(star_record_no, sale_transaction_id) %>%
+    left_join(knoedler_buyers, by = "star_record_no") %>%
+    add_count(sale_transaction_id, buy_auth_name) %>%
+    arrange(desc(n))
+
+
+
 }
 
 identify_knoedler_transactions <- function(df) {
@@ -293,6 +322,7 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_style_aat <- get_data(source_dir, "knoedler_style_aat")
   knoedler_subject_classified_as_aat <- get_data(source_dir, "knoedler_subject_classified_as_aat")
   knoedler_depicts_aat <- get_data(source_dir, "knoedler_depicts_aat")
+  currency_aat <- get_data(source_dir, "currency_aat")
 
   knoedler_name_order <- c(
     "star_record_no",
@@ -344,15 +374,19 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     "sale_date_day",
     "purch_amount",
     "purch_currency",
+    "purch_currency_aat",
     "purch_note",
     "knoedpurch_amt",
     "knoedpurch_curr",
+    "knoedpurch_curr_aat",
     "knoedpurch_note",
     "price_amount",
     "price_currency",
+    "price_currency_aat",
     "price_note",
     "knoedsale_amt",
     "knoedsale_curr",
+    "knoedpurch_curr_aat",
     "knoedsale_note",
     "transaction",
     "folio",
@@ -430,7 +464,12 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     left_join(spread_out(knoedler_style_aat, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
     left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no") %>%
-    select(one_of(knoedler_name_order))
+    select(one_of(knoedler_name_order)) %>%
+    pipe_message("- Joining currency IDs to knoedler") %>%
+    left_join(rename(currency_aat, purch_currency = price_currency, purch_currency_aat = currency_aat), by = "purch_currency") %>%
+    left_join(rename(currency_aat, knoedpurch_curr = price_currency, knoedpurch_curr_aat = currency_aat), by = "knoedpurch_curr") %>%
+    left_join(rename(currency_aat, price_currency = price_currency, price_currency_aat = currency_aat), by = "price_currency") %>%
+    left_join(rename(currency_aat, knoedsale_curr = price_currency, knoedsale_curr_aat = currency_aat), by = "knoedsale_curr")
 
   save_data(target_dir, joined_knoedler)
   invisible(joined_knoedler)
