@@ -8,6 +8,8 @@
 #' @export
 produce_knoedler <- function(source_dir, target_dir) {
   raw_knoedler <- get_data(source_dir, "raw_knoedler")
+  artists_authority <- get_data(target_dir, "artists_authority")
+  owners_authority <- get_data(target_dir, "owners_authority")
 
   knoedler_stocknumber_concordance <- produce_knoedler_stocknumber_concordance(source_dir, target_dir)
 
@@ -17,13 +19,17 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   message("- Extracting knoedler_artists")
   knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 2, idcols = "star_record_no") %>%
-    rename(artist_star_record_no = star_rec_no)
+    rename(artist_star_record_no = star_rec_no) %>%
+    left_join(select(artists_authority, artist_authority, ulan_id), by = c("art_authority" = "artist_authority")) %>%
+    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod, artist_ulan_id = ulan_id)
   knoedler <- knoedler %>%
     select(-(artist_name_1:star_rec_no_2))
   saveRDS(knoedler_artists, paste(target_dir, "knoedler_artists.rds", sep = "/"))
 
   message("- Extracting knoedler_sellers")
-  knoedler_sellers <- norm_vars(knoedler, base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc"), n_reps = 2, idcols = "star_record_no")
+  knoedler_sellers <- norm_vars(knoedler, base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc"), n_reps = 2, idcols = "star_record_no") %>%
+    left_join(select(owners_authority, owner_authority, ulan_id), by = c("sell_auth_name" = "owner_authority")) %>%
+    rename(seller_ulan_id = ulan_id)
   knoedler <- knoedler %>%
     select(-(seller_name_1:sell_auth_loc_2))
   saveRDS(knoedler_sellers, paste(target_dir, "knoedler_sellers.rds", sep = "/"))
@@ -37,12 +43,14 @@ produce_knoedler <- function(source_dir, target_dir) {
   message("- Extracting knoedler_buyers")
   knoedler_buyers <- knoedler %>%
     add_column(buyer_loc_2 = NA_character_, buy_auth_addr_2 = NA_character_) %>%
-    norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr"), n_reps = 2, idcols = "star_record_no")
+    norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr"), n_reps = 2, idcols = "star_record_no") %>%
+    left_join(select(owners_authority, owner_authority, ulan_id), by = c("buy_auth_name" = "owner_authority")) %>%
+    rename(buyer_ulan_id = ulan_id)
   knoedler <- knoedler %>%
     select(-(buyer_name_1:buy_auth_name_2))
   saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
 
-  produce_knoedler_transactions(source_dir, target_dir, kdf = knoedler)
+  # produce_knoedler_transactions(source_dir, target_dir, kdf = knoedler)
 
   knoedler <- knoedler %>%
     parse_knoedler_monetary_amounts() %>%
@@ -294,6 +302,14 @@ produce_knoedler_subject_aat <- function(source_dir, target_dir, kdf) {
   save_data(target_dir, knoedler_depicts_aat)
 }
 
+#' @importFrom stringr str_detect
+#' @importFrom rematch2 bind_re_match
+identify_knoedler_anonymous <- function(df) {
+  anon_artists <- knoedler_artists %>%
+    filter(str_detect(art_authority, "^\\[")) %>%
+    bind_re_match(art_authority, "(?<century>\\d{1,2})(?:ST|RD|TH) C\\.")
+}
+
 #' Produce a joined Knoedler table
 #'
 #' @param source_dir Where to load preprocessed Knoedler files.
@@ -312,8 +328,6 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_buyers <- get_data(source_dir, "knoedler_buyers")
   knoedler_sellers <- get_data(source_dir, "knoedler_sellers")
   knoedler_joint_owners <- get_data(source_dir, "knoedler_joint_owners")
-  artists_authority <- get_data(source_dir, "artists_authority")
-  owners_authority <- get_data(source_dir, "owners_authority")
   knoedler_materials_classified_as_aat <- get_data(source_dir, "knoedler_materials_classified_as_aat")
   knoedler_materials_object_aat <- get_data(source_dir, "knoedler_materials_object_aat")
   knoedler_materials_support_aat <- get_data(source_dir, "knoedler_materials_support_aat")
@@ -427,25 +441,13 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     "seller_ulan_id_2"
   )
 
-  joined_knoedler_artists <- knoedler_artists %>%
-    left_join(select(artists_authority, artist_authority, ulan_id), by = c("art_authority" = "artist_authority")) %>%
-    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod, artist_ulan_id = ulan_id)
-
-  joined_knoedler_buyers <- knoedler_buyers %>%
-    left_join(select(owners_authority, owner_authority, ulan_id), by = c("buy_auth_name" = "owner_authority")) %>%
-    rename(buyer_ulan_id = ulan_id)
-
-  joined_knoedler_sellers <- knoedler_sellers %>%
-    left_join(select(owners_authority, owner_authority, ulan_id), by = c("sell_auth_name" = "owner_authority")) %>%
-    rename(seller_ulan_id = ulan_id)
-
   joined_knoedler <- knoedler %>%
     pipe_message("- Join spread knoedler_artists to knoedler") %>%
-    left_join(spread_out(joined_knoedler_artists, "star_record_no"), by = "star_record_no") %>%
+    left_join(spread_out(knoedler_artists, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_buyers to knoedler") %>%
-    left_join(spread_out(joined_knoedler_buyers, "star_record_no"), by = "star_record_no") %>%
+    left_join(spread_out(knoedler_buyers, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_sellers to knoedler") %>%
-    left_join(spread_out(joined_knoedler_sellers, "star_record_no"), by = "star_record_no") %>%
+    left_join(spread_out(knoedler_sellers, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_joint_owners to knoedler") %>%
     left_join(spread_out(knoedler_joint_owners, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_materials_classified_as_aat to knoedler") %>%
