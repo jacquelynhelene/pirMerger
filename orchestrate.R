@@ -52,6 +52,10 @@ read_all_exports(out_dir = source_data_dir, data_dict = working_dict, repo_path 
 read_all_concordances(out_dir = source_data_dir, data_dict = working_dict)
 expect_equivalent(sort(dir(source_data_dir, "*.rds")), sort(required_rds))
 
+# Process singleton tables that are needed for a variety of datasets
+produce_currency_ids(source_data_dir, intermediate_data_dir)
+expect_true(file.exists(paste(intermediate_data_dir, "currency_aat.rds", sep = "/")))
+
 # Process artist authority table
 produce_artists_authority(source_data_dir, intermediate_data_dir)
 expect_true(file.exists(paste(intermediate_data_dir, "artists_authority.rds", sep = "/")))
