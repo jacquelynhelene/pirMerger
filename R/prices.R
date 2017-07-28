@@ -21,7 +21,7 @@ produce_currency_ids <- function(source_dir, target_dir) {
   currency_aat <- curr_auth %>%
     mutate_at(vars(auth_currency), tolower) %>%
     left_join(mutate_at(curr_aat, vars(auth_currency), tolower), by = "auth_currency") %>%
-    select(price_currency, auth_currency, currency_aat)
+    select(price_currency, currency_aat)
 
   save_data(target_dir, currency_aat)
   invisible(currency_aat)
