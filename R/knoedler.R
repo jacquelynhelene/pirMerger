@@ -20,8 +20,11 @@ produce_knoedler <- function(source_dir, target_dir) {
   message("- Extracting knoedler_artists")
   knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 2, idcols = "star_record_no") %>%
     rename(artist_star_record_no = star_rec_no) %>%
+    # Join ulan ids to this list
     left_join(select(artists_authority, artist_authority, ulan_id), by = c("art_authority" = "artist_authority")) %>%
-    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod, artist_ulan_id = ulan_id)
+    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod, artist_ulan_id = ulan_id) %>%
+    # Generate unique IDs for all artists mentioned here
+    identify_knoedler_anonymous_artists()
   knoedler <- knoedler %>%
     select(-(artist_name_1:star_rec_no_2))
   saveRDS(knoedler_artists, paste(target_dir, "knoedler_artists.rds", sep = "/"))
@@ -304,10 +307,22 @@ produce_knoedler_subject_aat <- function(source_dir, target_dir, kdf) {
 
 #' @importFrom stringr str_detect
 #' @importFrom rematch2 bind_re_match
-identify_knoedler_anonymous <- function(df) {
-  anon_artists <- knoedler_artists %>%
-    filter(str_detect(art_authority, "^\\[")) %>%
-    bind_re_match(art_authority, "(?<century>\\d{1,2})(?:ST|RD|TH) C\\.")
+identify_knoedler_anonymous_artists <- function(df) {
+  df %>%
+    mutate(
+      is_anon = str_detect(artist_authority, "^\\["),
+      person_uid = case_when(
+        !is.na(artist_ulan_id) & !is_anon ~ paste0("ulan-artist-", group_indices(., artist_ulan_id)),
+        is.na(artist_authority) & (is.na(is_anon) | !is_anon) ~ paste0("blank-artist-", seq_along(artist_authority)),
+        is_anon ~ paste0("anon-artist-", seq_along(artist_authority)),
+        !is.na(artist_authority) & !is_anon ~ paste0("known-artist-", group_indices(., artist_authority))
+      )
+    ) %>%
+    select(-is_anon) %>%
+    # Every artist MUST have a person_uid
+    assertr::assert(assertr::not_na, person_uid)
+}
+
 }
 
 #' Produce a joined Knoedler table
