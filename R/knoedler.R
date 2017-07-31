@@ -31,11 +31,11 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   message("- Extracting knoedler_sellers")
   knoedler_sellers <- norm_vars(knoedler, base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc"), n_reps = 2, idcols = "star_record_no") %>%
+    # Join ulan ids to this list
     left_join(select(owners_authority, owner_authority, ulan_id), by = c("sell_auth_name" = "owner_authority")) %>%
     rename(seller_ulan_id = ulan_id)
   knoedler <- knoedler %>%
     select(-(seller_name_1:sell_auth_loc_2))
-  saveRDS(knoedler_sellers, paste(target_dir, "knoedler_sellers.rds", sep = "/"))
 
   message("- Extracting knoedler_joint_owners")
   knoedler_joint_owners <- norm_vars(knoedler, base_names = c("joint_own", "joint_own_sh"), n_reps = 4, idcols = "star_record_no")
@@ -51,7 +51,18 @@ produce_knoedler <- function(source_dir, target_dir) {
     rename(buyer_ulan_id = ulan_id)
   knoedler <- knoedler %>%
     select(-(buyer_name_1:buy_auth_name_2))
+
+  # Add owner uids
+  owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers)
+
+  knoedler_buyers <- knoedler_buyers %>%
+    bind_cols(select(filter(owner_uids, owner_type == "buyers"), buyer_uid = person_uid))
+
+  knoedler_sellers_a <- knoedler_sellers %>%
+    bind_cols(select(filter(owner_uids, owner_type == "sellers"), seller_uid = person_uid))
+
   saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
+  saveRDS(knoedler_sellers, paste(target_dir, "knoedler_sellers.rds", sep = "/"))
 
   # produce_knoedler_transactions(source_dir, target_dir, kdf = knoedler)
 
@@ -323,6 +334,27 @@ identify_knoedler_anonymous_artists <- function(df) {
     assertr::assert(assertr::not_na, person_uid)
 }
 
+identify_knoedler_anonymous_owners <- function(buyers_df, sellers_df) {
+
+  # Combine both buyer and seller listings order to produce anonymous ids for everyone
+  all_owners <- bind_rows(
+    buyers = select(buyers_df,star_record_no, owner_name = buyer_name, owner_auth = buy_auth_name, owner_ulan_id = buyer_ulan_id),
+    sellers = select(sellers_df, star_record_no, owner_name = seller_name, owner_auth = sell_auth_name, owner_ulan_id = seller_ulan_id),
+    .id = "owner_type") %>%
+    mutate(
+      is_anon = owner_auth %in% c("Anonymous Collection"),
+      is_new = owner_auth == "NEW",
+      person_uid = case_when(
+        !is.na(owner_ulan_id) & !is_anon ~ paste0("ulan-owner-", group_indices(., owner_ulan_id)),
+        # In the case that an owner has the name "NEW", this means that authority work hasn't been done yet. This will instead group and assign IDs based on the owner name
+        is_new ~ paste0("unauthorized-owner-", group_indices(., owner_name)),
+        is_anon ~ paste0("anon-owner-", seq_along(owner_auth)),
+        !is.na(owner_auth) & !is_anon & !is_new ~ paste0("known-owner-", group_indices(., owner_auth))
+      )
+    ) %>%
+    select(-is_anon, -is_new) %>%
+    # Every artist MUST have a person_uid
+    assertr::assert(assertr::not_na, person_uid)
 }
 
 #' Produce a joined Knoedler table
