@@ -58,7 +58,7 @@ produce_knoedler <- function(source_dir, target_dir) {
   knoedler_buyers <- knoedler_buyers %>%
     bind_cols(select(filter(owner_uids, owner_type == "buyers"), buyer_uid = person_uid))
 
-  knoedler_sellers_a <- knoedler_sellers %>%
+  knoedler_sellers <- knoedler_sellers %>%
     bind_cols(select(filter(owner_uids, owner_type == "sellers"), seller_uid = person_uid))
 
   saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
@@ -92,22 +92,27 @@ produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
 
   knoedler_firm_id <- "500304270"
 
-  knoedler_sales <- kdf %>%
+  knoedler_transactions <- kdf %>%
     identify_knoedler_transactions()
 
-  sale_timespans <- knoedler_sales %>%
+  knoedler_sales <- knoedler_transactions %>%
+    filter(transaction == "Sold")
+
+  sale_transactions <- knoedler_sales %>%
     group_by(sale_transaction_id) %>%
-    summarize_at(vars(sale_date_year, sale_date_month, sale_date_day),
+    summarize_at(vars(sale_date_year, sale_date_month, sale_date_day, price_amount, price_currency),
                  funs(first(na.omit(.))))
 
   sales_to <- knoedler_sales %>%
-    select(star_record_no, sale_transaction_id) %>%
     left_join(knoedler_buyers, by = "star_record_no") %>%
-    add_count(sale_transaction_id, buy_auth_name) %>%
-    arrange(desc(n))
+    select(sale_transaction_id, buyer_uid) %>%
+    filter(!is.na(buyer_uid)) %>%
+    distinct()
 
-
-
+  sales_from <- knoedler_sales %>%
+    left_join(knoedler_joint_owners, by = "star_record_no") %>%
+    select(star_record_no, sale_transaction_id) %>%
+    add_column(seller_uid = knoedler_firm_id)
 }
 
 identify_knoedler_transactions <- function(df) {
