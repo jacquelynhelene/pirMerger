@@ -70,5 +70,5 @@ produce_sales_contents <- function(source_dir, target_dir) {
   sales_contents <- sales_contents %>% select(-(post_own_1:post_own_auth_q_6))
   save_data(target_dir, sales_contents_post_owners)
 
-  save(sales_contents, file = "data/sales_contents.rda")
+  save_data(target_dir, sales_contents)
 }
