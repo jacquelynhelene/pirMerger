@@ -18,8 +18,8 @@ dir.create(source_data_dir)
 dir.create(intermediate_data_dir)
 dir.create(pipeline_data_dir)
 
-working_dict <- secret::get_secret("data_definitions")
-repo_url <- secret::get_secret("repo_id")
+working_dict <- paste0(readLines("data_definitions.yml"), collapse = "\n")
+repo_url <- "ssh://git@stash.getty.edu:7999/griis/getty-provenance-index.git"
 
 required_rds <- c(
   "raw_artists_authority.rds",
