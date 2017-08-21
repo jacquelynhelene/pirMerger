@@ -9,7 +9,9 @@
 produce_sales_contents <- function(source_dir, target_dir) {
   raw_sales_contents <- get_data(source_dir, "raw_sales_contents")
 
-  sales_contents <- raw_sales_contents
+  # Coerce appropriate columns to integer/numeric
+  sales_contents <- raw_sales_contents %>%
+    mutate_at(vars(star_record_no, lot_sale_year, lot_sale_month, lot_sale_day, production_rec), funs(as.integer))
 
   ### expert_auth
   sales_contents_experts <- norm_vars(sales_contents, base_names = "expert_auth", n_reps = 4, idcols = "star_record_no")
