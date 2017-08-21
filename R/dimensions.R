@@ -32,6 +32,3 @@ replace_dimensions <- function(df) {
       TRUE ~ dimensions
     ))
 }
-
-frd <- general_dimension_extraction(french_sales_dim_mod, dimcol = "new_dims_3", idcol = "star_record_no")
-grmd <- general_dimension_extraction(filter(rsc, str_detect(catalog_number, "^D")), "dimensions", "star_record_no")
