@@ -1,1 +1,1 @@
-secret::update_secret("data_definitions", value = paste0(readLines("data_definitions.yml"), collapse = "\n"))
+secret::update_secret("working_dict", value = paste0(readLines("data_definitions.yml"), collapse = "\n"))
