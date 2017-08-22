@@ -24,7 +24,9 @@ produce_sales_contents <- function(source_dir, target_dir) {
   save_data(target_dir, sales_contents_commissaire_pr)
 
   ### artist_name
-  sales_contents_artists <- norm_vars(sales_contents, base_names = c("artist_name", "artist_info", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 5, idcols = "star_record_no")
+  sales_contents_artists <- norm_vars(sales_contents, base_names = c("artist_name", "artist_info", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 5, idcols = "star_record_no") %>%
+    rename(artist_star_rec_no = star_rec_no) %>%
+    mutate_at(vars(artist_star_rec_no), funs(as.integer))
   sales_contents <- sales_contents %>% select(-(artist_name_1:star_rec_no_5))
   save_data(target_dir, sales_contents_artists)
 
