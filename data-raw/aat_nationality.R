@@ -18,41 +18,51 @@ own_nat <- ow %>%
   pull(nationality) %>%
   na.omit()
 
+nat_id_pattern <- "^\\[[^\\.]"
+
 sc_buy_nat <- sc %>%
   norm_vars(base_names = "buy_auth_name", n_reps = 5, idcols = "star_record_no") %>%
-  filter(str_detect(buy_auth_name, "^\\[")) %>%
+  filter(str_detect(buy_auth_name, nat_id_pattern)) %>%
   pull(buy_auth_name)
 
 sc_art_nat <- sc %>%
   norm_vars(base_names = "art_authority", n_reps = 5, idcols = "star_record_no") %>%
-  filter(str_detect(art_authority, "^\\[")) %>%
+  filter(str_detect(art_authority, nat_id_pattern)) %>%
   pull(art_authority)
+
+sc_nat <- sc %>%
+  norm_vars(base_names = "nationality", n_reps = 5, idcols = "star_record_no") %>%
+  pull(nationality)
 
 sc_sell_nat <- sc %>%
   norm_vars(base_names = "sell_auth_name", n_reps = 5, idcols = "star_record_no") %>%
-  filter(str_detect(sell_auth_name, "^\\[")) %>%
+  filter(str_detect(sell_auth_name, nat_id_pattern)) %>%
   pull(sell_auth_name)
 
 k_art_nat <- kk %>%
   norm_vars(base_names = "art_authority", n_reps = 2, idcols = "star_record_no") %>%
-  filter(str_detect(art_authority, "^\\[")) %>%
+  filter(str_detect(art_authority, nat_id_pattern)) %>%
   pull(art_authority)
+
+k_nat <- kk %>%
+  norm_vars(base_names, "nationality", n_reps = 2, idcols = "star_record_no") %>%
+  pull(nationality)
 
 k_buy_nat <- kk %>%
   norm_vars(base_names = "buy_auth_name", n_reps = 2, idcols = "star_record_no") %>%
-  filter(str_detect(buy_auth_name, "^\\[")) %>%
+  filter(str_detect(buy_auth_name, nat_id_pattern)) %>%
   pull(buy_auth_name)
 
 k_sell_nat <- kk %>%
   norm_vars(base_names = "sell_auth_name", n_reps = 2, idcols = "star_record_no") %>%
-  filter(str_detect(sell_auth_name, "^\\[")) %>%
+  filter(str_detect(sell_auth_name, nat_id_pattern)) %>%
   pull(sell_auth_name)
 
-all_nationalities <- c(art_nat, own_nat, sc_buy_nat, sc_art_nat, sc_sell_nat, k_art_nat, k_buy_nat, k_sell_nat)
+all_nationalities <- c(sc_nat, art_nat, own_nat, sc_buy_nat, sc_art_nat, sc_sell_nat, k_art_nat, k_buy_nat, k_sell_nat)
 
 aat_nationalities <- fct_count(all_nationalities, sort = TRUE)
 
-# pull nationality > aat progress
+# Reimport existing work onto new table
 
 current_nats <- read_csv("~/Downloads/Knoedler & Sales Catalogs nationality - AAT - Sheet1.csv", col_types = "cicciic") %>%
   select(-n)
