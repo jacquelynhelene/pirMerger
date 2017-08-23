@@ -29,11 +29,15 @@ expanded_notes <- eric %>%
   mutate(match_id = group_indices(., catalog_number, new_lot)) %>%
   add_count(match_id) %>%
   arrange(desc(n)) %>%
+  left_join(select(sales_contents, original_srn = star_record_no, source_lot_sale_year = lot_sale_year, source_lot_sale_month = lot_sale_month, source_lot_sale_day = lot_sale_day), by = "original_srn") %>%
   select(
     source_star_record_no = original_srn,
     source_catalog_number = catalog_number,
     source_lot_number = original_lot,
     source_price_note = price_note,
+    source_lot_sale_year,
+    source_lot_sale_month,
+    source_lot_sale_day,
     candidate_star_record_no = star_record_no,
     candidate_lot_number = new_lot,
     lot_sale_year,
