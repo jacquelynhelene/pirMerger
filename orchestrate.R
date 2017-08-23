@@ -86,3 +86,5 @@ expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), 
 jk <- produce_joined_knoedler(intermediate_data_dir, pipeline_data_dir)
 
 write_csv(jk, path = "../pirdata/knoedler_join.csv", na = "")
+
+produce_sales_contents(source_data_dir, intermediate_data_dir)
