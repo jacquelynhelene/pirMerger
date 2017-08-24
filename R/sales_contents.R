@@ -21,7 +21,7 @@ produce_sales_contents <- function(source_dir, target_dir) {
   save_data(target_dir, sales_contents_experts)
 
   ### commissaire_pr
-  messages("- sales contents commissaire pr")
+  message("- sales contents commissaire pr")
   sales_contents_commissaire_pr <- norm_vars(sales_contents, base_names = "commissaire_pr", n_reps = 4, idcols = "star_record_no")
   sales_contents <- sales_contents %>% select(-(commissaire_pr_1:commissaire_pr_4))
   save_data(target_dir, sales_contents_commissaire_pr)
