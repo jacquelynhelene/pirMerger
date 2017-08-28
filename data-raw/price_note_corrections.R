@@ -17,19 +17,21 @@ eric <- read_csv("~/Downloads/error_paired_sales_2017-08-01.csv", locale = local
   mutate(price_note = str_replace_all(price_note, c("fÌ_r" = "für", "GemÌ_lde" = "Gemälde"))) %>%
   # Ignore any records still requiring manual edits
   filter(is.na(star_edit)) %>%
-  select(-star_edit)
+  select(-star_edit) %>%
+  mutate(lot_number = str_pad(lot_number, 4, side = "left", pad = "0")) %>%
+  left_join(select(old_paired_sales, star_record_no, puri))
 
 # Expand notes
 expanded_notes <- eric %>%
   single_separate("absent_lots", sep = ";") %>%
   gather(copy, new_lot, contains("absent_lots"), na.rm = TRUE) %>%
   select(-copy) %>%
+  left_join(select(sales_contents, star_record_no, source_lot_sale_year = lot_sale_year, source_lot_sale_month = lot_sale_month, source_lot_sale_day = lot_sale_day), by = "star_record_no") %>%
   rename(original_srn = star_record_no, original_lot = lot_number) %>%
   left_join(select(sales_contents, star_record_no, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = c("catalog_number" = "catalog_number", "new_lot" = "lot_number")) %>%
   mutate(match_id = group_indices(., catalog_number, new_lot)) %>%
   add_count(match_id) %>%
   arrange(desc(n)) %>%
-  left_join(select(sales_contents, original_srn = star_record_no, source_lot_sale_year = lot_sale_year, source_lot_sale_month = lot_sale_month, source_lot_sale_day = lot_sale_day), by = "original_srn") %>%
   select(
     source_star_record_no = original_srn,
     source_catalog_number = catalog_number,
