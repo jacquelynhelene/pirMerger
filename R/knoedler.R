@@ -45,7 +45,6 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   message("- Extracting knoedler_buyers")
   knoedler_buyers <- knoedler %>%
-    add_column(buyer_loc_2 = NA_character_, buy_auth_addr_2 = NA_character_) %>%
     norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr"), n_reps = 2, idcols = "star_record_no") %>%
     left_join(select(owners_authority, owner_authority, ulan_id), by = c("buy_auth_name" = "owner_authority")) %>%
     rename(buyer_ulan_id = ulan_id)
