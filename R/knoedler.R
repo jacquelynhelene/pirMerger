@@ -517,7 +517,6 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     left_join(spread_out(knoedler_style_aat, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
     left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no") %>%
-    select(one_of(knoedler_name_order)) %>%
     pipe_message("- Joining currency IDs to knoedler") %>%
     left_join(rename(currency_aat, purch_currency = price_currency, purch_currency_aat = currency_aat), by = "purch_currency") %>%
     left_join(rename(currency_aat, knoedpurch_curr = price_currency, knoedpurch_curr_aat = currency_aat), by = "knoedpurch_curr") %>%
