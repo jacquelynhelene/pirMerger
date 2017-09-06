@@ -12,9 +12,8 @@ produce_sales_contents <- function(source_dir, target_dir) {
 
   # Coerce appropriate columns to integer/numeric
   sales_contents <- raw_sales_contents %>%
-    mutate_at(vars(star_record_no, lot_sale_year, lot_sale_month, lot_sale_day, production_rec), funs(as.integer)) %>%
-    mutate(puri = paste(stringr::str_extract("^[a-zA-Z]{1,2}", catalog_number), production_rec, sep = "-")) %>%
-    select(puri, everything())
+    mutate_at(vars(star_record_no, lot_sale_year, lot_sale_month, lot_sale_day), funs(as.integer)) %>%
+    rename(puri = persistent_puid)
 
   ### expert_auth
   message("- Sales contents experts")
