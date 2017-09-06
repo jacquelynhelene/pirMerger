@@ -46,6 +46,7 @@ produce_knoedler <- function(source_dir, target_dir) {
     select(-(buyer_name_1:buyer_ulan_id_2))
 
   # Add owner uids
+  message("- Identifying Knoedler owners")
   owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers)
 
   knoedler_buyers <- knoedler_buyers %>%
@@ -57,6 +58,9 @@ produce_knoedler <- function(source_dir, target_dir) {
   saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
   saveRDS(knoedler_sellers, paste(target_dir, "knoedler_sellers.rds", sep = "/"))
 
+  message("- Extracting Knoedler dimensions")
+  produce_knoedler_dimensions(source_dir, target_dir, kdf = knoedler)
+
   # produce_knoedler_transactions(source_dir, target_dir, kdf = knoedler)
 
   knoedler <- knoedler %>%
@@ -67,15 +71,36 @@ produce_knoedler <- function(source_dir, target_dir) {
     # Where genre or object type is not identified, set to NA
     mutate_at(vars(genre, object_type), funs(na_if(., "[not identified]"))) %>%
     # Where month or day components of entry or sale dates are 0, set to NA
-    mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0))) %>%
-    # Parse fractions
-    bind_re_match(dimensions, "(?<dimension1>\\d+ ?\\d*/?\\d*) ? ?\\[?x?X?\\]? ?(?<dimension2>\\d+ ?\\d*/?\\d*)?")
+    mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0)))
 
   produce_knoedler_materials_aat(source_dir, target_dir, kdf = knoedler)
   produce_knoedler_subject_aat(source_dir, target_dir, kdf = knoedler)
 
   saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
   invisible(knoedler)
+}
+
+produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
+  knoedler_dimensions <- general_dimension_extraction(kdf, "dimensions", "star_record_no") %>%
+    mutate(
+      dimension_unit = case_when(
+        # Default to inches
+        is.na(dim_c1) ~ "inches",
+        dim_c1 == "\"" ~ "inches",
+        dim_c1 == "cm" ~ "centimeters",
+        TRUE ~ "inches"),
+      dimension_type = case_when(
+        is.na(dimtype) & dimension_order == 1 ~ "width",
+        is.na(dimtype) & dimension_order == 2 ~ "height",
+        is.na(dimtype) & dimension_order > 2 ~ NA_character_,
+        dimtype == "h" ~ "height",
+        dimtype == "w" ~ "width",
+        TRUE ~ NA_character_
+      )
+    ) %>%
+    select(star_record_no, dimension_value = dim_d1_parsed, dimension_unit, dimension_type)
+
+  save_data(target_dir, knoedler_dimensions)
 }
 
 produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
@@ -382,6 +407,7 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_subject_classified_as_aat <- get_data(source_dir, "knoedler_subject_classified_as_aat")
   knoedler_depicts_aat <- get_data(source_dir, "knoedler_depicts_aat")
   currency_aat <- get_data(source_dir, "currency_aat")
+  knoedler_dimensions <- get_data(source_dir, "knoedler_dimensions")
 
   knoedler_name_order <- c(
     "star_record_no",
@@ -495,6 +521,8 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     left_join(spread_out(knoedler_sellers, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_joint_owners to knoedler") %>%
     left_join(spread_out(knoedler_joint_owners, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Join knoedler_dimensions to knoedler") %>%
+    left_join(spread_out(knoedler_dimensions, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_materials_classified_as_aat to knoedler") %>%
     left_join(spread_out(knoedler_materials_classified_as_aat, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_materials_support_aat to knoedler") %>%

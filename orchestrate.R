@@ -81,7 +81,8 @@ required_knoedler <- c(
   "knoedler_subject_aat.rds",
   "knoedler_style_aat.rds",
   "knoedler_subject_classified_as_aat.rds",
-  "knoedler_depicts_aat.rds"
+  "knoedler_depicts_aat.rds",
+  "knoedler_dimensions.rds"
 )
 produce_knoedler(source_data_dir, intermediate_data_dir)
 expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), sort(required_knoedler))
