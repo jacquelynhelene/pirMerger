@@ -87,3 +87,17 @@ generate_artist_display_dates <- function(df) {
     mutate(
       artist_display = str_replace_all(artist_display, "(\\d) (/\\d|s|\\?)", "\\1\\2"))
 }
+
+#' Produce derivative artist authority table for ULAN
+#'
+#' @param source_dir Path where source RDS files are found
+#' @param repo_path Path where derivative CSV should be saved
+#'
+#' @export
+produce_ulan_derivative_artists <- function(source_dir, repo_path) {
+
+  derivative <- get_data(source_dir, "artists_authority") %>%
+    mutate(star_record_no = paste0("a", star_record_no))
+
+  write_csv(derivative, path = paste(repo_path, "derivatives", "ulan_load_artists.csv", sep = "/"))
+}

@@ -67,3 +67,17 @@ generate_owner_display_dates <- function(df) {
     mutate(owner_authority_clean = ifelse(is.na(.match), owner_authority_clean, str_replace(owner_authority_clean, fixed(.match), ""))) %>%
     select(-.match, -.text)
 }
+
+#' Produce derivative owner authority table for ULAN
+#'
+#' @param source_dir Path where source RDS files are found
+#' @param repo_path Path where derivative CSV should be saved
+#'
+#' @export
+produce_ulan_derivative_owners <- function(source_dir, repo_path) {
+
+  derivative <- get_data(source_dir, "owners_authority") %>%
+    mutate(star_record_no = paste0("o", star_record_no))
+
+  write_csv(derivative, path = paste(repo_path, "derivatives", "ulan_load_owners.csv", sep = "/"))
+}

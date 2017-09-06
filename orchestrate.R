@@ -59,10 +59,12 @@ expect_true(file.exists(paste(intermediate_data_dir, "currency_aat.rds", sep = "
 # Process artist authority table
 produce_artists_authority(source_data_dir, intermediate_data_dir)
 expect_true(file.exists(paste(intermediate_data_dir, "artists_authority.rds", sep = "/")))
+produce_ulan_derivative_artists(intermediate_data_dir, "../getty-provenance-index")
 
 # Process owner authority table
 produce_owners_authority(source_data_dir, intermediate_data_dir)
 expect_true(file.exists(paste(intermediate_data_dir, "owners_authority.rds", sep = "/")))
+produce_ulan_derivative_owners(intermediate_data_dir, "../getty-provenance-index")
 
 # Process Knoedler and its tables
 required_knoedler <- c(
