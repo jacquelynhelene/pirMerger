@@ -18,38 +18,32 @@ produce_knoedler <- function(source_dir, target_dir) {
     mutate_at(vars(star_record_no, stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer))
 
   message("- Extracting knoedler_artists")
-  knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 2, idcols = "star_record_no") %>%
+  knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     rename(artist_star_record_no = star_rec_no) %>%
     # Join ulan ids to this list
-    left_join(select(artists_authority, artist_authority, ulan_id), by = c("art_authority" = "artist_authority")) %>%
-    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod, artist_ulan_id = ulan_id) %>%
+    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod) %>%
     # Generate unique IDs for all artists mentioned here
     identify_knoedler_anonymous_artists()
   knoedler <- knoedler %>%
-    select(-(artist_name_1:star_rec_no_2))
+    select(-(artist_name_1:artist_ulan_id_2))
   saveRDS(knoedler_artists, paste(target_dir, "knoedler_artists.rds", sep = "/"))
 
   message("- Extracting knoedler_sellers")
-  knoedler_sellers <- norm_vars(knoedler, base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc"), n_reps = 2, idcols = "star_record_no") %>%
-    # Join ulan ids to this list
-    left_join(select(owners_authority, owner_authority, ulan_id), by = c("sell_auth_name" = "owner_authority")) %>%
-    rename(seller_ulan_id = ulan_id)
+  knoedler_sellers <- norm_vars(knoedler, base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc", "seller_ulan_id"), n_reps = 2, idcols = "star_record_no")
   knoedler <- knoedler %>%
-    select(-(seller_name_1:sell_auth_loc_2))
+    select(-(seller_name_1:seller_ulan_id_2))
 
   message("- Extracting knoedler_joint_owners")
-  knoedler_joint_owners <- norm_vars(knoedler, base_names = c("joint_own", "joint_own_sh"), n_reps = 4, idcols = "star_record_no")
+  knoedler_joint_owners <- norm_vars(knoedler, base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 4, idcols = "star_record_no")
   knoedler <- knoedler %>%
-    select(-(joint_own_1:joint_own_sh_4))
+    select(-(joint_own_1:joint_ulan_id_4))
   saveRDS(knoedler_joint_owners, paste(target_dir, "knoedler_joint_owners.rds", sep = "/"))
 
   message("- Extracting knoedler_buyers")
   knoedler_buyers <- knoedler %>%
-    norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr"), n_reps = 2, idcols = "star_record_no") %>%
-    left_join(select(owners_authority, owner_authority, ulan_id), by = c("buy_auth_name" = "owner_authority")) %>%
-    rename(buyer_ulan_id = ulan_id)
+    norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr", "buyer_ulan_id"), n_reps = 2, idcols = "star_record_no")
   knoedler <- knoedler %>%
-    select(-(buyer_name_1:buy_auth_name_2))
+    select(-(buyer_name_1:buyer_ulan_id_2))
 
   # Add owner uids
   owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers)
