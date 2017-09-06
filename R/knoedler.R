@@ -341,7 +341,7 @@ identify_knoedler_anonymous_owners <- function(buyers_df, sellers_df) {
     .id = "owner_type") %>%
     mutate(
       is_anon = owner_auth %in% c("Anonymous Collection"),
-      is_new = owner_auth == "NEW",
+      is_new = owner_auth == "NEW" | is.na(owner_auth),
       person_uid = case_when(
         !is.na(owner_ulan_id) & !is_anon ~ paste0("ulan-owner-", group_indices(., owner_ulan_id)),
         # In the case that an owner has the name "NEW", this means that authority work hasn't been done yet. This will instead group and assign IDs based on the owner name
