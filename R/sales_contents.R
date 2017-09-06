@@ -13,6 +13,7 @@ produce_sales_contents <- function(source_dir, target_dir) {
   # Coerce appropriate columns to integer/numeric
   sales_contents <- raw_sales_contents %>%
     mutate_at(vars(star_record_no, lot_sale_year, lot_sale_month, lot_sale_day), funs(as.integer)) %>%
+    mutate(project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
     rename(puri = persistent_puid)
 
   ### expert_auth
