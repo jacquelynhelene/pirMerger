@@ -24,11 +24,3 @@ general_dimension_extraction <- function(df, dimcol, idcol) {
     mutate_at(vars(dim_d1, dim_d2), funs(parsed = parse_fraction)) %>%
     mutate_at(vars(dim_c1, dim_c2), as.factor)
 }
-
-replace_dimensions <- function(df) {
-  df %>%
-    mutate(dimensions = case_when(
-      catalog_project == "British" ~ str_replace_all(dimensions, british_dimension_replacements),
-      TRUE ~ dimensions
-    ))
-}
