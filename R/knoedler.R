@@ -81,6 +81,8 @@ produce_knoedler <- function(source_dir, target_dir) {
 }
 
 produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
+  dimensions_aat <- get_data(source_dir, "raw_dimensions_aat")
+  units_aat <- get_data(source_dir, "raw_units_aat")
   knoedler_dimensions <- general_dimension_extraction(kdf, "dimensions", "star_record_no") %>%
     mutate(
       dimension_unit = case_when(
@@ -98,7 +100,9 @@ produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
         TRUE ~ NA_character_
       )
     ) %>%
-    select(star_record_no, dimension_value = dim_d1_parsed, dimension_unit, dimension_type)
+    inner_join(dimensions_aat, by = c("dimension_type" = "dimension")) %>%
+    inner_join(units_aat, by = c("dimension_unit" = "unit")) %>%
+    select(star_record_no, dimension_value = dim_d1_parsed, dimension_unit, dimension_unit_aat = unit_aat, dimension_type, dimension_type_aat = dimension_aat)
 
   save_data(target_dir, knoedler_dimensions)
 }
