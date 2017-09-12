@@ -123,6 +123,7 @@ produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
   # to whom custody is being transferred
   joint_payment <- knoedler_joint_owners %>%
     inner_join(select(knoedler_transactions, star_record_no, purchase_event_id), by = "star_record_no") %>%
+    filter(!is.na(purchase_event_id)) %>%
     select(-star_record_no) %>%
     distinct() %>%
     spread_out("purchase_event_id") %>%
@@ -142,6 +143,7 @@ produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
 
   ownership_from <- knoedler_sellers %>%
     left_join(select(knoedler_transactions, star_record_no, purchase_event_id), by = "star_record_no") %>%
+    filter(!is.na(purchase_event_id)) %>%
     select(purchase_event_id, seller_uid) %>%
     distinct() %>%
     spread_out("purchase_event_id")
@@ -208,9 +210,12 @@ identify_knoedler_transactions <- function(df) {
     # Calculate the order of events
     order_knoedler_object_events() %>%
     group_by(object_id) %>%
+    # If the entry event was the first of that object's lifetime, we assume it
+    # was a purchase. If not the first entry, then we assume it constitutes an
+    # inventory-taking event
     mutate(
-      purchase_event_id = if_else(event_order == 1, entry_event_id, NA_character_),
-      inventory_event_id = if_else(is.na(purchase_event_id), entry_event_id, NA_character_)) %>%
+      purchase_event_id = if_else(event_order == 1, str_replace(entry_event_id, "entry", "purchase"), NA_character_),
+      inventory_event_id = if_else(is.na(purchase_event_id), str_replace(entry_event_id, "entry", "inventory"), NA_character_)) %>%
     select(-purch_note_working, -knoedpurch_note_working, -price_note_working, -entry_event_id)
 }
 
