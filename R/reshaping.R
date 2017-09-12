@@ -70,7 +70,7 @@ spread_out <- function(df, idcol) {
 
   almost_wide <- df %>%
     unite_(col = "tempcol", from = united_cols, sep = "Ω") %>%
-    group_by_(.dots = "star_record_no") %>%
+    group_by_(.dots = idcol) %>%
     mutate(group_index = seq_along(tempcol)) %>%
     spread(group_index, tempcol) %>%
     ungroup()
