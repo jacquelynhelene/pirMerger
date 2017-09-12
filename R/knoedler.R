@@ -65,7 +65,6 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   knoedler <- knoedler %>%
     parse_knoedler_monetary_amounts() %>%
-    identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
     identify_knoedler_transactions() %>%
     order_knoedler_object_events() %>%
     # Where genre or object type is not identified, set to NA
@@ -115,8 +114,49 @@ produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
   knoedler_firm_id <- "500304270"
 
   knoedler_transactions <- kdf %>%
-    identify_knoedler_transactions()
+    identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
+    identify_knoedler_transactions() %>%
+    order_knoedler_object_events()
 
+  # Purchase events - for each purchase event, isolate the price coming from the
+  # buyers, the sellers from whom custody is being transferred, and the buyers
+  # to whom custody is being transferred
+  joint_payment <- knoedler_joint_owners %>%
+    inner_join(select(knoedler_transactions, star_record_no, purchase_event_id), by = "star_record_no") %>%
+    select(-star_record_no) %>%
+    distinct() %>%
+    spread_out("purchase_event_id") %>%
+    set_names(paste("purchase", names(.), sep = "_")) %>%
+    rename(purchase_event_id = purchase_purchase_event_id)
+
+  payment_from_buyers <- knoedler_transactions %>%
+    group_by(purchase_event_id) %>%
+    summarize_at(
+      vars(purch_amount,
+      purch_currency,
+      knoedpurch_amt,
+      knoedpurch_curr),
+      funs(first(na.omit(.)))
+    ) %>%
+    left_join(joint_payment, by = "purchase_event_id")
+
+  ownership_from <- knoedler_sellers %>%
+    left_join(select(knoedler_transactions, star_record_no, purchase_event_id), by = "star_record_no") %>%
+    select(purchase_event_id, seller_uid) %>%
+    distinct() %>%
+    spread_out("purchase_event_id")
+
+  knoedler_purchases <- payment_from_buyers %>%
+    left_join(ownership_from, by = "purchase_event_id")
+
+  save_data(target_dir, knoedler_purchases)
+
+
+  # Generate table of Knoedler transactions:
+  # - Transfer of payment to sellers
+  # - Transfer of payment from buyers
+  # - Transfer of custody from sellers
+  # - Transfer of custody to buyers
   knoedler_sales <- knoedler_transactions %>%
     filter(transaction == "Sold")
 
@@ -138,7 +178,7 @@ produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
 }
 
 identify_knoedler_transactions <- function(df) {
-  df %>%
+  event_ids <- df %>%
     # Detect the number of artworks between which a given purchase/sale amt. was
     # split, first by standardizing all purchase/price notes, then finding matches.
     mutate_at(
@@ -159,11 +199,19 @@ identify_knoedler_transactions <- function(df) {
     # Fill in null purchase notes with dummy ids
     mutate_at(vars(purch_note_working, price_note_working), funs(if_else(is.na(.), as.character(seq_along(.)), .))) %>%
     # Produce a unique id for unique pairings of purchase notes
-    # TO-DO: distinguish between inventory events and new purchase events
     mutate(
-      inventory_or_purchase_id = paste("k", "purch", group_indices(., stock_book_no, purch_note_working), sep = "-"),
-      sale_transaction_id = paste("k", "sale", group_indices(., stock_book_no, price_note_working), sep = "-")) %>%
-    select(-purch_note_working, -knoedpurch_note_working, -price_note_working)
+      entry_event_id = paste("k", "entry", group_indices(., stock_book_no, purch_note_working), sep = "-"),
+      sale_event_id = paste("k", "sale", group_indices(., stock_book_no, price_note_working), sep = "-"),
+      # No sale_event_id in the case that the record is not showing any sold
+      # info, and has no transaction date info or price info.
+      sale_event_id = ifelse(transaction == "Unsold" & is.na(sale_date_year) & is.na(price_amount), NA_character_, sale_event_id)) %>%
+    # Calculate the order of events
+    order_knoedler_object_events() %>%
+    group_by(object_id) %>%
+    mutate(
+      purchase_event_id = if_else(event_order == 1, entry_event_id, NA_character_),
+      inventory_event_id = if_else(is.na(purchase_event_id), entry_event_id, NA_character_)) %>%
+    select(-purch_note_working, -knoedpurch_note_working, -price_note_working, -entry_event_id)
 }
 
 produce_knoedler_stocknumber_concordance <- function(source_dir, target_dir) {
