@@ -10,10 +10,10 @@ parse_fraction <- Vectorize(function(s) {
   if (!str_detect(s, "/"))
     return(as.numeric(s))
 
-  whole <- as.numeric(str_extract(s, "^\\d+"))
-  fraction <- str_extract(s, "\\d/\\d")
-  numerator <- as.numeric(str_extract(fraction, "^\\d"))
-  denominator <- as.numeric(str_extract(fraction, "\\d$"))
+  whole <- as.numeric(str_extract(s, "^\\d+ "))
+  fraction <- str_extract(s, "\\d+/\\d+")
+  numerator <- as.numeric(str_extract(fraction, "^\\d+"))
+  denominator <- as.numeric(str_extract(fraction, "\\d+$"))
 
   whole_number <- ifelse(is.na(whole), 0, whole)
   numerator_number <- ifelse(is.na(numerator), 0, numerator)
