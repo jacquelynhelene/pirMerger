@@ -87,6 +87,8 @@ produce_knoedler <- function(source_dir, target_dir) {
   knoedler <- knoedler %>%
     select(-(entry_date_year:entry_date_day))
   produce_knoedler_sales(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
+  knoedler <- knoedler %>%
+    select(-(sale_date_year:knoedshare_note))
 
   knoedler <- knoedler %>%
     # Where genre or object type is not identified, set to NA
@@ -195,47 +197,57 @@ produce_knoedler_inventories <- function(source_dir, target_dir, kdf) {
 }
 
 produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
+  knoedler_sellers <- get_data(source_dir, "knoedler_sellers")
+  knoedler_buyers <- get_data(source_dir, "knoedler_buyers")
+  knoedler_joint_owners <- get_data(source_dir, "knoedler_joint_owners")
 
-}
+  knoedler_sales <- kdf %>%
+    filter(!is.na(sale_event_id))
 
-produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
-
-  knoedler_firm_id <- "500304270"
-
-  knoedler_transactions <- kdf %>%
-    identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
-    identify_knoedler_transactions()
-
-  # Generate table of Knoedler transactions:
-  # - Transfer of payment to sellers
-  # - Transfer of payment from buyers
-  # - Transfer of custody from sellers
-  # - Transfer of custody to buyers
-  knoedler_sales <- knoedler_transactions %>%
-    filter(transaction == "Sold")
-
-  sale_transactions <- knoedler_sales %>%
+  message(" - Picking sale prices and dates")
+  knoedler_sale_info <- knoedler_sales %>%
     group_by(sale_event_id) %>%
     summarize_at(
-      vars(sale_date_year,
+      vars(transaction,
+           sale_date_year,
            sale_date_month,
            sale_date_day,
+           knoedshare_amt,
+           knoedshare_curr,
+           knoedshare_note,
            price_amount,
            price_currency),
       funs(first(na.omit(.))))
 
-  sales_to <- knoedler_sales %>%
-    left_join(knoedler_buyers, by = "star_record_no") %>%
-    select(sale_event_id, buyer_uid) %>%
-    filter(!is.na(buyer_uid)) %>%
-    distinct()
-
-  sales_from <- knoedler_sales %>%
-    left_join(knoedler_joint_owners, by = "star_record_no") %>%
+  # Identify from whom custody is being transferred (includes share information)
+  message("- Calculating shares of joint ownership for sales")
+  knoedler_sale_buyers <- knoedler_sales %>%
+    filter(!is.na(sale_event_id)) %>%
     select(star_record_no, sale_event_id) %>%
-    add_column(seller_uid = knoedler_firm_id)
+    inner_join(knoedler_joint_owners, by = "star_record_no") %>%
+    select(-star_record_no) %>%
+    distinct() %>%
+    mutate(parsed_share = parse_fraction(joint_own_sh)) %>%
+    group_by(sale_event_id) %>%
+    mutate(
+      remainder = 1 - sum(na.omit(parsed_share)),
+      full_parsed_share = if_else(is.na(parsed_share), remainder, parsed_share)) %>%
+    ungroup() %>%
+    select(sale_event_id, sale_seller_name = joint_own, sale_seller_share = full_parsed_share, sale_seller_ulan_id = joint_ulan_id, sale_seller_uid = joint_owner_uid)
 
-  return(knoedler_transactions)
+  # Identify to whom custody is being transferred (includes no share information)
+  message(" - Finding buyers for sales")
+  knoedler_sale_sellers <- knoedler_sales %>%
+    filter(!is.na(sale_event_id)) %>%
+    select(star_record_no, sale_event_id) %>%
+    left_join(knoedler_buyers, by = "star_record_no") %>%
+    select(-star_record_no) %>%
+    distinct() %>%
+    select(sale_event_id, sale_buyer_name = buyer_name, sale_buyer = buyer_loc, sale_buyer_auth_name = buy_auth_name, sale_buyer_auth_loc = buy_auth_addr, sale_buyer_ulan_id = buyer_ulan_id, sale_buyer_uid = buyer_uid)
+
+  save_data(target_dir, knoedler_sale_sellers)
+  save_data(target_dir, knoedler_sale_info)
+  save_data(target_dir, knoedler_sale_buyers)
 }
 
 identify_knoedler_transactions <- function(df) {
@@ -528,6 +540,9 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_purchase_buyers <- get_data(source_dir, "knoedler_purchase_buyers")
   knoedler_purchase_sellers <- get_data(source_dir, "knoedler_purchase_sellers")
   knoedler_inventory_events <- get_data(source_dir, "knoedler_inventory_events")
+  knoedler_sale_info <- get_data(source_dir, "knoedler_sale_info")
+  knoedler_sale_buyers <- get_data(source_dir, "knoedler_sale_buyers")
+  knoedler_sale_sellers <- get_data(source_dir, "knoedler_sale_sellers")
   knoedler_materials_classified_as_aat <- get_data(source_dir, "knoedler_materials_classified_as_aat")
   knoedler_materials_object_aat <- get_data(source_dir, "knoedler_materials_object_aat")
   knoedler_materials_support_aat <- get_data(source_dir, "knoedler_materials_support_aat")
@@ -647,6 +662,11 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     left_join(spread_out(knoedler_purchase_sellers, "purchase_event_id"), by = "purchase_event_id") %>%
     left_join(spread_out(knoedler_purchase_buyers, "purchase_event_id"), by = "purchase_event_id")
 
+  message("- Merge knoedler sales data into single table")
+  knoedler_sales <- knoedler_sale_info %>%
+    left_join(spread_out(knoedler_sale_sellers, "sale_event_id"), by = "sale_event_id") %>%
+    left_join(spread_out(knoedler_sale_buyers, "sale_event_id"), by = "sale_event_id")
+
     joined_knoedler <- knoedler %>%
     pipe_message("- Join spread knoedler_artists to knoedler") %>%
     left_join(spread_out(knoedler_artists, "star_record_no"), by = "star_record_no") %>%
@@ -654,6 +674,8 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     left_join(knoedler_purchases, by = "purchase_event_id") %>%
     pipe_message("- Join knoedler_inventory_events to knoedler") %>%
     left_join(knoedler_inventory_events, by = "inventory_event_id") %>%
+    pipe_message("- Joint knoedler_sales to knoedler") %>%
+    left_join(knoedler_sales, by = "sale_event_id") %>%
     pipe_message("- Join knoedler_dimensions to knoedler") %>%
     left_join(spread_out(knoedler_dimensions, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_materials_classified_as_aat to knoedler") %>%
