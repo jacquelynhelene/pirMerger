@@ -167,7 +167,7 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
       remainder = 1 - sum(na.omit(parsed_share)),
       full_parsed_share = if_else(is.na(parsed_share), remainder, parsed_share)) %>%
     ungroup() %>%
-    select(purchase_event_id, purhcase_buyer_name = joint_own, purchase_buyer_share = full_parsed_share, purchase_buyer_ulan_id = joint_ulan_id, purchase_buyer_uid = joint_owner_uid)
+    select(purchase_event_id, purchase_buyer_name = joint_own, purchase_buyer_share = full_parsed_share, purchase_buyer_ulan_id = joint_ulan_id, purchase_buyer_uid = joint_owner_uid)
 
 
   # Identify from whom custody is being transferred (includes no share information)
@@ -178,7 +178,7 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
     left_join(knoedler_sellers, by = "star_record_no") %>%
     select(-star_record_no) %>%
     distinct() %>%
-    select(purchase_event_id, purchase_seller_name = seller_name, purchase_seller_loc = seller_loc, purchase_seller_auth_name = sell_auth_name, purhcase_seller_auth_loc = sell_auth_loc, purchase_seller_ulan_id = seller_ulan_id, purchase_seller_uid = seller_uid)
+    select(purchase_event_id, purchase_seller_name = seller_name, purchase_seller_loc = seller_loc, purchase_seller_auth_name = sell_auth_name, purchase_seller_auth_loc = sell_auth_loc, purchase_seller_ulan_id = seller_ulan_id, purchase_seller_uid = seller_uid)
 
   save_data(target_dir, knoedler_purchase_buyers)
   save_data(target_dir, knoedler_purchase_info)
