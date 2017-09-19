@@ -263,13 +263,17 @@ identify_knoedler_transactions <- function(df) {
       sale_event_id = ifelse(transaction == "Unsold" & is.na(sale_date_year) & is.na(price_amount), NA_character_, sale_event_id)) %>%
     # Calculate the order of events
     order_knoedler_object_events() %>%
-    group_by(object_id) %>%
     # If the entry event was the first of that object's lifetime, we assume it
     # was a purchase. If not the first entry, then we assume it constitutes an
     # inventory-taking event
+    group_by(object_id) %>%
+    mutate(purchase_event_id = if_else(event_order == 1, str_replace(entry_event_id, "entry", "purchase"), NA_character_)) %>%
+    ungroup() %>%
+    # If this is an inventory event, then label it based on an entirely new
+    # incrementing counter, as inventories are not to be connected by purchase
+    # notes in the same way that purchase_event_id is,
     mutate(
-      purchase_event_id = if_else(event_order == 1, str_replace(entry_event_id, "entry", "purchase"), NA_character_),
-      inventory_event_id = if_else(is.na(purchase_event_id), str_replace(entry_event_id, "entry", "inventory"), NA_character_)) %>%
+      inventory_event_id = if_else(is.na(purchase_event_id), paste("k-inventory", seq_along(purchase_event_id), sep = "-"), NA_character_)) %>%
     select(-purch_note_working, -knoedpurch_note_working, -price_note_working, -entry_event_id) %>%
     ungroup()
 }
