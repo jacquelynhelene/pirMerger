@@ -38,7 +38,7 @@ produce_knoedler <- function(source_dir, target_dir) {
     mutate(
         joint_own_5 = "Knoedler",
         joint_own_sh_5 = NA_character_,
-        joint_ulan_id_5 = 500304270) %>%
+        joint_ulan_id_5 = knoedler_firm_id()) %>%
     norm_vars(base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 5, idcols = "star_record_no")
   knoedler <- knoedler %>%
     select(-(joint_own_1:joint_ulan_id_4))
@@ -100,6 +100,9 @@ produce_knoedler <- function(source_dir, target_dir) {
   saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
   invisible(knoedler)
 }
+
+# Returns the ULAN ID for knoedler
+knoedler_firm_id <- function() 500304270
 
 produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
   dimensions_aat <- get_data(source_dir, "raw_dimensions_aat")
