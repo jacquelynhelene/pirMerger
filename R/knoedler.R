@@ -84,6 +84,8 @@ produce_knoedler <- function(source_dir, target_dir) {
   knoedler <- knoedler %>%
     select(-(purch_amount:knoedpurch_note))
   produce_knoedler_inventories(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
+  knoedler <- knoedler %>%
+    select(-(entry_date_year:entry_date_day))
   produce_knoedler_sales(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
 
   knoedler <- knoedler %>%
@@ -181,7 +183,12 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
 }
 
 produce_knoedler_inventories <- function(source_dir, target_dir, kdf) {
+  knoedler_inventory_events <- kdf %>%
+    filter(!is.na(inventory_event_id)) %>%
+    select(inventory_event_id, inventory_year = entry_date_year, inventory_month = entry_date_month, inventory_day = entry_date_day) %>%
+    distinct()
 
+  save_data(target_dir, knoedler_inventory_events)
 }
 
 produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
@@ -190,16 +197,11 @@ produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
 
 produce_knoedler_transactions <- function(source_dir, target_dir, kdf) {
 
-
   knoedler_firm_id <- "500304270"
 
   knoedler_transactions <- kdf %>%
     identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
     identify_knoedler_transactions()
-
-
-
-
 
   # Generate table of Knoedler transactions:
   # - Transfer of payment to sellers
@@ -522,6 +524,7 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
   knoedler_purchase_info <- get_data(source_dir, "knoedler_purchase_info")
   knoedler_purchase_buyers <- get_data(source_dir, "knoedler_purchase_buyers")
   knoedler_purchase_sellers <- get_data(source_dir, "knoedler_purchase_sellers")
+  knoedler_inventory_events <- get_data(source_dir, "knoedler_inventory_events")
   knoedler_materials_classified_as_aat <- get_data(source_dir, "knoedler_materials_classified_as_aat")
   knoedler_materials_object_aat <- get_data(source_dir, "knoedler_materials_object_aat")
   knoedler_materials_support_aat <- get_data(source_dir, "knoedler_materials_support_aat")
@@ -646,6 +649,8 @@ produce_joined_knoedler <- function(source_dir, target_dir) {
     left_join(spread_out(knoedler_artists, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join knoedler_purchases to knoedler") %>%
     left_join(knoedler_purchases, by = "purchase_event_id") %>%
+    pipe_message("- Join knoedler_inventory_events to knoedler") %>%
+    left_join(knoedler_inventory_events, by = "inventory_event_id") %>%
     pipe_message("- Join knoedler_dimensions to knoedler") %>%
     left_join(spread_out(knoedler_dimensions, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_materials_classified_as_aat to knoedler") %>%
