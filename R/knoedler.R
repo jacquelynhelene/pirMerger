@@ -37,7 +37,6 @@ produce_knoedler <- function(source_dir, target_dir) {
   knoedler_joint_owners <- norm_vars(knoedler, base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 4, idcols = "star_record_no")
   knoedler <- knoedler %>%
     select(-(joint_own_1:joint_ulan_id_4))
-  saveRDS(knoedler_joint_owners, paste(target_dir, "knoedler_joint_owners.rds", sep = "/"))
 
   message("- Extracting knoedler_buyers")
   knoedler_buyers <- knoedler %>%
@@ -47,7 +46,7 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   # Add owner uids
   message("- Identifying Knoedler owners")
-  owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers)
+  owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers, joint_df = knoedler_joint_owners)
 
   knoedler_buyers <- knoedler_buyers %>%
     bind_cols(select(filter(owner_uids, owner_type == "buyers"), buyer_uid = person_uid))
@@ -55,18 +54,28 @@ produce_knoedler <- function(source_dir, target_dir) {
   knoedler_sellers <- knoedler_sellers %>%
     bind_cols(select(filter(owner_uids, owner_type == "sellers"), seller_uid = person_uid))
 
-  saveRDS(knoedler_buyers, paste(target_dir, "knoedler_buyers.rds", sep = "/"))
-  saveRDS(knoedler_sellers, paste(target_dir, "knoedler_sellers.rds", sep = "/"))
+  knoedler_joint_owners <- knoedler_joint_owners %>%
+    bind_cols(select(filter(owner_uids, owner_type == "joint"), joint_owner_uid = person_uid))
+
+  save_data(target_dir, knoedler_buyers)
+  save_data(target_dir, knoedler_sellers)
+  save_data(target_dir, knoedler_joint_owners)
 
   message("- Extracting Knoedler dimensions")
   produce_knoedler_dimensions(source_dir, target_dir, kdf = knoedler)
 
-  # produce_knoedler_transactions(source_dir, target_dir, kdf = knoedler)
+  # Create unique object ids and unique transaction ids.
+  # Must be performed before splitting out purchase, inventory, and sale events
+  knoedler <- knoedler %>%
+    identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
+    order_knoedler_object_events() %>%
+    identify_knoedler_transactions()
+
+  produce_knoedler_purchases(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
+  produce_knoedler_inventories(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
+  produce_knoedler_sales(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
 
   knoedler <- knoedler %>%
-    parse_knoedler_monetary_amounts() %>%
-    identify_knoedler_transactions() %>%
-    order_knoedler_object_events() %>%
     # Where genre or object type is not identified, set to NA
     mutate_at(vars(genre, object_type), funs(na_if(., "[not identified]"))) %>%
     # Where month or day components of entry or sale dates are 0, set to NA
@@ -414,12 +423,13 @@ identify_knoedler_anonymous_artists <- function(df) {
     assertr::assert(assertr::not_na, person_uid)
 }
 
-identify_knoedler_anonymous_owners <- function(buyers_df, sellers_df) {
+identify_knoedler_anonymous_owners <- function(buyers_df, sellers_df, joint_df) {
 
   # Combine both buyer and seller listings order to produce anonymous ids for everyone
   all_owners <- bind_rows(
     buyers = select(buyers_df,star_record_no, owner_name = buyer_name, owner_auth = buy_auth_name, owner_ulan_id = buyer_ulan_id),
     sellers = select(sellers_df, star_record_no, owner_name = seller_name, owner_auth = sell_auth_name, owner_ulan_id = seller_ulan_id),
+    joint = select(joint_df, star_record_no, owner_name = joint_own, owner_ulan_id = joint_ulan_id) %>% add_column(owner_auth = NA_character_),
     .id = "owner_type") %>%
     mutate(
       is_anon = owner_auth %in% c("Anonymous Collection"),
