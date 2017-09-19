@@ -40,7 +40,9 @@ required_rds <- c(
   "raw_sales_descriptions.rds",
   "raw_us_cpi.rds",
   "raw_sales_contents_auth_currencies.rds",
-  "raw_currencies_aat.rds"
+  "raw_currencies_aat.rds",
+  "raw_dimensions_aat.rds",
+  "raw_units_aat.rds"
 )
 
 # Pull the current STAR exports and extract
