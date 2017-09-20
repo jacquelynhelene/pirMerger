@@ -1,5 +1,13 @@
 general_parse_prices <- function(p) {
-
+  amonsieurx(p) %>%
+    str_replace(pattern = "^\\[", "") %>%
+    str_split(pattern = regex("[[:punct:]]"), simplify = TRUE) %>%
+    as.data.frame() %>%
+    mutate(
+      original = kp$purch_amount,
+      index = seq_along(V1)) %>%
+    mutate_all(na_if, y = "") %>%
+    discard(function(p) all(is.na(p)))
 }
 
 replace_vulgar_fractions <- function(p) {
