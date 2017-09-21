@@ -88,7 +88,7 @@ produce_knoedler <- function(source_dir, target_dir) {
     select(-(entry_date_year:entry_date_day))
   produce_knoedler_sales(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
   knoedler <- knoedler %>%
-    select(-(sale_date_year:knoedshare_note))
+    select(-(sale_date_year:knoedshare_note), -transaction)
 
   knoedler <- knoedler %>%
     # Where genre or object type is not identified, set to NA
