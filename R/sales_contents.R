@@ -150,9 +150,11 @@ produce_sales_descriptions <- function(source_dir, target_dir) {
   sales_descriptions <- sales_descriptions %>% select(-(commissaire_pr_1:commissaire_pr_4))
   save_data(target_dir, sales_descriptions_commissaire_pr)
 
+  ### auction house
   sales_descriptions_auction_house <- sales_descriptions %>%
     norm_vars(base_names = c("auc_house_name", "auc_house_auth"), n_reps = 4, idcols = "puri")
   sales_descriptions <- sales_descriptions %>% select(-(auc_house_name_1:auc_house_auth_4))
+  save_data(target_dir, sales_descriptions_auction_house)
 
   sales_descriptions_country <- sales_descriptions %>%
     # small naming variation needs to be fixed
