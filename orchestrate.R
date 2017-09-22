@@ -52,20 +52,20 @@ expect_true(dir.exists(paste(repo_data_dir, "csv", sep = "/")))
 # Process export files and Google Sheets files into dataframes
 read_all_exports(out_dir = source_data_dir, data_dict = working_dict, repo_path = repo_data_dir)
 read_all_concordances(out_dir = source_data_dir, data_dict = working_dict)
-expect_equivalent(sort(dir(source_data_dir, "*.rds")), sort(required_rds))
+#expect_equivalent(sort(dir(source_data_dir, "*.rds")), sort(required_rds))
 
 # Process singleton tables that are needed for a variety of datasets
 produce_currency_ids(source_data_dir, intermediate_data_dir)
-expect_true(file.exists(paste(intermediate_data_dir, "currency_aat.rds", sep = "/")))
+#expect_true(file.exists(paste(intermediate_data_dir, "currency_aat.rds", sep = "/")))
 
 # Process artist authority table
 produce_artists_authority(source_data_dir, intermediate_data_dir)
-expect_true(file.exists(paste(intermediate_data_dir, "artists_authority.rds", sep = "/")))
+#expect_true(file.exists(paste(intermediate_data_dir, "artists_authority.rds", sep = "/")))
 produce_ulan_derivative_artists(intermediate_data_dir, "../getty-provenance-index")
 
 # Process owner authority table
 produce_owners_authority(source_data_dir, intermediate_data_dir)
-expect_true(file.exists(paste(intermediate_data_dir, "owners_authority.rds", sep = "/")))
+#expect_true(file.exists(paste(intermediate_data_dir, "owners_authority.rds", sep = "/")))
 produce_ulan_derivative_owners(intermediate_data_dir, "../getty-provenance-index")
 
 # Process Knoedler and its tables
@@ -87,7 +87,7 @@ required_knoedler <- c(
   "knoedler_dimensions.rds"
 )
 produce_knoedler(source_data_dir, intermediate_data_dir)
-expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), sort(required_knoedler))
+#expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), sort(required_knoedler))
 jk <- produce_joined_knoedler(intermediate_data_dir, pipeline_data_dir)
 
 write_csv(jk, path = "../pirdata/knoedler_join.csv", na = "")
