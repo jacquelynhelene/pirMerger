@@ -105,62 +105,63 @@ produce_sales_descriptions <- function(source_dir, target_dir) {
   raw_sales_descriptions <- get_data(source_dir, "raw_sales_descriptions")
 
   sales_descriptions <- raw_sales_descriptions %>%
-    mutate_at(vars(star_record_no, sale_begin_year, sale_begin_month, sale_begin_day, sale_end_year, sale_end_month, sale_end_day, no_of_ptgs_lots), funs(as.integer)) %>%
-    mutate(project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
-    rename(puri = persistent_puid)
+    mutate_at(vars(sale_begin_year, sale_begin_month, sale_begin_day, sale_end_year, sale_end_month, sale_end_day, no_of_ptgs_lots), funs(as.integer)) %>%
+    mutate(description_project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
+    rename(description_puri = persistent_puid) %>%
+    select(-star_record_no)
 
   ### lugt numbers
   sales_descriptions_lugt_numbers <- sales_descriptions %>%
-    norm_vars(base_names = "lugt_number", n_reps = 3, idcols = "puri")
+    norm_vars(base_names = "lugt_number", n_reps = 3, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(lugt_number_1:lugt_number_3))
   save_data(target_dir, sales_descriptions_lugt_numbers)
 
   ### Sellers from title page
   sales_descriptions_title_seller <- sales_descriptions %>%
-    norm_vars(base_names = "title_pg_sell", n_reps = 2, idcols = "puri")
+    norm_vars(base_names = "title_pg_sell", n_reps = 2, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(title_pg_sell_1:title_pg_sell_2))
   save_data(target_dir, sales_descriptions_title_seller)
 
   ### Sellers from auctioneer's copy
   sales_descriptions_auc_copy_seller <- sales_descriptions %>%
-    norm_vars(base_names = "auc_copy_seller", n_reps = 4, idcols = "puri")
+    norm_vars(base_names = "auc_copy_seller", n_reps = 4, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(auc_copy_seller_1:auc_copy_seller_4))
   save_data(target_dir, sales_descriptions_auc_copy_seller)
 
   ### Sellers from other sources
   sales_descriptions_other_seller <- sales_descriptions %>%
-    norm_vars(base_names = c("other_seller"), n_reps = 3, idcols = "puri")
+    norm_vars(base_names = c("other_seller"), n_reps = 3, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(other_seller_1:other_seller_3))
   save_data(target_dir, sales_descriptions_other_seller)
 
   ### Seller authority names (not yet exported properly)
   sales_descriptions_auth_seller <- sales_descriptions %>%
-    norm_vars(base_names = c("sell_auth_name", "sell_auth_q"), n_reps = 5, idcols = "puri")
+    norm_vars(base_names = c("sell_auth_name", "sell_auth_q"), n_reps = 5, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(sell_auth_name_1:sell_auth_q_5))
   save_data(target_dir, sales_descriptions_auth_seller)
 
   ### expert_auth
   sales_descriptions_expert_auth <- sales_descriptions %>%
-    norm_vars(base_names = c("expert_auth"), n_reps = 4, idcols = "puri")
+    norm_vars(base_names = c("expert_auth"), n_reps = 4, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(expert_auth_1:expert_auth_4))
   save_data(target_dir, sales_descriptions_expert_auth)
 
   ### commissaire_pr
   sales_descriptions_commissaire_pr <- sales_descriptions %>%
-    norm_vars(base_names = c("commissaire_pr"), n_reps = 4, idcols = "puri")
+    norm_vars(base_names = c("commissaire_pr"), n_reps = 4, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(commissaire_pr_1:commissaire_pr_4))
   save_data(target_dir, sales_descriptions_commissaire_pr)
 
   ### auction house
   sales_descriptions_auction_house <- sales_descriptions %>%
-    norm_vars(base_names = c("auc_house_name", "auc_house_auth"), n_reps = 4, idcols = "puri")
+    norm_vars(base_names = c("auc_house_name", "auc_house_auth"), n_reps = 4, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(auc_house_name_1:auc_house_auth_4))
   save_data(target_dir, sales_descriptions_auction_house)
 
   sales_descriptions_country <- sales_descriptions %>%
     # small naming variation needs to be fixed
     rename(country_auth_1 = country_auth) %>%
-    norm_vars(base_names = c("country_auth"), n_reps = 2, idcols = "puri")
+    norm_vars(base_names = c("country_auth"), n_reps = 2, idcols = "description_puri")
   sales_descriptions <- sales_descriptions %>% select(-(country_auth:country_auth_2))
 
   save_data(target_dir, sales_descriptions)
