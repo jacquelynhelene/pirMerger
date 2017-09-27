@@ -227,7 +227,7 @@ produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
 
   # Identify from whom custody is being transferred (includes share information)
   message("- Calculating shares of joint ownership for sales")
-  knoedler_sale_buyers <- knoedler_sales %>%
+  knoedler_sale_sellers <- knoedler_sales %>%
     filter(!is.na(sale_event_id)) %>%
     select(star_record_no, sale_event_id) %>%
     inner_join(knoedler_joint_owners, by = "star_record_no") %>%
@@ -243,7 +243,7 @@ produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
 
   # Identify to whom custody is being transferred (includes no share information)
   message(" - Finding buyers for sales")
-  knoedler_sale_sellers <- knoedler_sales %>%
+  knoedler_sale_buyers <- knoedler_sales %>%
     filter(!is.na(sale_event_id)) %>%
     select(star_record_no, sale_event_id) %>%
     left_join(knoedler_buyers, by = "star_record_no") %>%
