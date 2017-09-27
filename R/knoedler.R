@@ -51,16 +51,22 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   # Add owner uids
   message("- Identifying Knoedler owners")
-  owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers, joint_df = knoedler_joint_owners)
+  knoedler_owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers, joint_df = knoedler_joint_owners)
+
+  knoedler_owners_lookup <- knoedler_owner_uids %>%
+    group_by(person_uid) %>%
+    summarize(owner_label = if_else(all(is.na(owner_auth)), first(na.omit(owner_name)), first(na.omit(owner_auth))))
+
+  save_data(target_dir, knoedler_owners_lookup)
 
   knoedler_buyers <- knoedler_buyers %>%
-    bind_cols(select(filter(owner_uids, owner_type == "buyers"), buyer_uid = person_uid))
+    bind_cols(select(filter(knoedler_owner_uids, owner_type == "buyers"), buyer_uid = person_uid))
 
   knoedler_sellers <- knoedler_sellers %>%
-    bind_cols(select(filter(owner_uids, owner_type == "sellers"), seller_uid = person_uid))
+    bind_cols(select(filter(knoedler_owner_uids, owner_type == "sellers"), seller_uid = person_uid))
 
   knoedler_joint_owners <- knoedler_joint_owners %>%
-    bind_cols(select(filter(owner_uids, owner_type == "joint"), joint_owner_uid = person_uid))
+    bind_cols(select(filter(knoedler_owner_uids, owner_type == "joint"), joint_owner_uid = person_uid))
 
   save_data(target_dir, knoedler_buyers)
   save_data(target_dir, knoedler_sellers)
