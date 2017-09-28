@@ -1,5 +1,12 @@
 #' Produce Knoedler table from raw table.
 #'
+#' This is a two-stage process. First, the raw, mostly denormalized exports are
+#' read in, and then normalized into a series of tables. Secondly, IDs for
+#' artists, buyers, sellers, objects, and transaction & inventory events are
+#' generated and attached to the reamining core `knoedler` table.
+#'
+#'
+#'
 #' @param source_dir Path where source RDS files are found
 #' @param target_dir Path where resulting RDS files are saved
 #'
@@ -112,6 +119,10 @@ produce_knoedler <- function(source_dir, target_dir) {
 # Returns the ULAN ID for knoedler
 knoedler_firm_id <- function() 500304270
 
+# Call general dimension extraction function to parse dimension strings from
+# Knoedler, and assign dimension types based on [width] x [height] order
+# assumption that holds for Knoedler (but does not for more heterogeneous data
+# like Sales Contents)
 produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
   dimensions_aat <- get_data(source_dir, "raw_dimensions_aat")
   units_aat <- get_data(source_dir, "raw_units_aat")
@@ -123,6 +134,8 @@ produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
         dim_c1 == "\"" ~ "inches",
         dim_c1 == "cm" ~ "centimeters",
         TRUE ~ "inches"),
+      # Assign dimension type based on extracted dimension character, falling
+      # back when necessary to the order in which dimensions were listed
       dimension_type = case_when(
         is.na(dimtype) & dimension_order == 1 ~ "width",
         is.na(dimtype) & dimension_order == 2 ~ "height",
@@ -132,13 +145,21 @@ produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
         TRUE ~ NA_character_
       )
     ) %>%
+    # Join AAT ids for dimension types and distance units
     inner_join(dimensions_aat, by = c("dimension_type" = "dimension")) %>%
     inner_join(units_aat, by = c("dimension_unit" = "unit")) %>%
-    select(star_record_no, dimension_value = dim_d1_parsed, dimension_unit, dimension_unit_aat = unit_aat, dimension_type, dimension_type_aat = dimension_aat)
+    # Return final table with dimension valu, unit, unit aat, dimension type,
+    # and dimension aat, which can be joined to orginal records.
+    select(star_record_no, dimension_value = dim_d1_parsed, dimension_unit,
+           dimension_unit_aat = unit_aat, dimension_type,
+           dimension_type_aat = dimension_aat)
 
   save_data(target_dir, knoedler_dimensions)
 }
 
+# Pull the relevant information about Knoedler's intake of objects, and
+# structure into tables describing the sellers, buyers (Knoedler and joint
+# owners), payments transferred, and dates of the purchase events
 produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
   knoedler_sellers <- get_data(source_dir, "knoedler_sellers")
   knoedler_buyers <- get_data(source_dir, "knoedler_buyers")
@@ -147,6 +168,7 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
   # Locate information unique to each purchase event
   # - purchase amounts and currencies
   # - purchase datestamps
+  # - Parse price amoutns
   message(" - Picking prices for transactions")
   knoedler_purchase_info <- kdf %>%
     filter(!is.na(purchase_event_id)) %>%
@@ -160,6 +182,16 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
            entry_date_month,
            entry_date_day),
       funs(first(na.omit(.))))
+
+  # Parse purchase amount and join the results
+  parsed_purchase_amounts <- parse_prices(target_dir, knoedler_purchase_info, amount_col_name = "purch_amount", currency_col_name = "purch_currency", id_col_name = "purchase_event_id", decimalized_col_name = "decimalized_purch_amount", aat_col_name = "purch_currency_aat", amonsieurx = TRUE, replace_slashes = TRUE)
+
+  # Parse Knoedler's share of purchase amount and join the results
+  parsed_knoedpurch_amounts <- parse_prices(target_dir, knoedler_purchase_info, amount_col_name = "knoedpurch_amt", currency_col_name = "knoedpurch_curr", id_col_name = "purchase_event_id", decimalized_col_name = "decimalized_knoedpurch_amount", aat_col_name = "knoedpurch_currency_aat", amonsieurx = TRUE, replace_slashes = TRUE)
+
+  knoedler_purchase_info <- knoedler_purchase_info %>%
+    left_join(parsed_purchase_amounts, by = "purchase_event_id") %>%
+    left_join(parsed_knoedpurch_amounts, by = "purchase_event_id")
 
   # Identify to whom custody is being transferred (includes share information)
   message("- Calculating shares of joint ownership")
@@ -202,6 +234,9 @@ produce_knoedler_inventories <- function(source_dir, target_dir, kdf) {
   save_data(target_dir, knoedler_inventory_events)
 }
 
+# Pull the relevant information about Knoedler's outflow of objects, and
+# structure into tables describing the sellers (Knoedler and joint owners),
+# buyers, payments transferred, and dates of the purchase events
 produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
   knoedler_sellers <- get_data(source_dir, "knoedler_sellers")
   knoedler_buyers <- get_data(source_dir, "knoedler_buyers")
@@ -224,6 +259,16 @@ produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
            price_amount,
            price_currency),
       funs(first(na.omit(.))))
+
+  # Parse sale amount and join the results
+  parsed_sale_amounts <- parse_prices(target_dir, knoedler_sale_info, amount_col_name = "price_amount", currency_col_name = "price_currency", id_col_name = "sale_event_id", decimalized_col_name = "decimalized_price_amount", aat_col_name = "price_currency_aat", amonsieurx = TRUE, replace_slashes = TRUE)
+
+  # Parse Knoedler's share of purchase amount and join the results
+  parsed_knoedshare_amounts <- parse_prices(target_dir, knoedler_sale_info, amount_col_name = "knoedshare_amt", currency_col_name = "knoedshare_curr", id_col_name = "sale_event_id", decimalized_col_name = "decimalized_knoedshare_amount", aat_col_name = "knoedshare_currency_aat", amonsieurx = TRUE, replace_slashes = TRUE)
+
+  knoedler_sale_info <- knoedler_sale_info %>%
+    left_join(parsed_sale_amounts, by = "sale_event_id") %>%
+    left_join(parsed_knoedshare_amounts, by = "sale_event_id")
 
   # Identify from whom custody is being transferred (includes share information)
   message("- Calculating shares of joint ownership for sales")
