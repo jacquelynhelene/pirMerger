@@ -5,8 +5,6 @@
 #' artists, buyers, sellers, objects, and transaction & inventory events are
 #' generated and attached to the reamining core `knoedler` table.
 #'
-#'
-#'
 #' @param source_dir Path where source RDS files are found
 #' @param target_dir Path where resulting RDS files are saved
 #'
@@ -14,16 +12,19 @@
 #'
 #' @export
 produce_knoedler <- function(source_dir, target_dir) {
+  # Read in all the data required for top-level parsing
   raw_knoedler <- get_data(source_dir, "raw_knoedler")
   artists_authority <- get_data(target_dir, "artists_authority")
   owners_authority <- get_data(target_dir, "owners_authority")
-
   knoedler_stocknumber_concordance <- produce_knoedler_stocknumber_concordance(source_dir, target_dir)
 
   knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
     mutate_at(vars(star_record_no, stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer))
 
+  # --- The following functions break out tables for multiply-ocurring fields,
+  # writing them as normalized tables with keys to join back on to the core
+  # `knoedler` table ---
   message("- Extracting knoedler_artists")
   knoedler_artists <- norm_vars(knoedler, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     rename(artist_star_record_no = star_rec_no) %>%
@@ -42,6 +43,8 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   message("- Extracting knoedler_joint_owners")
   knoedler_joint_owners <- knoedler %>%
+    # As Knoedler is technically one of the joint owners, they need to be
+    # present in every sale
     mutate(
         joint_own_5 = "Knoedler",
         joint_own_sh_5 = NA_character_,
@@ -56,15 +59,17 @@ produce_knoedler <- function(source_dir, target_dir) {
   knoedler <- knoedler %>%
     select(-(buyer_name_1:buyer_ulan_id_2))
 
-  # Add owner uids
+  # Generate UIDs for all knoedlers by comparing across buyer, seller, and joint owner fields
   message("- Identifying Knoedler owners")
   knoedler_owner_uids <- identify_knoedler_anonymous_owners(buyers_df = knoedler_buyers, sellers_df = knoedler_sellers, joint_df = knoedler_joint_owners)
 
+  # A table of labels for each owner UID
   knoedler_owners_lookup <- knoedler_owner_uids %>%
     group_by(person_uid) %>%
     summarize(owner_label = if_else(all(is.na(owner_auth)), pick(owner_name)), pick(owner_auth))
   save_data(target_dir, knoedler_owners_lookup)
 
+  # Join UIDs to each table of buyers, sellers, and joint owners
   knoedler_buyers <- knoedler_buyers %>%
     bind_cols(select(filter(knoedler_owner_uids, owner_type == "buyers"), buyer_uid = person_uid))
 
@@ -78,11 +83,14 @@ produce_knoedler <- function(source_dir, target_dir) {
   save_data(target_dir, knoedler_sellers)
   save_data(target_dir, knoedler_joint_owners)
 
+  # Produce a table with Knoedler dimensions. This is saved separately from
+  # Knoedler, because records have a one-to-many relationship with dimensions
   message("- Extracting Knoedler dimensions")
   produce_knoedler_dimensions(source_dir, target_dir, kdf = knoedler)
 
-  # Create unique object ids and unique transaction ids.
-  # Must be performed before splitting out purchase, inventory, and sale events
+  # Create unique object ids, calculate order of events, and finally produce
+  # unique transaction ids. Must happen in this order. Must be performed before
+  # splitting out purchase, inventory, and sale events
   knoedler <- knoedler %>%
     pipe_message("- Identifying objects") %>%
     identify_knoedler_objects(knoedler_stocknumber_concordance) %>%
@@ -92,12 +100,15 @@ produce_knoedler <- function(source_dir, target_dir) {
     identify_knoedler_transactions()
 
   message("- Producing knoedler purchase data")
+  # Produce tables relating to Knoedler's purchasing of objects
   produce_knoedler_purchases(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
   knoedler <- knoedler %>%
     select(-(purch_amount:knoedpurch_note))
+  # Produce tables relating to Knoedler's inventorying of objects
   produce_knoedler_inventories(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
   knoedler <- knoedler %>%
     select(-(entry_date_year:entry_date_day))
+  # Produce tables relating to Knoedler's selling of objects
   produce_knoedler_sales(source_dir = target_dir, target_dir = target_dir, kdf = knoedler)
   knoedler <- knoedler %>%
     select(-(sale_date_year:knoedshare_note), -transaction)
@@ -108,9 +119,12 @@ produce_knoedler <- function(source_dir, target_dir) {
     # Where month or day components of entry or sale dates are 0, set to NA
     mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0)))
 
+  # Create tables of materials and subject AAT ids. These are separate because
+  # records have a one-to-many relationship to these data
   produce_knoedler_materials_aat(source_dir, target_dir, kdf = knoedler)
   produce_knoedler_subject_aat(source_dir, target_dir, kdf = knoedler)
 
+  # Save remianing core table, and return invisibly
   saveRDS(knoedler, paste(target_dir, "knoedler.rds", sep = "/"))
   invisible(knoedler)
 }
@@ -127,6 +141,8 @@ produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
   units_aat <- get_data(source_dir, "raw_units_aat")
   knoedler_dimensions <- general_dimension_extraction(kdf, "dimensions", "star_record_no") %>%
     mutate(
+      # Assign dimension unit based on the extracted dimension character,
+      # defaulting to inches (a valid default for Knoedler only)
       dimension_unit = case_when(
         # Default to inches
         is.na(dim_c1) ~ "inches",
@@ -224,6 +240,7 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
   save_data(target_dir, knoedler_purchase_sellers)
 }
 
+# Pull the dates on which Knoedler inventoried an object
 produce_knoedler_inventories <- function(source_dir, target_dir, kdf) {
   knoedler_inventory_events <- kdf %>%
     filter(!is.na(inventory_event_id)) %>%
@@ -348,12 +365,13 @@ identify_knoedler_transactions <- function(df) {
 produce_knoedler_stocknumber_concordance <- function(source_dir, target_dir) {
   raw_knoedler_stocknumber_concordance <- readRDS(paste(source_dir, "raw_knoedler_stocknumber_concordance.rds", sep = "/"))
 
-  # Take the
+  # Produce a 'long' table from the 'wide' version entered by editors
   knoedler_stocknumber_concordance <- raw_knoedler_stocknumber_concordance %>%
     select(sn1, sn2, sn3, sn4) %>%
     mutate(prime_stock_number = sn1) %>%
     gather(number_index, stock_number, sn1:sn4, na.rm = TRUE) %>%
     group_by(stock_number) %>%
+    # Generate a 'prime' stocknumber used to link objects together
     summarize(prime_stock_number = first(prime_stock_number))
 
   saveRDS(knoedler_stocknumber_concordance, file = paste(target_dir, "knoedler_stocknumber_concordance.rds", sep = "/"))
@@ -372,9 +390,14 @@ identify_knoedler_objects <- function(df, knoedler_stocknumber_concordance) {
     # unique id.
     mutate(
       prepped_sn = case_when(
-      is.na(knoedler_number) ~ paste("gennum", as.character(seq_along(knoedler_number)), sep = "-"),
-      knoedler_number %in% names(knoedler_stocknumber_concordance) ~ prime_stock_number,
-      TRUE ~ paste("orignnum", knoedler_number, sep = "-"))) %>%
+        # When there is no number, generate a unique ID
+        is.na(knoedler_number) ~ paste("gennum", as.character(seq_along(knoedler_number)), sep = "-"),
+        # When there is a number that has a prime # replacement from the
+        # concordance, use that prime #
+        knoedler_number %in% names(knoedler_stocknumber_concordance) ~ prime_stock_number,
+        # When the original number has no recorded changes, group based on that
+        # original number
+        TRUE ~ paste("orignnum", knoedler_number, sep = "-"))) %>%
     mutate(object_id = paste("k", "object", group_indices(., prepped_sn), sep = "-")) %>%
     select(-prime_stock_number, -prepped_sn)
 }
@@ -421,6 +444,7 @@ parse_knoedler_monetary_amounts <- function(df) {
     mutate_at(vars(purch_amount, knoedpurch_amt, price_amount), funs(as.numeric(str_match(., "(\\d+\\.?\\d*)")[,2])))
 }
 
+# From Materials -> AAT concordance, find appropriate IDs for each record
 produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
   raw_knoedler_materials_aat <- get_data(source_dir, "raw_knoedler_materials_aat")
 
@@ -474,6 +498,7 @@ produce_knoedler_materials_aat <- function(source_dir, target_dir, kdf) {
   save_data(target_dir, knoedler_materials_technique_as_aat)
 }
 
+# From Subjects -> AAT concordance, find appropriate IDs for each record
 produce_knoedler_subject_aat <- function(source_dir, target_dir, kdf) {
   raw_knoedler_subjects_aat <- get_data(source_dir, "raw_knoedler_subject_aat")
 
@@ -527,15 +552,19 @@ produce_knoedler_subject_aat <- function(source_dir, target_dir, kdf) {
 }
 
 #' @importFrom stringr str_detect
-#' @importFrom rematch2 bind_re_match
 identify_knoedler_anonymous_artists <- function(df) {
   df %>%
     mutate(
+      # Is the artist a "generic" one (with their name starting in brackets)
       is_anon = str_detect(artist_authority, "^\\["),
       person_uid = case_when(
+        # If ULAN ID present, group based on that
         !is.na(artist_ulan_id) & !is_anon ~ paste0("ulan-artist-", group_indices(., artist_ulan_id)),
+        # If a non-generic artist w/o authority, create unique id each time
         is.na(artist_authority) & (is.na(is_anon) | !is_anon) ~ paste0("blank-artist-", seq_along(artist_authority)),
+        # If a generic artist, create unique id each time
         is_anon ~ paste0("anon-artist-", seq_along(artist_authority)),
+        # If authority is present, group based on that
         !is.na(artist_authority) & !is_anon ~ paste0("known-artist-", group_indices(., artist_authority))
       )
     ) %>%
