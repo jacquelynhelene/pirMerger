@@ -62,8 +62,7 @@ produce_knoedler <- function(source_dir, target_dir) {
 
   knoedler_owners_lookup <- knoedler_owner_uids %>%
     group_by(person_uid) %>%
-    summarize(owner_label = if_else(all(is.na(owner_auth)), first(na.omit(owner_name)), first(na.omit(owner_auth))))
-
+    summarize(owner_label = if_else(all(is.na(owner_auth)), pick(owner_name)), pick(owner_auth))
   save_data(target_dir, knoedler_owners_lookup)
 
   knoedler_buyers <- knoedler_buyers %>%
@@ -181,7 +180,7 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
            entry_date_year,
            entry_date_month,
            entry_date_day),
-      funs(first(na.omit(.))))
+      funs(pick))
 
   # Parse purchase amount and join the results
   parsed_purchase_amounts <- parse_prices(target_dir, knoedler_purchase_info, amount_col_name = "purch_amount", currency_col_name = "purch_currency", id_col_name = "purchase_event_id", decimalized_col_name = "decimalized_purch_amount", aat_col_name = "purch_currency_aat", amonsieurx = TRUE, replace_slashes = TRUE)
@@ -258,7 +257,7 @@ produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
            knoedshare_note,
            price_amount,
            price_currency),
-      funs(first(na.omit(.))))
+      funs(pick))
 
   # Parse sale amount and join the results
   parsed_sale_amounts <- parse_prices(target_dir, knoedler_sale_info, amount_col_name = "price_amount", currency_col_name = "price_currency", id_col_name = "sale_event_id", decimalized_col_name = "decimalized_price_amount", aat_col_name = "price_currency_aat", amonsieurx = TRUE, replace_slashes = TRUE)
