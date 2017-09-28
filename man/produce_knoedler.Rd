@@ -12,5 +12,8 @@ produce_knoedler(source_dir, target_dir)
 \item{target_dir}{Path where resulting RDS files are saved}
 }
 \description{
-Produce Knoedler table from raw table.
+This is a two-stage process. First, the raw, mostly denormalized exports are
+read in, and then normalized into a series of tables. Secondly, IDs for
+artists, buyers, sellers, objects, and transaction & inventory events are
+generated and attached to the reamining core `knoedler` table.
 }
