@@ -313,5 +313,5 @@ identify_unique_objects <- function(prev_sales, post_sales, scdf) {
   # for those records with no prev/post sale information
   scdf %>%
     left_join(transaction_membership_list, by = "puri") %>%
-    mutate(object_uid, if_else(is.na(object_uid), paste("single", "object", seq_along(puri), sep = "-"), object_uid))
+    mutate(object_uid = if_else(is.na(object_uid), paste("single", "object", seq_along(puri), sep = "-"), object_uid))
 }
