@@ -185,3 +185,133 @@ produce_sales_catalogs_info <- function(source_dir, target_dir) {
 
   save_data(target_dir, sales_catalogs_info)
 }
+
+#' @import igraph
+identify_unique_objects <- function(prev_sales, post_sales, scdf) {
+  # Produce an easily-inspected set of sales_contents that has a sale_loc
+  # variable: the alphabetic part of each sale code indiciating the location.
+  # This, along with lot numbers and date components, are the only shared
+  # information with the
+  target_sales_contents <- scdf %>%
+    select(
+      target_puri = puri,
+      sale_code,
+      catalog_number,
+      lot_number,
+      lot_sale_year,
+      lot_sale_month,
+      lot_sale_day) %>%
+    mutate(sale_loc = str_extract(sale_code, "[A-Z]+$"))
+
+  # Attempt to join these candidate sales contents records to the records
+  # indicated in sales_contents_prev_sales
+  sales_prev_join <- prev_sales %>%
+    rename(prev_puri = puri) %>%
+    inner_join(target_sales_contents, by = c(
+      "prev_sale_loc" = "sale_loc",
+      "prev_sale_lot" = "lot_number",
+      "prev_sale_year" = "lot_sale_year",
+      "prev_sale_mo" = "lot_sale_month",
+      "prev_sale_day" = "lot_sale_day"
+    ))
+
+  # Records that claim to have a match, but we can't find it
+  failed_prev_match <- prev_sales %>%
+    # Only keep those that could not be successfully matched
+    anti_join(sales_prev_join, by = c("puri" = "prev_puri")) %>%
+    # Add additional identifying information to those records for editors to see
+    inner_join(select(scdf, puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = "puri")
+
+  # Records that claim to have a match, and we get MULTIPLE matches back
+  multiple_prev_match <- prev_sales %>%
+    # Only keep those joins that succeeded
+    filter(!is.na(target_puri)) %>%
+    # To find duplicated rows, find those that have been duplicated based on the
+    # original join query
+    add_count(prev_puri, prev_sale_lot, prev_sale_loc, prev_sale_day, prev_sale_mo, prev_sale_year) %>%
+    filter(n > 1) %>%
+    # Join the records for the _target_ sales so that editors can find them
+    inner_join(select(scdf, puri, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = c("target_puri" = "puri"))
+
+  # Only those records with exactly one match
+  exact_prev_match <- sales_prev_join %>%
+    anti_join(multiple_prev_match, by = "prev_puri")
+
+  # Attempt to join these candidate sales contents records to the records
+  # indicated in sales_contents_post_sales
+  sales_post_join <- post_sales %>%
+    rename(post_puri = puri) %>%
+    inner_join(target_sales_contents, by = c(
+      "post_sale_loc" = "sale_loc",
+      "post_sale_lot" = "lot_number",
+      "post_sale_yr" = "lot_sale_year",
+      "post_sale_mo" = "lot_sale_month",
+      "post_sale_day" = "lot_sale_day"
+    ))
+
+  # Records that claim to have a match, but we can't find it
+  failed_post_match <- post_sales %>%
+    # Only keep those that could not be successfully matched
+    anti_join(sales_post_join, by = c("puri" = "post_puri")) %>%
+    # Add additional identifying information to those records for editors to see
+    inner_join(select(scdf, puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = "puri")
+
+  multiple_post_match <- sales_post_join %>%
+    filter(!is.na(target_puri)) %>%
+    # Must group by the entire unqiue row from the original
+    # sales_contents_post_sales
+    add_count(post_puri, post_sale_lot, post_sale_loc, post_sale_day, post_sale_mo, post_sale_yr) %>%
+    filter(n > 1) %>%
+    inner_join(select(scdf, puri, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = c("target_puri" = "puri")) %>%
+    arrange(post_puri)
+
+  # Keep only those with exactly one match
+  exact_post_match <- sales_post_join %>%
+    anti_join(multiple_post_match, by = "post_puri")
+
+  # Create transaction graph ----
+  # For any given record, it is not guaranteed that it has prev/post references
+  # to every single sale that may have concerned the same object. It is
+  # necessary to find all records that share a link with each other across any
+  # number of siblings. In other words, we want to identify all the connected
+  # components of the graph representing the prev/post connections between each
+  # sales contents records. This is a simple network analysis task.
+
+  # Merge each of the exact match tables into one large adjacency list
+  transaction_edgelist <- bind_rows(
+    select(exact_post_match, source = post_puri, target = target_puri),
+    select(exact_prev_match, source = prev_puri, target = target_puri))
+
+  transaction_nodes <- scdf %>%
+    filter(puri %in% transaction_edgelist$source | puri %in% transaction_edgelist$target) %>%
+    select(name = puri, title, lot_sale_year, lot_sale_month, lot_sale_day, catalog_number, lot_number) %>%
+    mutate(
+      lot_sale_day = if_else(lot_sale_day == 0, 1L, lot_sale_day),
+      lot_sale_month = if_else(lot_sale_month == 0, 1L, lot_sale_month),
+      lot_sale_date = ymd(paste(lot_sale_year, lot_sale_month, lot_sale_day, sep = "-")))
+
+  transaction_graph <- graph_from_data_frame(transaction_edgelist, directed = FALSE, vertices = transaction_nodes)
+
+  # Simplify graph and check component size
+  flat_trans_graph <- simplify(transaction_graph)
+
+  # Add human readable labels for graph inspections
+  V(transaction_graph)$label <- str_wrap(paste0(V(transaction_graph)$catalog_number, ": ", V(transaction_graph)$lot_number, " - ", str_trunc(V(transaction_graph)$title, width = 20), "(", V(transaction_graph)$lot_sale_year, "/", V(transaction_graph)$lot_sale_month, "/", V(transaction_graph)$lot_sale_day, ")"), width = 30)
+
+  # Calculate the components
+  transaction_components <- components(flat_trans_graph)
+  transaction_betweenness <- centr_betw(transaction_graph)
+
+  V(transaction_graph)$component <- transaction_components$membership
+  V(transaction_graph)$bc <- transaction_betweenness$res
+
+  transaction_membership_list <- data_frame(
+    puri = names(transaction_components$membership),
+    object_uid = paste("multiple", "object", transaction_components$membership, sep = "-"))
+
+  # Join new object uids on to sales contents records, and produce singleton IDs
+  # for those records with no prev/post sale information
+  scdf %>%
+    left_join(transaction_membership_list, by = "puri") %>%
+    mutate(object_uid, if_else(is.na(object_uid), paste("single", "object", seq_along(puri), sep = "-"), object_uid))
+}
