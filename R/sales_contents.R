@@ -88,6 +88,8 @@ produce_sales_contents <- function(source_dir, target_dir) {
   sales_contents <- sales_contents %>% select(-(post_own_1:post_own_auth_q_6))
   save_data(target_dir, sales_contents_post_owners)
 
+  sales_contents <- identify_unique_objects(sales_contents_prev_sales, sales_contents_post_sales, sales_contents)
+
   message("- final normalized sales contents")
   save_data(target_dir, sales_contents)
 }
@@ -205,6 +207,7 @@ identify_unique_objects <- function(prev_sales, post_sales, scdf) {
 
   # Attempt to join these candidate sales contents records to the records
   # indicated in sales_contents_prev_sales
+  message("- Attempting to match previous sales")
   sales_prev_join <- prev_sales %>%
     rename(prev_puri = puri) %>%
     inner_join(target_sales_contents, by = c(
@@ -223,7 +226,7 @@ identify_unique_objects <- function(prev_sales, post_sales, scdf) {
     inner_join(select(scdf, puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = "puri")
 
   # Records that claim to have a match, and we get MULTIPLE matches back
-  multiple_prev_match <- prev_sales %>%
+  multiple_prev_match <- sales_prev_join %>%
     # Only keep those joins that succeeded
     filter(!is.na(target_puri)) %>%
     # To find duplicated rows, find those that have been duplicated based on the
@@ -239,6 +242,7 @@ identify_unique_objects <- function(prev_sales, post_sales, scdf) {
 
   # Attempt to join these candidate sales contents records to the records
   # indicated in sales_contents_post_sales
+  message("- Attempt to match post sales")
   sales_post_join <- post_sales %>%
     rename(post_puri = puri) %>%
     inner_join(target_sales_contents, by = c(
@@ -278,6 +282,7 @@ identify_unique_objects <- function(prev_sales, post_sales, scdf) {
   # sales contents records. This is a simple network analysis task.
 
   # Merge each of the exact match tables into one large adjacency list
+  message("- Identify connected components in graph of related sales")
   transaction_edgelist <- bind_rows(
     select(exact_post_match, source = post_puri, target = target_puri),
     select(exact_prev_match, source = prev_puri, target = target_puri))
