@@ -66,7 +66,7 @@ produce_knoedler <- function(source_dir, target_dir) {
   # A table of labels for each owner UID
   knoedler_owners_lookup <- knoedler_owner_uids %>%
     group_by(person_uid) %>%
-    summarize(owner_label = if_else(all(is.na(owner_auth)), pick(owner_name)), pick(owner_auth))
+    summarize(owner_label = if_else(all(is.na(owner_auth)), pick(owner_name), pick(owner_auth)))
   save_data(target_dir, knoedler_owners_lookup)
 
   # Join UIDs to each table of buyers, sellers, and joint owners
