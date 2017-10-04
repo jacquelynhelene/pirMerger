@@ -52,7 +52,7 @@ read_dat <- function(repo_path, dir_name, file_name, n_files) {
   tdata <- bind_rows(tdata)
 
   if (sum(map_int(probs, nrow)) / nrow(tdata) > 0.01)
-    stop("More than 10 percent of the rows in ", base_name, " have readr problems.")
+    warning("More than 10 percent of the rows in ", base_name, " have readr problems.")
 
   attr(tdata, "problems") <- probs
   attr(tdata, "base_name") <- base_name
