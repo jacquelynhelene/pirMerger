@@ -57,6 +57,8 @@ read_all_concordances(out_dir = source_data_dir, data_dict = working_dict)
 # Process singleton tables that are needed for a variety of datasets
 produce_currency_ids(source_data_dir, intermediate_data_dir)
 #expect_true(file.exists(paste(intermediate_data_dir, "currency_aat.rds", sep = "/")))
+produce_exchange_rates(source_data_dir, intermediate_data_dir)
+produce_cpi(source_data_dir, intermediate_data_dir)
 
 # Process artist authority table
 produce_artists_authority(source_data_dir, intermediate_data_dir)
