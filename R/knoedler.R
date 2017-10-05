@@ -362,17 +362,32 @@ identify_knoedler_transactions <- function(df) {
     ungroup()
 }
 
+#' Editors have compiled links between stocknumbers that actually represent the
+#' same object. We compose a graph of these relationships, identify connected
+#' components that represnent all the stock numbers related to a single object,
+#' and then produce a lookup table pairing each stock number with a UID for its
+#' group
+#' @import igraph
 produce_knoedler_stocknumber_concordance <- function(source_dir, target_dir) {
   raw_knoedler_stocknumber_concordance <- readRDS(paste(source_dir, "raw_knoedler_stocknumber_concordance.rds", sep = "/"))
 
   # Produce a 'long' table from the 'wide' version entered by editors
   knoedler_stocknumber_concordance <- raw_knoedler_stocknumber_concordance %>%
-    select(sn1, sn2, sn3, sn4) %>%
+    select(sn1, sn2, sn3, sn4, sn5) %>%
     mutate(prime_stock_number = sn1) %>%
-    gather(number_index, stock_number, sn1:sn4, na.rm = TRUE) %>%
-    group_by(stock_number) %>%
-    # Generate a 'prime' stocknumber used to link objects together
-    summarize(prime_stock_number = first(prime_stock_number))
+    gather(number_index, stock_number, sn1:sn5, na.rm = TRUE) %>%
+    select(source = prime_stock_number, target = stock_number) %>%
+    na.omit()
+
+  # Create a graph from this edgelist
+  sn_graph <- graph_from_data_frame(knoedler_stocknumber_concordance, directed = FALSE) %>%
+    simplify()
+
+  # Identify components and produce a lookup table
+  sn_components <- components(sn_graph)
+  V(sn_graph)$component <- sn_components$membership
+  knoedler_stocknumber_concordance <- as_data_frame(sn_graph, what = "vertices") %>%
+    rename(knoedler_number = name)
 
   saveRDS(knoedler_stocknumber_concordance, file = paste(target_dir, "knoedler_stocknumber_concordance.rds", sep = "/"))
   invisible(knoedler_stocknumber_concordance)
@@ -381,7 +396,7 @@ produce_knoedler_stocknumber_concordance <- function(source_dir, target_dir) {
 # Produce unique ids for knoedler objects based on their stock numbers
 identify_knoedler_objects <- function(df, knoedler_stocknumber_concordance) {
   df %>%
-    left_join(knoedler_stocknumber_concordance, by = c("knoedler_number" = "stock_number")) %>%
+    left_join(knoedler_stocknumber_concordance, by = c("knoedler_number")) %>%
     # Because some of the knoedler stock numbers changed or were re-used, we
     # will consult against a stock number concordance that we can use to create
     # a "functional" stock number - an identifier that connects objects even
@@ -391,15 +406,15 @@ identify_knoedler_objects <- function(df, knoedler_stocknumber_concordance) {
     mutate(
       prepped_sn = case_when(
         # When there is no number, generate a unique ID
-        is.na(knoedler_number) ~ paste("gennum", as.character(seq_along(knoedler_number)), sep = "-"),
+        is.na(knoedler_number) ~ paste("gennum", as.character(seq_along(star_record_no)), sep = "-"),
         # When there is a number that has a prime # replacement from the
         # concordance, use that prime #
-        knoedler_number %in% names(knoedler_stocknumber_concordance) ~ prime_stock_number,
+        !is.na(component) ~ paste("componentnum", component, sep = "-"),
         # When the original number has no recorded changes, group based on that
         # original number
         TRUE ~ paste("orignnum", knoedler_number, sep = "-"))) %>%
     mutate(object_id = paste("k", "object", group_indices(., prepped_sn), sep = "-")) %>%
-    select(-prime_stock_number, -prepped_sn)
+    select(-component)
 }
 
 # For a given object_id, attempt to discern an event order, which can be useful
