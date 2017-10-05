@@ -293,7 +293,7 @@ identify_unique_objects <- function(prev_sales, post_sales, scdf) {
     mutate(
       lot_sale_day = if_else(lot_sale_day == 0, 1L, lot_sale_day),
       lot_sale_month = if_else(lot_sale_month == 0, 1L, lot_sale_month),
-      lot_sale_date = ymd(paste(lot_sale_year, lot_sale_month, lot_sale_day, sep = "-")))
+      lot_sale_date = lubridate::ymd(paste(lot_sale_year, lot_sale_month, lot_sale_day, sep = "-")))
 
   transaction_graph <- graph_from_data_frame(transaction_edgelist, directed = FALSE, vertices = transaction_nodes)
 
