@@ -67,10 +67,16 @@ read_dat <- function(repo_path, dir_name, file_name, n_files) {
 #' @param out_dir Directory to which rds files ought to be written
 #' @param data_dict Path to the data files definition YAML
 #' @param repo_path Location of git repository holding GPI data
+#' @param names Specify dataset names to refresh. If \code{NULL} (the default),
+#'   will read all data frames specified in the data dictionary.
 #'
 #' @export
-read_all_exports <- function(out_dir, data_dict, repo_path) {
+read_all_exports <- function(out_dir, data_dict, repo_path, names = NULL) {
   data_files <- data_definitions(data_dict)[["star_exports"]]
+
+  if (!is.null(names))
+    data_files <- keep(data_files, function(d) d[["dir_name"]] %in% names)
+
   walk(data_files, function(x) {
     walk(x[["files"]], function(y) {
       output_data <- read_dat(repo_path = repo_path, dir_name = x[["dir_name"]], file_name = y, n_files = x[["n_files"]])

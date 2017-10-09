@@ -4,7 +4,7 @@
 \alias{read_all_exports}
 \title{Pull the latest STAR exports and parse into dataframes}
 \usage{
-read_all_exports(out_dir, data_dict, repo_path)
+read_all_exports(out_dir, data_dict, repo_path, names = NULL)
 }
 \arguments{
 \item{out_dir}{Directory to which rds files ought to be written}
@@ -12,6 +12,9 @@ read_all_exports(out_dir, data_dict, repo_path)
 \item{data_dict}{Path to the data files definition YAML}
 
 \item{repo_path}{Location of git repository holding GPI data}
+
+\item{names}{Specify dataset names to refresh. If \code{NULL} (the default),
+will read all data frames specified in the data dictionary.}
 }
 \description{
 The resulting files are stored in the `data-raw` directory. If any files have
