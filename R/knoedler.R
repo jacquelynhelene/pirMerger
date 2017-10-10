@@ -373,9 +373,9 @@ produce_knoedler_stocknumber_concordance <- function(source_dir, target_dir) {
 
   # Produce a 'long' table from the 'wide' version entered by editors
   knoedler_stocknumber_concordance <- raw_knoedler_stocknumber_concordance %>%
-    select(sn1, sn2, sn3, sn4, sn5) %>%
+    select(contains("sn")) %>%
     mutate(prime_stock_number = sn1) %>%
-    gather(number_index, stock_number, sn1:sn5, na.rm = TRUE) %>%
+    gather(number_index, stock_number, contains("sn"), na.rm = TRUE) %>%
     select(source = prime_stock_number, target = stock_number) %>%
     na.omit()
 
