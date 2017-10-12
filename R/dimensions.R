@@ -23,7 +23,36 @@ general_dimension_extraction <- function(df, dimcol, idcol) {
     mutate_at(vars(dim_d1, dim_c1, dim_d2, dim_c2), funs(na_if(str_trim(.), ""))) %>%
     mutate_at(vars(dim_d1, dim_d2), funs(parsed = parse_fraction)) %>%
     mutate_at(vars(dim_c1, dim_c2), as.factor) %>%
+    mutate(decimalized_dim_value = compile_inches(dim_d1_parsed, dim_c1, dim_d2_parsed, dim_c2)) %>%
     group_by(star_record_no) %>%
     mutate(dimension_order = row_number()) %>%
     ungroup()
+}
+
+#' Given a two pairs of values and feet/inches, parse
+#'
+#' If first is explicity feet, assume feet. Otherwise, assume inches. Note that,
+#' because if() statements cannot be NA, we have to check cases in decreasing
+#' order of NA-ness, so each must evaluate correctly and filter out any cases
+#' that would break later statements.
+#'
+#' @param d1 Numeric.
+#' @param c2 Character.
+#' @param d2 Numeric
+#' @param c2 Character.
+#'
+#' @return Numeric.
+#' @export
+compile_inches <- function(d1, c1, d2, c2) {
+  case_when(
+    is.na(d1) & is.na(d2) & is.na(c1) & is.na(c2) ~ NA_real_,
+    !is.na(d1) & is.na(d2) & is.na(c1) & is.na(c2) ~ d1,
+    !is.na(d1) & is.na(d2) & c1 == "\'" & is.na(c2) ~ d1 * 12,
+    !is.na(d1) & is.na(d2) & c1 == "\"" & is.na(c2) ~ d1,
+    !is.na(d1) & !is.na(d2) & is.na(c1) & c2 == "\"" ~ d1 * 12 + d2,
+    !is.na(d1) & !is.na(d2) & c1 == "\"" & is.na(c2) ~ d1,
+    !is.na(d1) & !is.na(d2) & c1 == "\'" & is.na(c2) ~ d1 * 12 + d2,
+    !is.na(d1) & !is.na(d2) & c1 == "\'" & c2 == "\'" ~ d1 * 12 + d2,
+    !is.na(d1) & !is.na(d2) & c1 == "'" & c2 == "\"" ~ d1 * 12 + d2,
+    TRUE ~ NA_real_)
 }

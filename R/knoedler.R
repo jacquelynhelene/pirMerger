@@ -144,11 +144,9 @@ produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
       # Assign dimension unit based on the extracted dimension character,
       # defaulting to inches (a valid default for Knoedler only)
       dimension_unit = case_when(
-        # Default to inches
-        is.na(dim_c1) ~ "inches",
-        dim_c1 == "\"" ~ "inches",
+        # Default to feet
         dim_c1 == "cm" ~ "centimeters",
-        TRUE ~ "inches"),
+        TRUE ~ "feet"),
       # Assign dimension type based on extracted dimension character, falling
       # back when necessary to the order in which dimensions were listed
       dimension_type = case_when(
@@ -157,6 +155,8 @@ produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
         is.na(dimtype) & dimension_order > 2 ~ NA_character_,
         dimtype == "h" ~ "height",
         dimtype == "w" ~ "width",
+        dimtype == "d" ~ "diameter",
+        dimtype == "l" ~ "length",
         TRUE ~ NA_character_
       )
     ) %>%
@@ -165,7 +165,7 @@ produce_knoedler_dimensions <- function(source_dir, target_dir, kdf) {
     inner_join(units_aat, by = c("dimension_unit" = "unit")) %>%
     # Return final table with dimension valu, unit, unit aat, dimension type,
     # and dimension aat, which can be joined to orginal records.
-    select(star_record_no, dimension_value = dim_d1_parsed, dimension_unit,
+    select(star_record_no, dimension_value = decimalized_dim_value, dimension_unit,
            dimension_unit_aat = unit_aat, dimension_type,
            dimension_type_aat = dimension_aat)
 
