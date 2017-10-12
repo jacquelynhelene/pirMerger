@@ -8,10 +8,10 @@
 general_dimension_extraction <- function(df, dimcol, idcol) {
   df <- df[which(!is.na(df[[dimcol]])),]
   tryd <- rematch2::re_match_all(df[[dimcol]],
-               # Find any combo of acceptable
-               # value/unit/dimension chars IFF there is
-               # at least one digit in the bunch
-               pattern = "(?<dim>[0-9 '\"/\\.lhwd]*(?:cm)*\\d+[0-9 '\"/\\.lhwd]*(?:cm)*)") %>%
+                                 # Find any combo of acceptable
+                                 # value/unit/dimension chars IFF there is
+                                 # at least one digit in the bunch
+                                 pattern = "(?<dim>[0-9 '\"/\\.lhwd]*(?:cm)*\\d+[0-9 '\"/\\.lhwd]*(?:cm)*)") %>%
     add_column(star_record_no = df[[idcol]]) %>%
     unnest() %>%
     # Extract the dimension marker to its own column, leaving only the dimension value with its unit markers
