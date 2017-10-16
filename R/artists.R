@@ -97,7 +97,8 @@ generate_artist_display_dates <- function(df) {
 produce_ulan_derivative_artists <- function(source_dir, repo_path) {
 
   derivative <- get_data(source_dir, "artists_authority") %>%
-    mutate(star_record_no = paste0("a", star_record_no))
+    mutate(star_record_no = paste0("a", star_record_no)) %>%
+    filter(!str_detect(artist_authority, "^\\[.*\\]") & !str_detect(artist_authority, "REJECTED"))
 
   write_csv(derivative, path = paste(repo_path, "derivatives", "ulan_load_artists.csv", sep = "/"))
 }
