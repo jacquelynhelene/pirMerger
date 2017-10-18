@@ -91,7 +91,8 @@ required_knoedler <- c(
 produce_knoedler(source_data_dir, intermediate_data_dir)
 #expect_equivalent(sort(dir(intermediate_data_dir, pattern = "knoedler.*.rds")), sort(required_knoedler))
 jk <- produce_joined_knoedler(intermediate_data_dir, pipeline_data_dir)
-
+union_aat_ids <- produce_union_aat(intermediate_data_dir)
+write_lines(union_aat_ids, path = "../pirdata/unique_aat_ids.txt", na = "")
 write_csv(jk, path = "../pirdata/knoedler_join.csv", na = "")
 
 produce_sales_contents(source_data_dir, intermediate_data_dir)
