@@ -188,6 +188,7 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
   knoedler_purchase_info <- kdf %>%
     filter(!is.na(purchase_event_id)) %>%
     group_by(purchase_event_id) %>%
+    mutate_at(vars(purch_amount, purch_currency, knoedpurch_amt, knoedpurch_curr), funs(inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
     summarize_at(
       vars(purch_amount,
            purch_currency,
@@ -195,7 +196,8 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
            knoedpurch_curr,
            entry_date_year,
            entry_date_month,
-           entry_date_day),
+           entry_date_day,
+           contains("inconsistent")),
       funs(pick))
 
   # Parse purchase amount and join the results
