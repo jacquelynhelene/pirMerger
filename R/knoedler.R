@@ -188,6 +188,7 @@ produce_knoedler_purchases <- function(source_dir, target_dir, kdf) {
   knoedler_purchase_info <- kdf %>%
     filter(!is.na(purchase_event_id)) %>%
     group_by(purchase_event_id) %>%
+    # Flag when any of the amounts or currencies are inconsistent across mutliple records of a transaction
     mutate_at(vars(purch_amount, purch_currency, knoedpurch_amt, knoedpurch_curr), funs(inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
     summarize_at(
       vars(purch_amount,
@@ -266,6 +267,8 @@ produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
   message(" - Picking sale prices and dates")
   knoedler_sale_info <- knoedler_sales %>%
     group_by(sale_event_id) %>%
+    # Flag when any of the amounts or currencies are inconsistent across mutliple records of a transaction
+    mutate_at(vars(transaction, knoedshare_amt, knoedshare_curr, price_amount, price_currency), funs(inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
     summarize_at(
       vars(transaction,
            sale_date_year,
@@ -275,7 +278,8 @@ produce_knoedler_sales <- function(source_dir, target_dir, kdf) {
            knoedshare_curr,
            knoedshare_note,
            price_amount,
-           price_currency),
+           price_currency,
+           contains("inconsistent")),
       funs(pick))
 
   # Parse sale amount and join the results
