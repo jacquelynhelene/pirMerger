@@ -102,6 +102,12 @@ read_all_concordances <- function(out_dir, data_dict) {
   })
 }
 
+read_concordance <- function(url, sheet = 1, col_names, col_types) {
+  res <- googlesheets::gs_read(googlesheets::gs_url(url, verbose = FALSE), ws = sheet, verbose = FALSE, skip = 1, col_names = str_split(col_names, ";")[[1]], col_types = col_types)
+  readr::stop_for_problems(res)
+  res
+}
+
 #' Pull data from a given directory and name, and load into an object
 #'
 #' @param dir The directory to read from
