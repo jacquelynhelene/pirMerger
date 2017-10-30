@@ -1,0 +1,28 @@
+sources:
+  - R/
+
+packages:
+  - stringr
+  - tidyverse
+  - rematch2
+
+targets:
+  all:
+    depends:
+      - processed_data/artists_authority.rda
+      - raw_data/raw_artists_authority.rda
+
+  artists_authority:
+    command: produce_artists_authority(raw_artists_authority)
+
+  processed_data/artists_authority.rda:
+    command: save(artists_authority, file = target_name)
+
+  raw_data/raw_artists_authority.rda:
+    command: save(raw_artists_authority, file = target_name)
+
+  raw_artists_authority:
+    command: read_dat(
+      "scratch/repo_data/csv/artists_authority/artists_authority.csv",
+      "scratch/repo_data/csv/artists_authority/artists_authority_headers.txt")
+

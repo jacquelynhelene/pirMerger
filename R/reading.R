@@ -24,20 +24,12 @@ data_definitions <- function(definitions) {
   yaml::yaml.load(definitions)
 }
 
+#' Read data files with header names
+#'
 #' @import stringr
-read_dat <- function(repo_path, dir_name, file_name, n_files) {
-  base_name <- paste0("raw_", file_name)
-  dir_path <- paste0(repo_path, "/csv/", dir_name)
-  header_path <- paste0(dir_path, "/", file_name, "_headers.txt")
-  if (!is.null(n_files)) {
-    csv_paths <- paste0(dir_path, "/", file_name, "_", seq_len(n_files), ".csv")
-  } else {
-    csv_paths <- paste0(dir_path, "/", file_name, ".csv")
-  }
-
-  message("Reading ", csv_paths)
-
-  headers <- readr::read_lines(file = header_path) %>%
+#' @export
+read_dat <- function(file_names, header_file_name) {
+  headers <- readr::read_lines(file = header_file_name) %>%
     str_trim() %>%
     str_replace_all("[[:punct:] ]+$", "") %>%
     str_replace_all("[[:punct:] ]+", "_") %>%
@@ -47,15 +39,14 @@ read_dat <- function(repo_path, dir_name, file_name, n_files) {
   # dataframes and we may want to inspect for problems, before binding all dfs
   # together, this will call problems() on each one, and save the resulting
   # problems table as an attribute of the full data frame.
-  tdata <- map(csv_paths, readr::read_delim, delim = ",", col_names = headers, col_types = paste0(rep("c", length(headers)), collapse = ""), locale = locale(encoding = "UTF-8"))
+  tdata <- map(file_names, readr::read_delim, delim = ",", col_names = headers, col_types = paste0(rep("c", length(headers)), collapse = ""), locale = locale(encoding = "UTF-8"))
   probs <- map(tdata, problems)
-  tdata <- bind_rows(tdata)
+  tdata <- bind_rows(tdata, .id = "original_file_name")
 
   if (sum(map_int(probs, nrow)) / nrow(tdata) > 0.01)
     warning("More than 10 percent of the rows in ", base_name, " have readr problems.")
 
   attr(tdata, "problems") <- probs
-  attr(tdata, "base_name") <- base_name
   tdata
 }
 

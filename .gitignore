@@ -4,5 +4,7 @@
 .Ruserdata
 .Rprofile
 *.rds
+*.rda
 scratch/
 data_definitions.yml
+.remake/

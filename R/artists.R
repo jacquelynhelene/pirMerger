@@ -6,9 +6,7 @@
 #' @importFrom rematch2 re_match bind_re_match
 #'
 #' @export
-produce_artists_authority <- function(source_dir, target_dir) {
-  message("Producing artists authority (" , source_dir, "/raw_artists_authority.rds to ", target_dir, "/artists_authority.rds", ")")
-  raw_artists_authority <- get_data(source_dir, "raw_artists_authority")
+produce_artists_authority <- function(raw_artists_authority) {
 
   artists_authority <- raw_artists_authority %>%
     extract_artist_dates() %>%
@@ -31,7 +29,7 @@ produce_artists_authority <- function(source_dir, target_dir) {
     # Select the final combination of columns to include in the table
     select(one_of(names(raw_artists_authority)), artist_early, artist_late, artist_display, artist_authority_clean, parenthetical_text)
 
-  save_data(target_dir, artists_authority)
+  artists_authority
 }
 
 extract_artist_dates <- function(df) {
