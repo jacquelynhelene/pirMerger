@@ -6,11 +6,7 @@
 #' @importFrom rematch2 re_match bind_re_match
 #'
 #' @export
-produce_owners_authority <- function(source_dir, target_dir) {
-  message("Producing owners authority (" , source_dir, "/raw_owners_authority.rds to ", target_dir, "/owners_authority.rds", ")")
-
-  raw_owners_authority <- get_data(source_dir, "raw_owners_authority")
-
+produce_owners_authority <- function(raw_owners_authority) {
   owners_authority <- raw_owners_authority %>%
     extract_owner_dates() %>%
     reconcile_owner_dates() %>%
@@ -23,7 +19,7 @@ produce_owners_authority <- function(source_dir, target_dir) {
 
     select(one_of(names(raw_owners_authority)), owner_early, owner_late, owner_display, owner_authority_clean, parenthetical_text, location_from_name)
 
-  save_data(target_dir, owners_authority)
+  owners_authority
 }
 
 extract_owner_dates <- function(df) {
@@ -74,9 +70,9 @@ generate_owner_display_dates <- function(df) {
 #' @param repo_path Path where derivative CSV should be saved
 #'
 #' @export
-produce_ulan_derivative_owners <- function(source_dir, repo_path) {
+produce_ulan_derivative_owners <- function(owners_authority) {
 
-  derivative <- get_data(source_dir, "owners_authority") %>%
+  derivative <- owners_authority %>%
     mutate(star_record_no = paste0("o", star_record_no))
 
   write_csv(derivative, path = paste(repo_path, "derivatives", "ulan_load_owners.csv", sep = "/"))
