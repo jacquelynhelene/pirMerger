@@ -17,7 +17,7 @@
 #'
 #' @return A data frame with 3 columns: \code{id_col_name} containing IDs from
 #'   original \code{df}, and  new columns for decimalized amount and currency.
-parse_prices <- function(source_dir, df, amount_col_name, currency_col_name, id_col_name, decimalized_col_name, aat_col_name, amonsieurx = FALSE, replace_slashes = FALSE) {
+parse_prices <- function(currency_aat, df, amount_col_name, currency_col_name, id_col_name, decimalized_col_name, aat_col_name, amonsieurx = FALSE, replace_slashes = FALSE) {
   currency_aat <- get_data(source_dir, "currency_aat")
 
   parsed_prices <- select(df, !!id_col_name, original_price = !!amount_col_name, original_currency = !!currency_col_name)
@@ -119,21 +119,19 @@ decimal_function <- function(divisor_1 = 1, divisor_2 = 1, divisor_3 = 1) {
 #' @param target_dir Path where resulting RDS files are saved
 #'
 #' @export
-produce_currency_ids <- function(source_dir, target_dir) {
+produce_currency_ids <- function(raw_sales_contents_auth_currencies, raw_currencies_aat) {
   # Concordance of verbatim currency values to standardized labels
-  curr_auth <- get_data(source_dir, "raw_sales_contents_auth_currencies")
+
   # Concordance of standardized labels to ULAN IDs, along with subunit divisors
   # (e.g. describing 1 pound > 12 shillings > 20 pence)
-  curr_aat <- get_data(source_dir, "raw_currencies_aat")
 
   # Join both tables together
-  currency_aat <- curr_auth %>%
+  currency_aat <- raw_sales_contents_auth_currencies %>%
     mutate_at(vars(auth_currency), tolower) %>%
-    left_join(mutate_at(curr_aat, vars(auth_currency), tolower), by = "auth_currency") %>%
+    left_join(mutate_at(raw_currencies_aat, vars(auth_currency), tolower), by = "auth_currency") %>%
     select(price_currency, currency_aat, primary_unit, secondary_unit, tertiary_unit)
 
-  save_data(target_dir, currency_aat)
-  invisible(currency_aat)
+  currency_aat
 }
 
 #' Produce tables with currency exchange rates
@@ -142,13 +140,12 @@ produce_currency_ids <- function(source_dir, target_dir) {
 #' @param target_dir Path where resulting RDS files are saved
 #'
 #' @export
-produce_exchange_rates <- function(source_dir, target_dir) {
-  exchange_rates <- get_data(source_dir, "raw_exchange_rates") %>%
+produce_exchange_rates <- function(raw_exchange_rates) {
+  exchange_rates <- raw_exchange_rates %>%
     # Create multiplier that will convert a foreign currency to USD
     mutate(fex_to_usd = usd / fex)
 
-  save_data(target_dir, exchange_rates)
-  invisible(exchange_rates)
+  exchange_rates
 }
 
 #' Produce tables with US consumer price index
@@ -157,8 +154,8 @@ produce_exchange_rates <- function(source_dir, target_dir) {
 #' @param target_dir Path where resulting RDS files are saved
 #'
 #' @export
-produce_cpi <- function(source_dir, target_dir) {
-  us_cpi <- get_data(source_dir, "raw_us_cpi") %>%
+produce_cpi <- function(raw_us_cpi) {
+  us_cpi <- raw_us_cpi %>%
     select(-source)
 
   rate_1900 <- us_cpi %>%
@@ -169,6 +166,5 @@ produce_cpi <- function(source_dir, target_dir) {
     # Create multiplier that will express USD from a given year as USD from 1900
     mutate(base1900 = us_cpi / rate_1900)
 
-  save_data(target_dir, us_cpi)
-  invisible(us_cpi)
+  us_cpi
 }

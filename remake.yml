@@ -14,7 +14,9 @@ targets:
     depends:
       - processed_data/artists_authority.rda
       - processed_data/owners_authority.rda
-      - raw_data/raw_exchange_rates.rda
+      - processed_data/currency_aat.rda
+      - processed_data/exchange_rates.rda
+      - processed_data/us_cpi.rda
 
   artists_authority:
     command: produce_artists_authority(raw_artists_authority)
@@ -25,3 +27,18 @@ targets:
     command: produce_owners_authority(raw_owners_authority)
   processed_data/owners_authority.rda:
     command: save(owners_authority, file = target_name)
+
+  currency_aat:
+    command: produce_currency_ids(raw_sales_contents_auth_currencies, raw_currencies_aat)
+  processed_data/currency_aat.rda:
+    command: save(currency_aat, file = target_name)
+
+  exchange_rates:
+    command: produce_exchange_rates(raw_exchange_rates)
+  processed_data/exchange_rates.rda:
+    command: save(exchange_rates, file = target_name)
+
+  us_cpi:
+    command: produce_cpi(raw_us_cpi)
+  processed_data/us_cpi.rda:
+    command: save(us_cpi, file = target_name)

@@ -5,6 +5,7 @@
 .Rprofile
 *.rds
 *.rda
+*.csv
 scratch/
 data_definitions.yml
 .remake/

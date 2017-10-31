@@ -44,7 +44,7 @@ read_dat <- function(file_names, header_file_name) {
   tdata <- bind_rows(tdata, .id = "original_file_name")
 
   if (sum(map_int(probs, nrow)) / nrow(tdata) > 0.01)
-    warning("More than 10 percent of the rows in ", base_name, " have readr problems.")
+    warning("More than 10 percent of the rows in ", file_names, " have readr problems.")
 
   attr(tdata, "problems") <- probs
   tdata
@@ -102,8 +102,22 @@ read_all_concordances <- function(out_dir, data_dict) {
   })
 }
 
-read_concordance <- function(url, sheet = 1, col_names, col_types) {
-  res <- googlesheets::gs_read(googlesheets::gs_url(url, verbose = FALSE), ws = sheet, verbose = FALSE, skip = 1, col_names = str_split(col_names, ";")[[1]], col_types = col_types)
+get_definitions <- function(definitions_file) {
+  yaml::yaml.load_file(definitions_file)
+}
+
+refresh_concordances <- function(data_definitions) {
+  walk(data_definitions$google_sheets, function(x) {
+    dl_concordance(url = x$url, sheet = x$sheet, path = paste0("concordance_csv/", x$name, ".csv"))
+  })
+}
+
+dl_concordance <- function(path, url, sheet = 1) {
+  googlesheets::gs_download(googlesheets::gs_url(url, verbose = FALSE), ws = sheet, to = path, verbose = FALSE, overwrite = TRUE)
+}
+
+read_concordance <- function(filename, col_names, col_types) {
+  res <- readr::read_csv(filename, skip = 1, col_names = str_split(col_names, ";")[[1]], col_types = col_types)
   readr::stop_for_problems(res)
   res
 }
