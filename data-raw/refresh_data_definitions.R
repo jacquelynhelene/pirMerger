@@ -1,5 +1,5 @@
 refresh_definitions <- function() {
-  current_raw_data <- readLines("data_definitions.yml")
+  current_raw_data <- readLines("raw_data.yml")
   secret::update_secret("raw_data", value = current_raw_data, vault = "secret")
 }
 
