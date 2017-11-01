@@ -1,6 +1,6 @@
 #' Generalized function for decimalizing and standardizing currencies on prices
 #'
-#' @param source_dir Directory from which to read currency authority tables.
+#' @param currency_aat Lookup table with currency names and AAT ids
 #' @param df Source data frame
 #' @param amount_col_name Quoted name of column with original price string.
 #' @param currency_col_name Quoted name of column with original currency string.
@@ -18,13 +18,10 @@
 #' @return A data frame with 3 columns: \code{id_col_name} containing IDs from
 #'   original \code{df}, and  new columns for decimalized amount and currency.
 parse_prices <- function(currency_aat, df, amount_col_name, currency_col_name, id_col_name, decimalized_col_name, aat_col_name, amonsieurx = FALSE, replace_slashes = FALSE) {
-  currency_aat <- get_data(source_dir, "currency_aat")
-
   parsed_prices <- select(df, !!id_col_name, original_price = !!amount_col_name, original_currency = !!currency_col_name)
 
   # If specified, do string replacement on "amonsieurx" price codes
   if (amonsieurx) {
-    message("- Decoding 'amonsieurx' price codes")
     parsed_prices <- mutate(parsed_prices, price_amount = amonsieurx(original_price))
   } else {
     parsed_prices <- mutate(parsed_prices, price_amount = original_price)
