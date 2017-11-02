@@ -14,11 +14,17 @@ include:
 targets:
   all:
     depends:
+      - all_authorities
+      - all_sales_contents
+      - all_knoedler
+      - all_raw_concordances
+
+  all_authorities:
+    depends:
       - processed_data/artists_authority.rda
       - processed_data/owners_authority.rda
       - processed_data/exchange_rates.rda
       - processed_data/us_cpi.rda
-      - processed_data/joined_knoedler.rda
 
   artists_authority:
     command: produce_artists_authority(raw_artists_authority)

@@ -1,9 +1,25 @@
 targets:
-  # Knoedler ----
+
+  all_knoedler:
+    depends:
+      - processed_data/knoedler_stocknumber_concordance.rda
+      - processed_data/knoedler_with_ids.rda
+      - processed_data/knoedler.rda
+      - processed_data/knoedler_owners_lookup.rda
+      - processed_data/knoedler_sellers.rda
+      - processed_data/knoedler_buyers.rda
+      - processed_data/knoedler_joint_owners.rda
+      - processed_data/knoedler_dimensions.rda
+      - processed_data/knoedler_purchase_buyers.rda
+      - processed_data/knoedler_inventory_events.rda
+      - processed_data/knoedler_sale_info.rda
+      - processed_data/knoedler_sale_buyers.rda
+      - processed_data/knoedler_sale_sellers.rda
+      - processed_data/joined_knoedler.rda
 
   knoedler_stocknumber_concordance:
     command: produce_knoedler_stocknumber_concordance(raw_knoedler_stocknumber_concordance)
-  processed_data/knoedler_stocknumber_concordance:
+  processed_data/knoedler_stocknumber_concordance.rda:
     command: save(knoedler_stocknumber_concordance, file = target_name)
 
   knoedler_with_ids:
