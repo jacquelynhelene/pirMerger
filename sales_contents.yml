@@ -1,37 +1,138 @@
 targets:
 
+  all_sales_contents:
+    depends:
+      - processed_data/sales_descriptions_lugt_numbers.rda
+      - processed_data/sales_descriptions_title_seller.rda
+      - processed_data/sales_descriptions_auc_copy_seller.rda
+      - processed_data/sales_descriptions_other_seller.rda
+      - processed_data/sales_descriptions_auth_seller.rda
+      - processed_data/sales_descriptions_expert_auth.rda
+      - processed_data/sales_descriptions_commissaire_pr.rda
+      - processed_data/sales_descriptions_auction_house.rda
+      - processed_data/sales_descriptions_country.rda
+      - processed_data/sales_catalogs_info.rda
+      - processed_data/sales_descriptions.rda
+      - processed_data/sales_contents_expert_auth.rda
+      - processed_data/sales_contents_commissaire_pr.rda
+      - processed_data/sales_contents_artists.rda
+      - processed_data/sales_contents_hand_notes.rda
+      - processed_data/sales_contents_sellers.rda
+      - processed_data/sales_contents_buyers.rda
+      - processed_data/sales_contents_prices.rda
+      - processed_data/sales_contents_prev_owners.rda
+      - processed_data/sales_contents_prev_sale.rda
+      - processed_data/sales_contents_post_sale.rda
+      - processed_data/sales_contents_post_owners.rda
+
+  # Sales Contents
+
   sales_contents_ids:
     command: produce_sales_contents_ids(raw_sales_contents)
 
   sales_contents_expert_auth:
     command: produce_sales_contents_expert_auth(sales_contents_ids)
+  processed_data/sales_contents_expert_auth.rda:
+    command: save(sales_contents_expert_auth, file = target_name)
 
   sales_contents_commissaire_pr:
     command: produce_sales_contents_commissaire_pr(sales_contents_ids)
+  processed_data/sales_contents_commissaire_pr.rda:
+    command: save(sales_contents_commissaire_pr, file = target_name)
 
   sales_contents_artists:
     command: produce_sales_contents_artists(sales_contents_ids)
+  processed_data/sales_contents_artists.rda:
+    command: save(sales_contents_artists, file = target_name)
 
   sales_contents_hand_notes:
     command: produce_sales_contents_hand_notes(sales_contents_ids)
+  processed_data/sales_contents_hand_notes.rda:
+    command: save(sales_contents_hand_notes, file = target_name)
 
   sales_contents_sellers:
     command: produce_sales_contents_sellers(sales_contents_ids)
+  processed_data/sales_contents_sellers.rda:
+    command: save(sales_contents_sellers, file = target_name)
 
   sales_contents_buyers:
     command: produce_sales_contents_buyers(sales_contents_ids)
+  processed_data/sales_contents_buyers.rda:
+    command: save(sales_contents_buyers, file = target_name)
 
   sales_contents_prices:
     command: produce_sales_contents_prices(sales_contents_ids)
+  processed_data/sales_contents_prices.rda:
+    command: save(sales_contents_prices, file = target_name)
 
   sales_contents_prev_owners:
     command: produce_sales_contents_prev_owners(sales_contents_ids)
+  processed_data/sales_contents_prev_owners.rda:
+    command: save(sales_contents_prev_owners, file = target_name)
 
   sales_contents_prev_sale:
     command: produce_sales_contents_prev_sale(sales_contents_ids)
+  processed_data/sales_contents_prev_sale.rda:
+    command: save(sales_contents_prev_sale, file = target_name)
 
   sales_contents_post_sale:
-    command: produce_sales_contents_post_sale(sales_contents_ids)
+    command: proudce_sales_contents_post_sale(sales_contents_ids)
+  processed_data/sales_contents_post_sale.rda:
+    command: save(sales_contents_post_sale, file = target_name)
 
   sales_contents_post_owners:
     command: proudce_sales_contents_post_owners(sales_contents_ids)
+  processed_data/sales_contents_post_owners.rda:
+    command: save(sales_contents_post_owners, file = target_name)
+
+  # Sales Descriptions
+
+  sales_descriptions_ids:
+    command: produce_sales_descriptions_ids(raw_sales_descriptions)
+  sales_descriptions_lugt_numbers:
+    command: produce_sales_descriptions_lugt_numbers(sales_descriptions_ids)
+  processed_data/sales_descriptions_lugt_numbers.rda:
+    command: save(sales_descriptions_lugt_numbers, file = target_name)
+  sales_descriptions_title_seller:
+    command: produce_sales_descriptions_title_seller(sales_descriptions_ids)
+  processed_data/sales_descriptions_title_seller.rda:
+    command: save(sales_descriptions_title_seller, file = target_name)
+  sales_descriptions_auc_copy_seller:
+    command: produce_sales_descriptions_auc_copy_seller(sales_descriptions_ids)
+  processed_data/sales_descriptions_auc_copy_seller.rda:
+    command: save(sales_descriptions_auc_copy_seller, file = target_name)
+  sales_descriptions_other_seller:
+    command: produce_sales_descriptions_other_seller(sales_descriptions_ids)
+  processed_data/sales_descriptions_other_seller.rda:
+    command: save(sales_descriptions_other_seller, file = target_name)
+  sales_descriptions_auth_seller:
+    command: produce_sales_descriptions_auth_seller(sales_descriptions_ids)
+  processed_data/sales_descriptions_auth_seller.rda:
+    command: save(sales_descriptions_auth_seller, file = target_name)
+  sales_descriptions_expert_auth:
+    command: produce_sales_descriptions_expert_auth(sales_descriptions_ids)
+  processed_data/sales_descriptions_expert_auth.rda:
+    command: save(sales_descriptions_expert_auth, file = target_name)
+  sales_descriptions_commissaire_pr:
+    command: produce_sales_descriptions_commissaire_pr(sales_descriptions_ids)
+  processed_data/sales_descriptions_commissaire_pr.rda:
+    command: save(sales_descriptions_commissaire_pr, file = target_name)
+  sales_descriptions_auction_house:
+    command: produce_sales_descriptions_auction_house(sales_descriptions_ids)
+  processed_data/sales_descriptions_auction_house.rda:
+    command: save(sales_descriptions_auction_house, file = target_name)
+  sales_descriptions_country:
+    command: produce_sales_descriptions_country(sales_descriptions_ids)
+  processed_data/sales_descriptions_country.rda:
+    command: save(sales_descriptions_country, file = target_name)
+  sales_catalogs_info:
+    command: produce_sales_catalogs_info(raw_sales_catalogs_info, raw_sales_catalogs_loccodes)
+  processed_data/sales_catalogs_info.rda:
+    command: save(sales_catalogs_info, file = target_name)
+
+  sales_descriptions:
+    command: produce_sales_descriptions(sales_descriptions_ids)
+  processed_data/sales_descriptions.rda:
+    command: save(sales_descriptions, file = target_name)
+
+
