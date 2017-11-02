@@ -1,0 +1,37 @@
+targets:
+
+  sales_contents_ids:
+    command: produce_sales_contents_ids(raw_sales_contents)
+
+  sales_contents_expert_auth:
+    command: produce_sales_contents_expert_auth(sales_contents_ids)
+
+  sales_contents_commissaire_pr:
+    command: produce_sales_contents_commissaire_pr(sales_contents_ids)
+
+  sales_contents_artists:
+    command: produce_sales_contents_artists(sales_contents_ids)
+
+  sales_contents_hand_notes:
+    command: produce_sales_contents_hand_notes(sales_contents_ids)
+
+  sales_contents_sellers:
+    command: produce_sales_contents_sellers(sales_contents_ids)
+
+  sales_contents_buyers:
+    command: produce_sales_contents_buyers(sales_contents_ids)
+
+  sales_contents_prices:
+    command: produce_sales_contents_prices(sales_contents_ids)
+
+  sales_contents_prev_owners:
+    command: produce_sales_contents_prev_owners(sales_contents_ids)
+
+  sales_contents_prev_sale:
+    command: produce_sales_contents_prev_sale(sales_contents_ids)
+
+  sales_contents_post_sale:
+    command: produce_sales_contents_post_sale(sales_contents_ids)
+
+  sales_contents_post_owners:
+    command: proudce_sales_contents_post_owners(sales_contents_ids)

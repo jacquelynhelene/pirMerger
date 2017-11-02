@@ -9,6 +9,7 @@ packages:
 include:
   - knoedler.yml
   - raw_data.yml
+  - sales_contents.yml
 
 targets:
   all:
