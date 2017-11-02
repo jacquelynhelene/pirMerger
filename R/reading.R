@@ -28,7 +28,8 @@ data_definitions <- function(definitions) {
 #'
 #' @import stringr
 #' @export
-read_dat <- function(file_names, header_file_name) {
+read_dat <- function(..., header_file_name, stop_on_problems = TRUE) {
+  file_names <- as.character(list(...))
   headers <- readr::read_lines(file = header_file_name) %>%
     str_trim() %>%
     str_replace_all("[[:punct:] ]+$", "") %>%
@@ -43,7 +44,7 @@ read_dat <- function(file_names, header_file_name) {
   probs <- map(tdata, problems)
   tdata <- bind_rows(tdata, .id = "original_file_name")
 
-  if (sum(map_int(probs, nrow)) / nrow(tdata) > 0.01)
+  if (stop_on_problems && sum(map_int(probs, nrow)) / nrow(tdata) > 0.01)
     warning("More than 10 percent of the rows in ", file_names, " have readr problems.")
 
   attr(tdata, "problems") <- probs
