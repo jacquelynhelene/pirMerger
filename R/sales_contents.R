@@ -99,7 +99,7 @@ produce_sales_descriptions <- function(sales_descriptions) {
     select(-(expert_auth_1:expert_auth_4)) %>%
     select(-(commissaire_pr_1:commissaire_pr_4)) %>%
     select(-(auc_house_name_1:auc_house_auth_4)) %>%
-    select(-(country_auth:country_auth_2))
+    select(-(country_auth_1:country_auth_2))
 }
 
 produce_sales_descriptions_lugt_numbers <- function(sales_descriptions) {
@@ -145,7 +145,6 @@ produce_sales_descriptions_auction_house <- function(sales_descriptions) {
 produce_sales_descriptions_country <-  function(sales_descriptions) {
   sales_descriptions %>%
     # small naming variation needs to be fixed
-    rename(country_auth_1 = country_auth) %>%
     norm_vars(base_names = c("country_auth"), n_reps = 2, idcols = "description_puri")
 }
 
