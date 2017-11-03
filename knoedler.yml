@@ -33,7 +33,7 @@ targets:
     command: save(knoedler, file = target_name)
 
   knoedler_artists:
-    command: produce_knoedler_artists(knoedler_with_ids)
+    command: produce_knoedler_artists(knoedler_with_ids, gpi_artists_nationality_aat)
   processed_data/knoedler_artists.rda:
     command: save(knoedler_artists, file = target_name)
 
