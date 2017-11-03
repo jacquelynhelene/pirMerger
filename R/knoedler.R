@@ -467,7 +467,8 @@ produce_knoedler_artists <- function(raw_knoedler, gpi_artists_nationality_aat) 
     norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     rename(artist_star_record_no = star_rec_no) %>%
     # Join ulan ids to this list
-    left_join(gpi_artists_nationality_aat, by = c("art_authority" = "nationality_name")) %>%
+    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod) %>%
+    left_join(gpi_artists_nationality_aat, by = c("artist_authority" = "nationality_name")) %>%
     # Generate unique IDs for all artists mentioned here
     identify_knoedler_anonymous_artists()
 }
@@ -477,16 +478,16 @@ identify_knoedler_anonymous_artists <- function(df) {
   df %>%
     mutate(
       # Is the artist a "generic" one (with their name starting in brackets)
-      is_anon = str_detect(art_authority, "^\\["),
+      is_anon = str_detect(artist_authority, "^\\["),
       person_uid = case_when(
         # If ULAN ID present, group based on that
         !is.na(artist_ulan_id) & !is_anon ~ paste0("ulan-artist-", group_indices(., artist_ulan_id)),
         # If a non-generic artist w/o authority, create unique id each time
-        is.na(art_authority) & (is.na(is_anon) | !is_anon) ~ paste0("blank-artist-", seq_along(art_authority)),
+        is.na(artist_authority) & (is.na(is_anon) | !is_anon) ~ paste0("blank-artist-", seq_along(artist_authority)),
         # If a generic artist, create unique id each time
-        is_anon ~ paste0("anon-artist-", seq_along(art_authority)),
+        is_anon ~ paste0("anon-artist-", seq_along(artist_authority)),
         # If authority is present, group based on that
-        !is.na(art_authority) & !is_anon ~ paste0("known-artist-", group_indices(., art_authority))
+        !is.na(artist_authority) & !is_anon ~ paste0("known-artist-", group_indices(., artist_authority))
       )
     ) %>%
     select(-is_anon) %>%
