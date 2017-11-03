@@ -100,3 +100,10 @@ produce_ulan_derivative_artists <- function(source_dir, repo_path) {
 
   write_csv(derivative, path = paste(repo_path, "derivatives", "ulan_load_artists.csv", sep = "/"))
 }
+
+produce_gpi_artists_nationality_aat <- function(raw_gpi_artist_nationality_aat) {
+  just_aat <- raw_gpi_artist_nationality_aat %>%
+    single_separate("artist_aat_nationality", sep = ";") %>%
+    mutate_at(vars(contains("artist_aat_nationality")), funs(as.integer)) %>%
+    select(-or_and)
+}

@@ -32,6 +32,9 @@ targets:
   processed_data/artists_authority.rda:
     command: save(artists_authority, file = target_name)
 
+  gpi_artists_nationality_aat:
+    command: produce_gpi_artists_nationality_aat(raw_gpi_artist_nationality_aat)
+
   owners_authority:
     command: produce_owners_authority(raw_owners_authority)
   processed_data/owners_authority.rda:

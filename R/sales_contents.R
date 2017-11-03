@@ -41,10 +41,11 @@ produce_sales_contents_commissaire_pr <- function(sales_contents) {
   norm_vars(sales_contents, base_names = "commissaire_pr", n_reps = 4, idcols = "puri")
 }
 
-produce_sales_contents_artists <- function(sales_contents) {
+produce_sales_contents_artists <- function(sales_contents, gpi_artists_nationality_aat) {
   norm_vars(sales_contents, base_names = c("artist_name", "artist_info", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 5, idcols = "puri") %>%
     rename(artist_star_rec_no = star_rec_no) %>%
-    mutate_at(vars(artist_star_rec_no), funs(as.integer))
+    mutate_at(vars(artist_star_rec_no), funs(as.integer)) %>%
+    left_join(gpi_artists_nationality_aat, by = c("art_authority" = "nationality_name"))
 }
 
 produce_sales_contents_hand_notes <- function(sales_contents) {

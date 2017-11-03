@@ -47,7 +47,7 @@ targets:
     command: save(sales_contents_commissaire_pr, file = target_name)
 
   sales_contents_artists:
-    command: produce_sales_contents_artists(sales_contents_ids)
+    command: produce_sales_contents_artists(sales_contents_ids, gpi_artists_nationality_aat)
   processed_data/sales_contents_artists.rda:
     command: save(sales_contents_artists, file = target_name)
 
