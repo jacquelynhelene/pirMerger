@@ -13,7 +13,8 @@ produce_sales_contents_ids <- function(raw_sales_contents) {
     mutate_at(vars(lot_sale_year, lot_sale_month, lot_sale_day), funs(as.integer)) %>%
     mutate(project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
     rename(puri = persistent_puid) %>%
-    select(-star_record_no)
+    select(-star_record_no) %>%
+    assertr::assert(assertr::not_na, puri)
 }
 
 produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sales_contents_post_sales) {
@@ -29,7 +30,7 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     select(-(prev_sale_year_1:prev_sale_coll_7)) %>%
     select(-(post_sale_yr_1:post_sale_col_13)) %>%
     select(-(post_own_1:post_own_auth_q_6)) %>%
-    identify_unique_objects(sales_contents_prev_sales, sales_contents_post_sales, sales_contents)
+    identify_unique_objects(sales_contents_prev_sales, sales_contents_post_sales)
 }
 
 produce_sales_contents_expert_auth <- function(sales_contents) {

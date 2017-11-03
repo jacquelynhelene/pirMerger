@@ -5,6 +5,7 @@ packages:
   - stringr
   - tidyverse
   - rematch2
+  - igraph
 
 include:
   - knoedler.yml

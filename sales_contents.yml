@@ -24,11 +24,17 @@ targets:
       - processed_data/sales_contents_prev_sale.rda
       - processed_data/sales_contents_post_sale.rda
       - processed_data/sales_contents_post_owners.rda
+      - processed_data/sales_contents.rda
 
   # Sales Contents
 
   sales_contents_ids:
     command: produce_sales_contents_ids(raw_sales_contents)
+
+  sales_contents:
+    command: produce_sales_contents(sales_contents_ids, sales_contents_prev_sale, sales_contents_post_sale)
+  processed_data/sales_contents.rda:
+    command: save(sales_contents, file = target_name)
 
   sales_contents_expert_auth:
     command: produce_sales_contents_expert_auth(sales_contents_ids)
