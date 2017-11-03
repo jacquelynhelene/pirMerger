@@ -33,7 +33,7 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     identify_unique_objects(sales_contents_prev_sales, sales_contents_post_sales)
 }
 
-produce_sales_contents_expert_auth <- function(sales_contents) {
+produce_sales_contents_experts <- function(sales_contents) {
   norm_vars(sales_contents, base_names = "expert_auth", n_reps = 4, idcols = "puri")
 }
 
@@ -68,12 +68,12 @@ produce_sales_contents_prev_owners <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("prev_owner", "prev_own_ques", "prev_own_so", "prev_own_auth", "prev_own_auth_d", "prev_own_auth_l", "prev_own_auth_q"), n_reps = 9, idcols = "puri")
 }
 
-produce_sales_contents_prev_sale <- function(sales_contents) {
+produce_sales_contents_prev_sales <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("prev_sale_year", "prev_sale_mo", "prev_sale_day", "prev_sale_loc", "prev_sale_lot", "prev_sale_ques", "prev_sale_artx", "prev_sale_ttlx", "prev_sale_note", "prev_sale_coll"), n_reps = 7, idcols = "puri") %>%
     mutate_at(vars(prev_sale_year, prev_sale_mo, prev_sale_day), funs(as.integer))
 }
 
-proudce_sales_contents_post_sale <- function(sales_contents) {
+proudce_sales_contents_post_sales <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("post_sale_yr", "post_sale_mo", "post_sale_day", "post_sale_loc", "post_sale_lot", "post_sale_q", "post_sale_art", "post_sale_ttl", "post_sale_nte", "post_sale_col"), n_reps = 13, idcols = "puri") %>%
     mutate_at(vars(post_sale_yr, post_sale_mo, post_sale_day), funs(as.integer))
 }

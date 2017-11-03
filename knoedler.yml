@@ -3,18 +3,20 @@ targets:
   all_knoedler:
     depends:
       - processed_data/knoedler_stocknumber_concordance.rda
-      - processed_data/knoedler_with_ids.rda
       - processed_data/knoedler.rda
       - processed_data/knoedler_owners_lookup.rda
+      - processed_data/knoedler_artists.rda
       - processed_data/knoedler_sellers.rda
       - processed_data/knoedler_buyers.rda
       - processed_data/knoedler_joint_owners.rda
       - processed_data/knoedler_dimensions.rda
-      - processed_data/knoedler_purchase_buyers.rda
       - processed_data/knoedler_inventory_events.rda
       - processed_data/knoedler_sale_info.rda
       - processed_data/knoedler_sale_buyers.rda
       - processed_data/knoedler_sale_sellers.rda
+      - processed_data/knoedler_purchase_info.rda
+      - processed_data/knoedler_purchase_sellers.rda
+      - processed_data/knoedler_purchase_buyers.rda
       - processed_data/joined_knoedler.rda
       - ../pirdata/knoedler_join.csv
 
@@ -25,8 +27,6 @@ targets:
 
   knoedler_with_ids:
     command: produce_knoedler_ids(raw_knoedler, knoedler_stocknumber_concordance)
-  processed_data/knoedler_with_ids.rda:
-    command: save(knoedler_with_ids, file = target_name)
 
   knoedler:
     command: produce_knoedler(knoedler_with_ids)

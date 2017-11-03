@@ -13,7 +13,7 @@ targets:
       - processed_data/sales_descriptions_country.rda
       - processed_data/sales_catalogs_info.rda
       - processed_data/sales_descriptions.rda
-      - processed_data/sales_contents_expert_auth.rda
+      - processed_data/sales_contents_experts.rda
       - processed_data/sales_contents_commissaire_pr.rda
       - processed_data/sales_contents_artists.rda
       - processed_data/sales_contents_hand_notes.rda
@@ -21,8 +21,8 @@ targets:
       - processed_data/sales_contents_buyers.rda
       - processed_data/sales_contents_prices.rda
       - processed_data/sales_contents_prev_owners.rda
-      - processed_data/sales_contents_prev_sale.rda
-      - processed_data/sales_contents_post_sale.rda
+      - processed_data/sales_contents_prev_sales.rda
+      - processed_data/sales_contents_post_sales.rda
       - processed_data/sales_contents_post_owners.rda
       - processed_data/sales_contents.rda
 
@@ -32,14 +32,14 @@ targets:
     command: produce_sales_contents_ids(raw_sales_contents)
 
   sales_contents:
-    command: produce_sales_contents(sales_contents_ids, sales_contents_prev_sale, sales_contents_post_sale)
+    command: produce_sales_contents(sales_contents_ids, sales_contents_prev_sales, sales_contents_post_sales)
   processed_data/sales_contents.rda:
     command: save(sales_contents, file = target_name)
 
-  sales_contents_expert_auth:
-    command: produce_sales_contents_expert_auth(sales_contents_ids)
-  processed_data/sales_contents_expert_auth.rda:
-    command: save(sales_contents_expert_auth, file = target_name)
+  sales_contents_experts:
+    command: produce_sales_contents_experts(sales_contents_ids)
+  processed_data/sales_contents_experts.rda:
+    command: save(sales_contents_experts, file = target_name)
 
   sales_contents_commissaire_pr:
     command: produce_sales_contents_commissaire_pr(sales_contents_ids)
@@ -76,15 +76,15 @@ targets:
   processed_data/sales_contents_prev_owners.rda:
     command: save(sales_contents_prev_owners, file = target_name)
 
-  sales_contents_prev_sale:
-    command: produce_sales_contents_prev_sale(sales_contents_ids)
-  processed_data/sales_contents_prev_sale.rda:
-    command: save(sales_contents_prev_sale, file = target_name)
+  sales_contents_prev_sales:
+    command: produce_sales_contents_prev_sales(sales_contents_ids)
+  processed_data/sales_contents_prev_sales.rda:
+    command: save(sales_contents_prev_sales, file = target_name)
 
-  sales_contents_post_sale:
-    command: proudce_sales_contents_post_sale(sales_contents_ids)
-  processed_data/sales_contents_post_sale.rda:
-    command: save(sales_contents_post_sale, file = target_name)
+  sales_contents_post_sales:
+    command: proudce_sales_contents_post_sales(sales_contents_ids)
+  processed_data/sales_contents_post_sales.rda:
+    command: save(sales_contents_post_sales, file = target_name)
 
   sales_contents_post_owners:
     command: proudce_sales_contents_post_owners(sales_contents_ids)
