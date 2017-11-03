@@ -43,7 +43,8 @@ produce_knoedler <- function(knoedler_tmp) {
     select(-(buyer_name_1:buyer_ulan_id_2)) %>%
     select(-(purch_amount:knoedpurch_note)) %>%
     select(-(entry_date_year:entry_date_day)) %>%
-    select(-(sale_date_year:knoedshare_note), -transaction)
+    select(-(sale_date_year:knoedshare_note), -transaction) %>%
+    select(-pres_own_ulan_id)
 }
 
 # Returns the ULAN ID for knoedler
@@ -455,6 +456,12 @@ produce_knoedler_depicts_aat <- function(raw_knoedler_subjects_aat, kdf) {
     filter(!is.na(star_record_no))
 }
 
+produce_knoedler_present_owner_ulan <- function(raw_knoedler_present_owner_ulan) {
+  kdf %>%
+    select(-present_own_ulan_id) %>%
+    left_join(raw_knoedler_present_owner_ulan, by = "star_record_no")
+}
+
 produce_knoedler_artists <- function(raw_knoedler) {
   raw_knoedler %>%
     norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
@@ -583,7 +590,8 @@ produce_joined_knoedler <- function(knoedler,
                                     knoedler_subject_classified_as_aat,
                                     knoedler_depicts_aat,
                                     currency_aat,
-                                    knoedler_dimensions) {
+                                    knoedler_dimensions,
+                                    knoedler_present_owner_ulan) {
 
   knoedler_name_order <- c(
     "star_record_no",
@@ -725,5 +733,7 @@ produce_joined_knoedler <- function(knoedler,
     left_join(spread_out(knoedler_style_aat, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
     left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no")
-  joined_knoedler
+  joined_knoedler %>%
+    pipe_message("- Join knoedler_present_owner_ulan to knoedler") %>%
+    left_join(knoedler_present_owner_ulan, by = "star_record_no")
 }
