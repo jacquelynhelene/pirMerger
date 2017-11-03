@@ -313,7 +313,7 @@ identify_knoedler_objects <- function(df, knoedler_stocknumber_concordance) {
         # original number
         TRUE ~ paste("orignnum", knoedler_number, sep = "-"))) %>%
     mutate(object_id = paste("k", "object", group_indices(., prepped_sn), sep = "-")) %>%
-    select(-component)
+    select(-component, -prepped_sn)
 }
 
 # For a given object_id, attempt to discern an event order, which can be useful
