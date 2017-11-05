@@ -11,6 +11,7 @@ include:
   - knoedler.yml
   - raw_data.yml
   - sales_contents.yml
+  - goupil.yml
 
 targets:
   all:
@@ -18,6 +19,7 @@ targets:
       - all_authorities
       - all_sales_contents
       - all_knoedler
+      - all_goupil
       - all_raw_concordances
       - all_raw_star
 
