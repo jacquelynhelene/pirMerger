@@ -20,8 +20,7 @@ targets:
       - all_sales_contents
       - all_knoedler
       - all_goupil
-      - all_raw_concordances
-      - all_raw_star
+      - all_raw_data
 
   all_authorities:
     depends:
