@@ -29,3 +29,15 @@ produce_goupil_buyers <- function(goupil) {
 produce_goupil_previous_owners <- function(goupil) {
   norm_vars(goupil, base_names = c("previous_owner"), n_reps = 2, idcols = "star_record_no")
 }
+
+produce_joined_goupil <- function(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, goupil_present_location_ulan) {
+  goupil %>%
+    pipe_message("- Joining goupil_artists to goupil") %>%
+    left_join(spread_out(goupil_artists, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Joining goupil_buyers to goupil") %>%
+    left_join(spread_out(goupil_buyers, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Joining goupil_previous_owners to goupil") %>%
+    left_join(spread_out(goupil_previous_owners, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Joining goupil_present_location_ulan to goupil") %>%
+    left_join(spread_out(goupil_present_location_ulan, "star_record_no"), by = "star_record_no")
+}

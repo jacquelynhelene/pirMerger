@@ -35,3 +35,8 @@ targets:
     command: produce_goupil_previous_owners(goupil_with_ids)
   processed_data/goupil_previous_owners.rda:
     command: save(goupil_previous_owners, file = target_name)
+
+  joined_goupil:
+    command: produce_joined_goupil(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, raw_goupil_present_location_ulan)
+
+
