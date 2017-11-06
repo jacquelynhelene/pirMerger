@@ -31,23 +31,25 @@ produce_goupil_previous_owners <- function(goupil) {
 }
 
 produce_goupil_classified_as_aat <- function(raw_goupil_subject_genre_aat, goupil_with_ids) {
-  raw_goupil_subject_genre_aat %>%
+  tt <- raw_goupil_subject_genre_aat %>%
     select(goupil_subject, goupil_genre, classified_as_aat) %>%
     filter(!is.na(classified_as_aat)) %>%
     single_separate("classified_as_aat") %>%
-    mutate_at(vars(contains("aat")), funs(as.integer)) %>%
+    gather(classified_index, classified_as_aat, contains("classified_as_aat")) %>%
+    mutate_at(vars(classified_as_aat), funs(as.integer)) %>%
     left_join(select(goupil_with_ids, star_record_no, subject, genre), by = c("goupil_subject" = "subject", "goupil_genre" = "genre")) %>%
-    select(-goupil_subject, -goupil_genre)
+    select(-goupil_subject, -goupil_genre, -classified_index)
 }
 
 produce_goupil_depicts_aat <- function(raw_goupil_subject_genre_aat, goupil_with_ids) {
-  raw_goupil_subject_genre_aat %>%
+  tt <- raw_goupil_subject_genre_aat %>%
     select(goupil_subject, goupil_genre, depicts_aat) %>%
     filter(!is.na(depicts_aat)) %>%
     single_separate("depicts_aat") %>%
-    mutate_at(vars(contains("aat")), funs(as.integer)) %>%
+    gather(depicts_aat_index, depicts_aat, contains("depicts_aat")) %>%
+    mutate_at(vars(depicts_aat), funs(as.integer)) %>%
     left_join(select(goupil_with_ids, star_record_no, subject, genre), by = c("goupil_subject" = "subject", "goupil_genre" = "genre")) %>%
-    select(-goupil_subject, -goupil_genre)
+    select(-goupil_subject, -goupil_genre, -depicts_aat_index)
 }
 
 produce_joined_goupil <- function(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, goupil_present_location_ulan, goupil_classified_as_aat, goupil_depicts_aat) {
