@@ -36,7 +36,11 @@ targets:
   processed_data/goupil_previous_owners.rda:
     command: save(goupil_previous_owners, file = target_name)
 
+  goupil_classified_as_aat:
+    command: produce_goupil_classified_as_aat(raw_goupil_subject_genre_aat, goupil_with_ids)
+
+  goupil_depicts_aat:
+    command: produce_goupil_depicts_aat(raw_goupil_subject_genre_aat, goupil_with_ids)
+
   joined_goupil:
-    command: produce_joined_goupil(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, raw_goupil_present_location_ulan)
-
-
+    command: produce_joined_goupil(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, raw_goupil_present_location_ulan, goupil_classified_as_aat, goupil_depicts_aat)

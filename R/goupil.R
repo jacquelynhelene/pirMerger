@@ -30,7 +30,27 @@ produce_goupil_previous_owners <- function(goupil) {
   norm_vars(goupil, base_names = c("previous_owner"), n_reps = 2, idcols = "star_record_no")
 }
 
-produce_joined_goupil <- function(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, goupil_present_location_ulan) {
+produce_goupil_classified_as_aat <- function(raw_goupil_subject_genre_aat, goupil_with_ids) {
+  raw_goupil_subject_genre_aat %>%
+    select(goupil_subject, goupil_genre, classified_as_aat) %>%
+    filter(!is.na(classified_as_aat)) %>%
+    single_separate("classified_as_aat") %>%
+    mutate_at(vars(contains("aat")), funs(as.integer)) %>%
+    left_join(select(goupil_with_ids, star_record_no, subject, genre), by = c("goupil_subject" = "subject", "goupil_genre" = "genre")) %>%
+    select(-goupil_subject, -goupil_genre)
+}
+
+produce_goupil_depicts_aat <- function(raw_goupil_subject_genre_aat, goupil_with_ids) {
+  raw_goupil_subject_genre_aat %>%
+    select(goupil_subject, goupil_genre, depicts_aat) %>%
+    filter(!is.na(depicts_aat)) %>%
+    single_separate("depicts_aat") %>%
+    mutate_at(vars(contains("aat")), funs(as.integer)) %>%
+    left_join(select(goupil_with_ids, star_record_no, subject, genre), by = c("goupil_subject" = "subject", "goupil_genre" = "genre")) %>%
+    select(-goupil_subject, -goupil_genre)
+}
+
+produce_joined_goupil <- function(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, goupil_present_location_ulan, goupil_classified_as_aat, goupil_depicts_aat) {
   goupil %>%
     pipe_message("- Joining goupil_artists to goupil") %>%
     left_join(spread_out(goupil_artists, "star_record_no"), by = "star_record_no") %>%
@@ -39,5 +59,9 @@ produce_joined_goupil <- function(goupil, goupil_artists, goupil_buyers, goupil_
     pipe_message("- Joining goupil_previous_owners to goupil") %>%
     left_join(spread_out(goupil_previous_owners, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Joining goupil_present_location_ulan to goupil") %>%
-    left_join(spread_out(goupil_present_location_ulan, "star_record_no"), by = "star_record_no")
+    left_join(spread_out(goupil_present_location_ulan, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Joining goupil_classified_as_aat to goupil") %>%
+    left_join(spread_out(goupil_classified_as_aat, "star_record_no"), by = "star_record_no") %>%
+    pipe_message("- Joining goupil_depicts_aat to goupil") %>%
+    left_join(spread_out(goupil_depicts_aat, "star_record_no"), by = "star_record_no")
 }
