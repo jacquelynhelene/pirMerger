@@ -82,6 +82,50 @@ proudce_sales_contents_post_owners <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("post_own", "post_own_q", "post_own_so", "post_own_so_q", "post_own_auth", "post_own_auth_d", "post_own_auth_l", "post_own_auth_q"), n_reps = 6, idcols = "puri")
 }
 
+produce_sales_contents_materials_classified_as_aat <- function(raw_sales_contents_materials_aat, sales_contents_ids) {
+  raw_sales_contents_materials_aat %>%
+    select(sales_contents_object_type, sales_contents_materials, contains("classified_as")) %>%
+    single_separate("classified_as_2") %>%
+    mutate_at(vars(contains("classified_as")), as.integer) %>%
+    gather(ca_index, classified_as, contains("classified_as")) %>%
+    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    select(puri, object_type_classified_as_aat = classified_as) %>%
+    na.omit()
+}
+
+produce_sales_contents_made_of_materials_aat <- function(raw_sales_contents_materials_aat, sales_contents_ids) {
+  raw_sales_contents_materials_aat %>%
+    select(sales_contents_object_type, sales_contents_materials, made_of_materials) %>%
+    single_separate("made_of_materials") %>%
+    mutate_at(vars(contains("made_of_materials")), as.integer) %>%
+    gather(mo_index, made_of_aat, contains("made_of_materials")) %>%
+    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    select(puri, made_of_aat) %>%
+    na.omit()
+}
+
+produce_sales_contents_support_materials_aat <- function(raw_sales_contents_materials_aat, sales_contents_ids) {
+  raw_sales_contents_materials_aat %>%
+    select(sales_contents_object_type, sales_contents_materials, made_of_support) %>%
+    single_separate("made_of_support") %>%
+    mutate_at(vars(contains("made_of_support")), as.integer) %>%
+    gather(mo_index, support_aat, contains("made_of_support")) %>%
+    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    select(puri, support_aat) %>%
+    na.omit()
+}
+
+produce_sales_contents_technique_aat <- function(raw_sales_contents_materials_aat, sales_contents_ids) {
+  raw_sales_contents_materials_aat %>%
+    select(sales_contents_object_type, sales_contents_materials, technique) %>%
+    single_separate("technique") %>%
+    mutate_at(vars(contains("technique")), as.integer) %>%
+    gather(mo_index, technique, contains("technique")) %>%
+    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    select(puri, technique) %>%
+    na.omit()
+}
+
 # Sales Descriptions Normalization ----
 
 produce_sales_descriptions_ids <- function(raw_sales_descriptions) {

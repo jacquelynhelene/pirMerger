@@ -136,6 +136,15 @@ targets:
   processed_data/sales_catalogs_info.rda:
     command: save(sales_catalogs_info, file = target_name)
 
+  sales_contents_materials_classified_as_aat:
+    command: produce_sales_contents_materials_classified_as_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+  sales_contents_made_of_materials_aat:
+    command: produce_sales_contents_made_of_materials_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+  sales_contents_support_materials_aat:
+    command: produce_sales_contents_support_materials_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+  sales_contents_technique_aat:
+    command: produce_sales_contents_technique_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+
   sales_descriptions:
     command: produce_sales_descriptions(sales_descriptions_ids)
   processed_data/sales_descriptions.rda:
