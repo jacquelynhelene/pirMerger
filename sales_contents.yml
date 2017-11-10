@@ -145,6 +145,15 @@ targets:
   sales_contents_technique_aat:
     command: produce_sales_contents_technique_aat(raw_sales_contents_materials_aat, sales_contents_ids)
 
+  sales_contents_subject_aat:
+    command: produce_sales_contents_subject_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+  sales_contents_style_aat:
+    command: produce_sales_contents_style_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+  sales_contents_subject_classified_as_aat:
+    command: produce_sales_contents_subject_classified_as_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+  sales_contents_depicts_aat:
+    command: produce_sales_contents_depicts_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+
   sales_descriptions:
     command: produce_sales_descriptions(sales_descriptions_ids)
   processed_data/sales_descriptions.rda:

@@ -12,6 +12,8 @@ produce_sales_contents_ids <- function(raw_sales_contents) {
   raw_sales_contents %>%
     mutate_at(vars(lot_sale_year, lot_sale_month, lot_sale_day), funs(as.integer)) %>%
     mutate(project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
+    # Lowercase all text fields that need to be used as joining keys
+    mutate_at(vars(subject, genre, object_type, materials), funs(tolower)) %>%
     rename(puri = persistent_puid) %>%
     select(-star_record_no) %>%
     assertr::assert(assertr::not_na, puri)
@@ -123,6 +125,52 @@ produce_sales_contents_technique_aat <- function(raw_sales_contents_materials_aa
     gather(mo_index, technique, contains("technique")) %>%
     left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
     select(puri, technique) %>%
+    na.omit()
+}
+
+# Subject-related AAT terms
+
+produce_sales_contents_subject_aat <- function(raw_sales_contents_subject_aat, sales_contents_ids) {
+  raw_sales_contents_subject_aat %>%
+    select(sales_contents_subject, sales_contents_genre, subject_aat = subject) %>%
+    single_separate("subject_aat") %>%
+    mutate_at(vars(contains("subject_aat")), as.integer) %>%
+    gather(mo_index, subject_aat, contains("subject_aat")) %>%
+    left_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    select(puri, subject_aat) %>%
+    na.omit()
+}
+
+produce_sales_contents_style_aat <- function(raw_sales_contents_subject_aat, sales_contents_ids) {
+  raw_sales_contents_subject_aat %>%
+    select(sales_contents_subject, sales_contents_genre, style_aat = style) %>%
+    single_separate("style_aat") %>%
+    mutate_at(vars(contains("style_aat")), as.integer) %>%
+    gather(mo_index, style_aat, contains("style_aat")) %>%
+    left_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    select(puri, style_aat) %>%
+    na.omit()
+}
+
+produce_sales_contents_subject_classified_as_aat <- function(raw_sales_contents_subject_aat, sales_contents_ids) {
+  raw_sales_contents_subject_aat %>%
+    select(sales_contents_subject, sales_contents_genre, subject_classified_as_aat = classified_as) %>%
+    single_separate("subject_classified_as_aat") %>%
+    mutate_at(vars(contains("subject_classified_as_aat")), as.integer) %>%
+    gather(mo_index, subject_classified_as_aat, contains("subject_classified_as_aat")) %>%
+    full_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    select(puri, subject_classified_as_aat) %>%
+    na.omit()
+}
+
+produce_sales_contents_depicts_aat <- function(raw_sales_contents_subject_aat, sales_contents_ids) {
+  raw_sales_contents_subject_aat %>%
+    select(sales_contents_subject, sales_contents_genre, depicts_aat = depicts) %>%
+    single_separate("depicts_aat") %>%
+    mutate_at(vars(contains("depicts_aat")), as.integer) %>%
+    gather(mo_index, depicts_aat, contains("depicts_aat")) %>%
+    full_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    select(puri, depicts_aat) %>%
     na.omit()
 }
 
