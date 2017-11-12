@@ -26,6 +26,7 @@ targets:
     depends:
       - processed_data/artists_authority.rda
       - processed_data/owners_authority.rda
+      - processed_data/union_person_ids.rda
       - processed_data/exchange_rates.rda
       - processed_data/us_cpi.rda
 
@@ -41,6 +42,18 @@ targets:
     command: produce_owners_authority(raw_owners_authority)
   processed_data/owners_authority.rda:
     command: save(owners_authority, file = target_name)
+
+  combined_authority:
+    command: produce_combined_authority(owners_authority, artists_authority)
+
+  union_person_ids:
+    command: produce_union_person_ids(
+      knoedler_artists = knoedler_artists_lookup,
+      knoedler_buyers = knoedler_buyers_lookup,
+      knoedler_sellers = knoedler_sellers_lookup,
+      knoedler_joint_owners = knoedler_joint_owners_lookup)
+  processed_data/union_person_ids.rda:
+    command: save(union_person_ids, file = target_name)
 
   currency_aat:
     command: produce_currency_ids(raw_sales_contents_auth_currencies, raw_currencies_aat)

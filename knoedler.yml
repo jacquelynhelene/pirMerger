@@ -33,39 +33,40 @@ targets:
   processed_data/knoedler.rda:
     command: save(knoedler, file = target_name)
 
+  knoedler_artists_tmp:
+    command: produce_knoedler_artists_tmp(knoedler_with_ids)
+  knoedler_artists_lookup:
+    command: produce_knoedler_artists_lookup(knoedler_artists_tmp)
   knoedler_artists:
-    command: produce_knoedler_artists(knoedler_with_ids, gpi_artists_nationality_aat)
+    command: produce_knoedler_artists(knoedler_artists_tmp, union_person_ids)
   processed_data/knoedler_artists.rda:
     command: save(knoedler_artists, file = target_name)
 
   knoedler_sellers_tmp:
     command: produce_knoedler_sellers_tmp(knoedler_with_ids)
-
-  knoedler_buyers_tmp:
-    command: produce_knoedler_buyers_tmp(knoedler_with_ids)
-
-  knoedler_joint_owners_tmp:
-    command: produce_knoedler_joint_owners_tmp(knoedler_with_ids)
-
-  knoedler_owner_uids:
-    command: produce_knoedler_owner_uids(buyers_df = knoedler_buyers_tmp, sellers_df = knoedler_sellers_tmp, joint_df = knoedler_joint_owners_tmp)
-  knoedler_owners_lookup:
-    command: produce_knoedler_owners_lookup(knoedler_owner_uids)
-  processed_data/knoedler_owners_lookup.rda:
-    command: save(knoedler_owners_lookup, file = target_name)
-
+  knoedler_sellers_lookup:
+    command: produce_knoedler_sellers_lookup(knoedler_sellers_tmp)
   knoedler_sellers:
-    command: produce_knoedler_sellers(knoedler_sellers_tmp, knoedler_owner_uids)
+    command: produce_knoedler_sellers(knoedler_sellers_tmp, union_person_ids)
   processed_data/knoedler_sellers.rda:
     command: save(knoedler_sellers, file = target_name)
 
+
+  knoedler_buyers_tmp:
+    command: produce_knoedler_buyers_tmp(knoedler_with_ids)
+  knoedler_buyers_lookup:
+    command: produce_knoedler_buyers_lookup(knoedler_buyers_tmp)
   knoedler_buyers:
-    command: produce_knoedler_buyers(knoedler_buyers_tmp, knoedler_owner_uids)
+    command: produce_knoedler_buyers(knoedler_buyers_tmp, union_person_ids)
   processed_data/knoedler_buyers.rda:
     command: save(knoedler_buyers, file = target_name)
 
+  knoedler_joint_owners_tmp:
+    command: produce_knoedler_joint_owners_tmp(knoedler_with_ids)
+  knoedler_joint_owners_lookup:
+    command: produce_knoedler_joint_owners_lookup(knoedler_joint_owners_tmp)
   knoedler_joint_owners:
-    command: produce_knoedler_joint_owners(knoedler_joint_owners_tmp, knoedler_owner_uids)
+    command: produce_knoedler_joint_owners(knoedler_joint_owners_tmp, union_person_ids)
   processed_data/knoedler_joint_owners.rda:
     command: save(knoedler_joint_owners, file = target_name)
 

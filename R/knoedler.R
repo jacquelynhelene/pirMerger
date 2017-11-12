@@ -1,3 +1,5 @@
+# Knoedler Top Level ----
+
 #' Produce Knoedler table from raw table.
 #'
 #' This is a two-stage process. First, the raw, mostly denormalized exports are
@@ -87,6 +89,8 @@ produce_knoedler_dimensions <- function(kdf, dimensions_aat, units_aat) {
            dimension_unit_aat = unit_aat, dimension_type,
            dimension_type_aat = dimension_aat)
 }
+
+# Purchase Events ----
 
 # Pull the relevant information about Knoedler's intake of objects, and
 # structure into tables describing the sellers, buyers (Knoedler and joint
@@ -359,6 +363,9 @@ parse_knoedler_monetary_amounts <- function(df) {
     mutate_at(vars(purch_amount, knoedpurch_amt, price_amount), funs(as.numeric(str_match(., "(\\d+\\.?\\d*)")[,2])))
 }
 
+# AAT Tables ----
+
+
 produce_knoedler_materials_object_aat <- function(raw_knoedler_materials_aat, kdf) {
   raw_knoedler_materials_aat %>%
     select(materials = knoedler_materials, object_type = knoedler_object_type, aat_materials = made_of_materials) %>%
@@ -462,66 +469,64 @@ produce_knoedler_present_owner_ulan <- function(raw_knoedler_present_owner_ulan)
     left_join(raw_knoedler_present_owner_ulan, by = "star_record_no")
 }
 
-produce_knoedler_artists <- function(raw_knoedler, gpi_artists_nationality_aat) {
-  raw_knoedler %>%
-    norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
-    rename(artist_star_record_no = star_rec_no) %>%
-    # Join ulan ids to this list
-    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod) %>%
-    left_join(gpi_artists_nationality_aat, by = c("artist_authority" = "nationality_name")) %>%
-    # Generate unique IDs for all artists mentioned here
-    identify_knoedler_anonymous_artists()
-}
-
-#' @importFrom stringr str_detect
-identify_knoedler_anonymous_artists <- function(df) {
-  df %>%
-    mutate(
-      # Is the artist a "generic" one (with their name starting in brackets)
-      is_anon = str_detect(artist_authority, "^\\["),
-      person_uid = case_when(
-        # If ULAN ID present, group based on that
-        !is.na(artist_ulan_id) & !is_anon ~ paste0("ulan-artist-", group_indices(., artist_ulan_id)),
-        # If a non-generic artist w/o authority, create unique id each time
-        is.na(artist_authority) & (is.na(is_anon) | !is_anon) ~ paste0("blank-artist-", seq_along(artist_authority)),
-        # If a generic artist, create unique id each time
-        is_anon ~ paste0("anon-artist-", seq_along(artist_authority)),
-        # If authority is present, group based on that
-        !is.na(artist_authority) & !is_anon ~ paste0("known-artist-", group_indices(., artist_authority))
-      )
-    ) %>%
-    select(-is_anon) %>%
-    # Every artist MUST have a person_uid
-    assertr::assert(assertr::not_na, person_uid)
-}
-
-# Combine both buyer and seller listings order to produce anonymous ids for everyone
-produce_knoedler_owner_uids <- function(buyers_df, sellers_df, joint_df) {
-  all_owners <- bind_rows(
-    buyers = select(buyers_df,star_record_no, owner_name = buyer_name, owner_auth = buy_auth_name, owner_ulan_id = buyer_ulan_id),
-    sellers = select(sellers_df, star_record_no, owner_name = seller_name, owner_auth = sell_auth_name, owner_ulan_id = seller_ulan_id),
-    joint = select(joint_df, star_record_no, owner_name = joint_own, owner_ulan_id = joint_ulan_id) %>% add_column(owner_auth = NA_character_),
-    .id = "owner_type") %>%
-    mutate(
-      is_anon = owner_auth %in% c("Anonymous Collection"),
-      is_new = owner_auth == "NEW" | is.na(owner_auth),
-      person_uid = case_when(
-        !is.na(owner_ulan_id) & !is_anon ~ paste0("ulan-owner-", group_indices(., owner_ulan_id)),
-        # In the case that an owner has the name "NEW", this means that authority work hasn't been done yet. This will instead group and assign IDs based on the owner name
-        is_new ~ paste0("unauthorized-owner-", group_indices(., owner_name)),
-        is_anon ~ paste0("anon-owner-", seq_along(owner_auth)),
-        !is.na(owner_auth) & !is_anon & !is_new ~ paste0("known-owner-", group_indices(., owner_auth))
-      )
-    ) %>%
-    select(-is_anon, -is_new) %>%
-    # Every artist MUST have a person_uid
-    assertr::assert(assertr::not_na, person_uid)
-}
-
 produce_knoedler_owners_lookup <- function(knoedler_owner_uids) {
   knoedler_owner_uids %>%
     group_by(person_uid) %>%
     summarize(owner_label = if_else(all(is.na(owner_auth)), pick(owner_name), pick(owner_auth)))
+}
+
+# People ----
+
+# Knoedler-specific process for flagging records with a UID process - should a
+# UID be generated based on a ULAN id? The auth name? The verbatim name? Or
+# uniquely generated (for all anonymous people)?
+identify_knoedler_id_process <- function(person_df) {
+  mutate(person_df,
+         is_bracketed = str_detect(person_auth, "^\\["),
+         is_anon_collex = person_auth %in% c("Anonymous Collection"),
+         is_new = person_auth == "NEW" | is.na(person_auth),
+         is_anon =  is_anon_collex | is_bracketed,
+         is_ulan = !is.na(person_ulan) & !is_anon,
+         is_known = !is.na(person_auth) & !is_anon & !is_new,
+         id_process = case_when(
+           is_ulan ~ "from_ulan",
+           is_new ~ "from_name",
+           is_anon ~ "from_nothing",
+           is_known ~ "from_auth")) %>%
+    select(source_record_id, source_document_id, person_name, person_auth, person_ulan, id_process) %>%
+    assertr::assert(assertr::not_na, id_process)
+}
+
+produce_knoedler_artists_tmp <- function(raw_knoedler) {
+  raw_knoedler %>%
+    norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
+    rename(artist_star_record_no = star_rec_no) %>%
+    # Join ulan ids to this list
+    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod)
+}
+
+produce_knoedler_artists_lookup <- function(knoedler_artists_tmp) {
+  select(knoedler_artists_tmp,
+         source_record_id = star_record_no,
+         person_name = artist_name,
+         person_auth = artist_authority,
+         person_ulan = artist_ulan_id) %>%
+    add_column(source_document_id = "KNOEDLER") %>%
+    identify_knoedler_id_process()
+}
+
+produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
+  upi_subset <- union_person_ids %>%
+    filter(source_db == "knoedler_artists") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(artist_uid = person_uid)
+
+  left_join(knoedler_artists_tmp,
+            upi_subset,
+            by = c("star_record_no" = "source_record_id",
+                   "artist_name" = "person_name",
+                   "artist_authority" = "person_auth",
+                   "artist_ulan_id" = "person_ulan"))
 }
 
 produce_knoedler_sellers_tmp <- function(raw_knoedler) {
@@ -529,11 +534,63 @@ produce_knoedler_sellers_tmp <- function(raw_knoedler) {
     norm_vars(base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc", "seller_ulan_id"), n_reps = 2, idcols = "star_record_no")
 }
 
+produce_knoedler_sellers_lookup <- function(knoedler_sellers_tmp) {
+  select(knoedler_sellers_tmp,
+         source_record_id = star_record_no,
+         person_name = seller_name,
+         person_auth = sell_auth_name,
+         person_ulan = seller_ulan_id) %>%
+    add_column(source_document_id = "KNOEDLER") %>%
+    identify_knoedler_id_process()
+}
+
+produce_knoedler_sellers <- function(knoedler_sellers_tmp, union_person_ids) {
+  seller_ids <- union_person_ids %>%
+    filter(source_db == "knoedler_sellers") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(seller_uid = person_uid)
+
+  left_join(knoedler_sellers_tmp,
+            seller_ids,
+            by = c(
+               "star_record_no" = "source_record_id",
+              "seller_name" = "person_name",
+              "sell_auth_name" = "person_auth",
+              "seller_ulan_id" = "person_ulan"
+            ))
+}
+
 produce_knoedler_buyers_tmp <- function(raw_knoedler) {
   raw_knoedler %>%
     # As Knoedler is technically one of the joint owners, they need to be
     # present in every sale
     norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr", "buyer_ulan_id"), n_reps = 2, idcols = "star_record_no")
+}
+
+produce_knoedler_buyers_lookup <- function(knoedler_buyers_tmp) {
+  select(knoedler_buyers_tmp,
+         source_record_id = star_record_no,
+         person_name = buyer_name,
+         person_auth = buy_auth_name,
+         person_ulan = buyer_ulan_id) %>%
+    add_column(source_document_id = "KNOEDLER") %>%
+    identify_knoedler_id_process()
+}
+
+produce_knoedler_buyers <- function(knoedler_buyers_tmp, union_person_ids) {
+  buyer_ids <- union_person_ids %>%
+    filter(source_db == "knoedler_buyers") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(buyer_uid = person_uid)
+
+  left_join(knoedler_buyers_tmp,
+            buyer_ids,
+            by = c(
+              "star_record_no" = "source_record_id",
+              "buyer_name" = "person_name",
+              "buy_auth_name" = "person_auth",
+              "buyer_ulan_id" = "person_ulan"
+            ))
 }
 
 produce_knoedler_joint_owners_tmp <- function(raw_knoedler) {
@@ -547,20 +604,33 @@ produce_knoedler_joint_owners_tmp <- function(raw_knoedler) {
     norm_vars(base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 5, idcols = "star_record_no")
 }
 
-produce_knoedler_sellers <- function(knoedler_sellers_tmp, knoedler_owner_uids) {
-  knoedler_sellers_tmp %>%
-    bind_cols(select(filter(knoedler_owner_uids, owner_type == "sellers"), seller_uid = person_uid))
+produce_knoedler_joint_owners_lookup <- function(knoedler_joint_owners_tmp) {
+  select(knoedler_joint_owners_tmp,
+         source_record_id = star_record_no,
+         person_auth = joint_own,
+         person_ulan = joint_ulan_id) %>%
+    add_column(
+      person_name = NA_character_,
+      source_document_id = "KNOEDLER") %>%
+    identify_knoedler_id_process()
 }
 
-produce_knoedler_buyers <- function(knoedler_buyers_tmp, knoedler_owner_uids) {
-  knoedler_buyers_tmp %>%
-    bind_cols(select(filter(knoedler_owner_uids, owner_type == "buyers"), buyer_uid = person_uid))
+produce_knoedler_joint_owners <- function(knoedler_joint_owners_tmp, union_person_ids) {
+  joint_owner_ids <- union_person_ids %>%
+    filter(source_db == "knoedler_joint_owners") %>%
+    select(-source_db, -source_document_id, -person_name) %>%
+    rename(joint_owner_uid = person_uid)
+
+  left_join(knoedler_joint_owners_tmp,
+            joint_owner_ids,
+            by = c(
+              "star_record_no" = "source_record_id",
+              "joint_own" = "person_auth",
+              "joint_ulan_id" = "person_ulan"
+            ))
 }
 
-produce_knoedler_joint_owners <- function(knoedler_joint_owners_tmp, knoedler_owner_uids) {
-  knoedler_joint_owners_tmp %>%
-    bind_cols(select(filter(knoedler_owner_uids, owner_type == "joint"), joint_owner_uid = person_uid))
-}
+# Joined Table ----
 
 #' Produce a joined Knoedler table
 #'

@@ -194,3 +194,89 @@ produce_ulan_derivative_owners <- function(owners_authority) {
 
 # Merged Authority ----
 
+produce_merged_persons <- function(owners_authority, artists_authority) {
+  renamed_owners <- owners_authority %>%
+    select(
+      authority_name = owner_authority,
+      person_role = type,
+      project,
+      birth_date,
+      death_date,
+      active_dates,
+      locations = owner_locations,
+      nationality,
+      address,
+      source,
+      brief_notes,
+      working_notes,
+      text,
+      ulan_id,
+      date_last_edited,
+      early_date = owner_early,
+      late_date = owner_late,
+      display_date = owner_display,
+      clean_authority_name = owner_authority_clean,
+      parenthetical_text,
+      location_from_name
+    )
+
+  renamed_artists <- artists_authority %>%
+    select(
+      authority_name = artist_authority,
+      birth_date,
+      death_date,
+      active_dates = period_active,
+      century_active,
+      locations = active_city_date,
+      nationality,
+      school,
+      subjects_painted,
+      source = source_of_name,
+      medal_received,
+      bha_rila,
+      working_notes = notes,
+      ulan_id,
+      message,
+      date_last_edited,
+      early_date = artist_early,
+      late_date = artist_late,
+      display_date = artist_display,
+      clean_authority_name = artist_authority_clean,
+      parenthetical_text
+    )
+
+  combined_authority <- bind_rows(
+    owners = renamed_owners,
+    artists = renamed_artists,
+    .id = "authority_source"
+  )
+}
+
+# Takes tables from multiple database sources and positions (artist, buyer,
+# etc.) and computes unique IDs across all datasets. Input tables should contain
+# the following columns:
+# - source_record_id (e.g. star_record_no, puri)
+# - source_document_id (document-level aggregation to be used when creating
+# persons based on their contexts in a document. For example, an unidentified
+# buyer with the same name across one sales catalog may be treated as an
+# individual, even when no other identity information is known outside the
+# context of that sales catalog)
+# - person_name ("verbatim" string information for that artist in the context of the source record)
+# - person_auth ("authorized" name)
+# - person_ulan (known ULAN ID, if such an id has been entered into the original STAR record)
+# - id_process (Whether ID should be derived from ULAN id, from the verbatim
+# name, from "nothing" [given an unrepeated id], from authority name, or from
+# authority name WITH a document grouping provision)
+produce_union_person_ids <- function(...) {
+  bind_rows(list(...), .id = "source_db") %>%
+    assertr::assert(assertr::in_set("from_ulan", "from_name", "from_nothing", "from_auth")) %>%
+    mutate(
+      person_uid = case_when(
+        id_process == "from_ulan" ~ paste0("ulan-person-", group_indices(., person_ulan)),
+        id_process == "from_name" ~ paste0("unauthorized-person-", group_indices(., person_name)),
+        id_process == "from_nothing" ~ paste0("anon-person-", seq_along(person_auth)),
+        id_process == "from_auth" ~ paste0("known-person-", group_indices(., person_auth)),
+        id_process == "from_auth_grouped" ~ paste0("known-person-indoc-", group_indices(., person_auth, source_document_id)))) %>%
+    select(-id_process)
+}
+
