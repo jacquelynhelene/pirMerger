@@ -4,7 +4,6 @@ targets:
     depends:
       - processed_data/knoedler_stocknumber_concordance.rda
       - processed_data/knoedler.rda
-      - processed_data/knoedler_owners_lookup.rda
       - processed_data/knoedler_artists.rda
       - processed_data/knoedler_sellers.rda
       - processed_data/knoedler_buyers.rda
