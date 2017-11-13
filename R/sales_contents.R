@@ -35,6 +35,32 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     identify_unique_objects(sales_contents_prev_sales, sales_contents_post_sales)
 }
 
+# Sales Contents - People ----
+
+identify_sales_contents_id_process <- function(person_df, combined_authority) {
+
+  missing_auth_names <- person_df %>%
+    filter(!is.na(person_auth) & !(person_auth %in% combined_authority$authority_name)) %>%
+    pull(person_auth)
+
+  mutate(person_df,
+         is_bracketed = str_detect(person_auth, "^\\["),
+         is_anon_collex = person_auth %in% c("Anonymous Collection"),
+         is_new = person_auth == "NEW" | is.na(person_auth),
+         is_anon =  is_anon_collex | is_bracketed,
+         is_ulan = !is.na(person_ulan) & !is_anon,
+         is_known = !is.na(person_auth) & !is_anon & !is_new,
+         is_bad_authority = person_auth %in% missing_auth_names,
+         id_process = case_when(
+           is_ulan ~ "from_ulan",
+           is_new ~ "from_name",
+           is_anon ~ "from_nothing",
+           is_known ~ "from_auth",
+           is_bad_authority ~ "from_auth_grouped")) %>%
+    select(source_record_id, source_document_id, person_name, person_auth, person_ulan, id_process) %>%
+    assertr::assert(assertr::not_na, id_process)
+}
+
 produce_sales_contents_experts <- function(sales_contents) {
   norm_vars(sales_contents, base_names = "expert_auth", n_reps = 4, idcols = "puri")
 }
@@ -43,11 +69,36 @@ produce_sales_contents_commissaire_pr <- function(sales_contents) {
   norm_vars(sales_contents, base_names = "commissaire_pr", n_reps = 4, idcols = "puri")
 }
 
-produce_sales_contents_artists <- function(sales_contents, gpi_artists_nationality_aat) {
+produce_sales_contents_artists_tmp <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("artist_name", "artist_info", "art_authority", "nationality", "attribution_mod", "star_rec_no"), n_reps = 5, idcols = "puri") %>%
-    rename(artist_star_rec_no = star_rec_no) %>%
-    mutate_at(vars(artist_star_rec_no), funs(as.integer)) %>%
-    left_join(gpi_artists_nationality_aat, by = c("art_authority" = "nationality_name"))
+    select(-star_rec_no)
+}
+
+produce_sales_contents_artists_lookup <- function(sales_contents_artists_tmp, sales_contents_ids, combined_authority) {
+  sales_contents_artists_tmp %>%
+    left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+    select(
+      source_record_id = puri,
+      source_document_id = catalog_number,
+      person_name = artist_name,
+      person_auth = art_authority
+    ) %>%
+    add_column(person_ulan = NA_integer_) %>%
+    identify_sales_contents_id_process(combined_authority)
+}
+
+produce_sales_contents_artists <- function(sales_contents_artists_tmp, union_person_ids) {
+  artists_ids <- union_person_ids %>%
+    filter(source_db == "sales_contents_artists") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(artist_uid = person_uid)
+
+  left_join(sales_contents_artists_tmp,
+            artists_ids,
+            by = c(
+              "puri" = "source_record_id",
+              "artist_name" = "person_name",
+              "art_authority" = "person_auth"))
 }
 
 produce_sales_contents_hand_notes <- function(sales_contents) {

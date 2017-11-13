@@ -46,8 +46,12 @@ targets:
   processed_data/sales_contents_commissaire_pr.rda:
     command: save(sales_contents_commissaire_pr, file = target_name)
 
+  sales_contents_artists_tmp:
+    command: produce_sales_contents_artists_tmp(sales_contents_ids)
+  sales_contents_artists_lookup:
+    command: produce_sales_contents_artists_lookup(sales_contents_artists_tmp, sales_contents_ids, combined_authority)
   sales_contents_artists:
-    command: produce_sales_contents_artists(sales_contents_ids, gpi_artists_nationality_aat)
+    command: produce_sales_contents_artists(sales_contents_artists_tmp, union_person_ids)
   processed_data/sales_contents_artists.rda:
     command: save(sales_contents_artists, file = target_name)
 

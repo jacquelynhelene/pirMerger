@@ -16,7 +16,7 @@
 produce_knoedler_ids <- function(raw_knoedler, knoedler_stocknumber_concordance) {
   knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
-    mutate_at(vars(star_record_no, stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer))
+    mutate_at(vars(stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer))
 
   # Create unique object ids, calculate order of events, and finally produce
   # unique transaction ids. Must happen in this order. Must be performed before
@@ -58,7 +58,6 @@ knoedler_firm_id <- function() 500304270
 # like Sales Contents)
 produce_knoedler_dimensions <- function(kdf, dimensions_aat, units_aat) {
   kdf %>%
-    mutate_at(vars(star_record_no), as.integer) %>%
     general_dimension_extraction("dimensions", "star_record_no") %>%
     mutate(
       # Assign dimension unit based on the extracted dimension character,

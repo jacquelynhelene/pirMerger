@@ -194,7 +194,7 @@ produce_ulan_derivative_owners <- function(owners_authority) {
 
 # Merged Authority ----
 
-produce_merged_persons <- function(owners_authority, artists_authority) {
+produce_combined_authority <- function(owners_authority, artists_authority) {
   renamed_owners <- owners_authority %>%
     select(
       authority_name = owner_authority,
@@ -268,7 +268,9 @@ produce_merged_persons <- function(owners_authority, artists_authority) {
 # name, from "nothing" [given an unrepeated id], from authority name, or from
 # authority name WITH a document grouping provision)
 produce_union_person_ids <- function(...) {
-  bind_rows(list(...), .id = "source_db") %>%
+  list(...) %>%
+    map(function(x) mutate_at(x, vars(source_record_id), funs(as.character))) %>%
+    bind_rows(.id = "source_db") %>%
     assertr::assert(assertr::in_set("from_ulan", "from_name", "from_nothing", "from_auth")) %>%
     mutate(
       person_uid = case_when(
