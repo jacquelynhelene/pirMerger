@@ -203,7 +203,7 @@ produce_knoedler_sale_buyers <- function(knoedler_sales, knoedler_buyers) {
     left_join(knoedler_buyers, by = "star_record_no") %>%
     select(-star_record_no) %>%
     distinct() %>%
-    select(sale_event_id, sale_buyer_name = buyer_name, sale_buyer = buyer_loc, sale_buyer_auth_name = buy_auth_name, sale_buyer_auth_loc = buy_auth_addr, sale_buyer_ulan_id = buyer_ulan_id, sale_buyer_uid = buyer_uid)
+    select(sale_event_id, sale_buyer_name = buyer_name, sale_buyer_loc = buyer_loc, sale_buyer_auth_name = buy_auth_name, sale_buyer_auth_loc = buy_auth_addr, sale_buyer_ulan_id = buyer_ulan_id, sale_buyer_uid = buyer_uid)
 }
 
 # Identify from whom custody is being transferred (includes share information)
