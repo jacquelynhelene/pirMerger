@@ -2,10 +2,10 @@ sources:
   - R/
 
 packages:
-  - stringr
   - tidyverse
   - rematch2
   - igraph
+  - assertr
 
 include:
   - knoedler.yml

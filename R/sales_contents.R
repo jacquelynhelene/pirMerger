@@ -1,13 +1,5 @@
 # Sales Contents Normalization ----
 
-#' Produce sales contents tables
-#'
-#' @param source_dir Path where source RDS files are found
-#' @param target_dir Path where resulting RDS files are saved
-#'
-#' @importFrom rematch2 re_match bind_re_match
-#'
-#' @export
 produce_sales_contents_ids <- function(raw_sales_contents) {
   raw_sales_contents %>%
     mutate_at(vars(lot_sale_year, lot_sale_month, lot_sale_day), funs(as.integer)) %>%
@@ -16,7 +8,8 @@ produce_sales_contents_ids <- function(raw_sales_contents) {
     mutate_at(vars(subject, genre, object_type, materials), funs(tolower)) %>%
     rename(puri = persistent_puid) %>%
     select(-star_record_no) %>%
-    assertr::assert(assertr::not_na, puri)
+    assert(not_na, puri) %>%
+    assert(is_uniq, puri)
 }
 
 produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sales_contents_post_sales) {
@@ -232,7 +225,9 @@ produce_sales_descriptions_ids <- function(raw_sales_descriptions) {
     mutate_at(vars(sale_begin_year, sale_begin_month, sale_begin_day, sale_end_year, sale_end_month, sale_end_day, no_of_ptgs_lots), funs(as.integer)) %>%
     mutate(description_project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
     rename(description_puri = persistent_puid) %>%
-    select(-star_record_no)
+    select(-star_record_no) %>%
+    assert(not_na, description_puri) %>%
+    assert(is_uniq, description_puri)
 }
 
 produce_sales_descriptions <- function(sales_descriptions) {

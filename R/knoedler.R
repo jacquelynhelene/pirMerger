@@ -16,7 +16,9 @@
 produce_knoedler_ids <- function(raw_knoedler, knoedler_stocknumber_concordance) {
   knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
-    mutate_at(vars(stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer))
+    mutate_at(vars(stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer)) %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no)
 
   # Create unique object ids, calculate order of events, and finally produce
   # unique transaction ids. Must happen in this order. Must be performed before

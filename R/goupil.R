@@ -1,7 +1,9 @@
 produce_goupil_ids <- function(raw_goupil) {
   raw_goupil %>%
-    mutate_at(vars(star_record_no, contains("stock_book"), page_number, row_number, contains("_date_")), funs(as.integer)) %>%
-    select(-persistent_uid, -original_file_name)
+    mutate_at(vars(contains("stock_book"), page_number, row_number, contains("_date_")), funs(as.integer)) %>%
+    select(-persistent_uid, -original_file_name) %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no)
 }
 
 produce_goupil <- function(goupil_with_ids) {
