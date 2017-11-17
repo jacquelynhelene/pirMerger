@@ -35,8 +35,8 @@ targets:
   processed_data/artists_authority.rda:
     command: save(artists_authority, file = target_name)
 
-  gpi_artists_nationality_aat:
-    command: produce_gpi_artists_nationality_aat(raw_gpi_artist_nationality_aat)
+  gpi_nationality_aat:
+    command: produce_gpi_nationality_aat(raw_gpi_nationality_aat)
 
   owners_authority:
     command: produce_owners_authority(raw_owners_authority)
@@ -52,7 +52,9 @@ targets:
       knoedler_buyers = knoedler_buyers_lookup,
       knoedler_sellers = knoedler_sellers_lookup,
       knoedler_joint_owners = knoedler_joint_owners_lookup,
-      sales_contents_artists = sales_contents_artists_lookup)
+      sales_contents_artists = sales_contents_artists_lookup,
+      combined_authority = combined_authority,
+      nationality_aat = gpi_nationality_aat)
   processed_data/union_person_ids.rda:
     command: save(union_person_ids, file = target_name)
 

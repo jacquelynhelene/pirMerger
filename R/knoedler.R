@@ -132,7 +132,20 @@ produce_knoedler_purchase_sellers <- function(knoedler, knoedler_sellers) {
     left_join(knoedler_sellers, by = "star_record_no") %>%
     select(-star_record_no) %>%
     distinct() %>%
-    select(purchase_event_id, purchase_seller_name = seller_name, purchase_seller_loc = seller_loc, purchase_seller_auth_name = sell_auth_name, purchase_seller_auth_loc = sell_auth_loc, purchase_seller_ulan_id = seller_ulan_id, purchase_seller_uid = seller_uid)
+    select(purchase_event_id,
+           purchase_seller_name = seller_name,
+           purchase_seller_loc = seller_loc,
+           purchase_seller_auth_name = sell_auth_name,
+           purchase_seller_auth_loc = sell_auth_loc,
+           purchase_seller_ulan_id = seller_ulan_id,
+           purchase_seller_uid = seller_uid,
+           purchase_seller_birth_date = seller_birth_date,
+           purchase_seller_death_date = seller_death_date,
+           purchase_seller_active_early = seller_active_early,
+           purchase_seller_active_late = seller_active_late,
+           purchase_seller_aat_nationality_1 = seller_aat_nationality_1,
+           purchase_seller_aat_nationality_2 = seller_aat_nationality_2,
+           purchase_seller_aat_nationality_3 = seller_aat_nationality_3)
 }
 
 # Identify to whom custody is being transferred (includes share information)
@@ -149,7 +162,18 @@ produce_knoedler_purchase_buyers <- function(knoedler, knoedler_joint_owners) {
       remainder = 1 - sum(na.omit(parsed_share)),
       full_parsed_share = if_else(is.na(parsed_share), remainder, parsed_share)) %>%
     ungroup() %>%
-    select(purchase_event_id, purchase_buyer_name = joint_own, purchase_buyer_share = full_parsed_share, purchase_buyer_ulan_id = joint_ulan_id, purchase_buyer_uid = joint_owner_uid)
+    select(purchase_event_id,
+           purchase_buyer_name = joint_own,
+           purchase_buyer_ulan_id = joint_ulan_id,
+           purchase_buyer_uid = joint_owner_uid,
+           purchase_buyer_birth_date = joint_owner_person_birth_date,
+           purchase_buyer_death_date = joint_owner_person_death_date,
+           purchase_buyer_active_early = joint_owner_person_active_early,
+           purchase_buyer_active_late = joint_owner_person_active_late,
+           purchase_buyer_aat_nationality_1 = joint_owner_aat_nationality_1,
+           purchase_buyer_aat_nationality_2 = joint_owner_aat_nationality_2,
+           purchase_buyer_aat_nationality_3 = joint_owner_aat_nationality_3,
+           purchase_buyer_share = full_parsed_share)
 }
 
 # Pull the dates on which Knoedler inventoried an object
@@ -205,7 +229,20 @@ produce_knoedler_sale_buyers <- function(knoedler_sales, knoedler_buyers) {
     left_join(knoedler_buyers, by = "star_record_no") %>%
     select(-star_record_no) %>%
     distinct() %>%
-    select(sale_event_id, sale_buyer_name = buyer_name, sale_buyer_loc = buyer_loc, sale_buyer_auth_name = buy_auth_name, sale_buyer_auth_loc = buy_auth_addr, sale_buyer_ulan_id = buyer_ulan_id, sale_buyer_uid = buyer_uid)
+    select(sale_event_id,
+           sale_buyer_name = buyer_name,
+           sale_buyer_loc = buyer_loc,
+           sale_buyer_auth_name = buy_auth_name,
+           sale_buyer_auth_loc = buy_auth_addr,
+           sale_buyer_ulan_id = buyer_ulan_id,
+           sale_buyer_uid = buyer_uid,
+           sale_buyer_birth_date = buyer_birth_date,
+           sale_buyer_death_date = buyer_death_date,
+           sale_buyer_active_early = buyer_active_early,
+           sale_buyer_active_late = buyer_active_late,
+           sale_buyer_aat_nationality_1 = buyer_aat_nationality_1,
+           sale_buyer_aat_nationality_2 = buyer_aat_nationality_2,
+           sale_buyer_aat_nationality_3 = buyer_aat_nationality_3)
 }
 
 # Identify from whom custody is being transferred (includes share information)
@@ -222,7 +259,18 @@ produce_knoedler_sale_sellers <- function(knoedler_sales, knoedler_joint_owners)
       remainder = 1 - sum(na.omit(parsed_share)),
       full_parsed_share = if_else(is.na(parsed_share), remainder, parsed_share)) %>%
     ungroup() %>%
-    select(sale_event_id, sale_seller_name = joint_own, sale_seller_share = full_parsed_share, sale_seller_ulan_id = joint_ulan_id, sale_seller_uid = joint_owner_uid)
+    select(sale_event_id,
+           sale_seller_name = joint_own,
+           sale_seller_ulan_id = joint_ulan_id,
+           sale_seller_uid = joint_owner_uid,
+           sale_seller_person_birth_date = joint_owner_person_birth_date,
+           sale_seller_person_death_date = joint_owner_person_death_date,
+           sale_seller_person_active_early = joint_owner_person_active_early,
+           sale_seller_person_active_late = joint_owner_person_active_late,
+           sale_seller_aat_nationality_1 = joint_owner_aat_nationality_1,
+           sale_seller_aat_nationality_2 = joint_owner_aat_nationality_2,
+           sale_seller_aat_nationality_3 = joint_owner_aat_nationality_3,
+           sale_seller_share = full_parsed_share)
 }
 
 identify_knoedler_transactions <- function(df) {
@@ -527,7 +575,20 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
             by = c("star_record_no" = "source_record_id",
                    "artist_name" = "person_name",
                    "artist_authority" = "person_auth",
-                   "artist_ulan_id" = "person_ulan"))
+                   "artist_ulan_id" = "person_ulan")) %>%
+    select(star_record_no,
+           artist_name,
+           artist_authority,
+           artist_attribution_mod,
+           artist_ulan_id,
+           artist_uid,
+           artist_birth_date = person_birth_date,
+           artist_death_date = person_death_date,
+           artist_active_early = person_active_early,
+           artist_active_late = person_active_late,
+           artist_aat_nationality_1 = aat_nationality_1,
+           artist_aat_nationality_2 = aat_nationality_2,
+           artist_aat_nationality_3 = aat_nationality_3)
 }
 
 produce_knoedler_sellers_tmp <- function(raw_knoedler) {
@@ -558,7 +619,21 @@ produce_knoedler_sellers <- function(knoedler_sellers_tmp, union_person_ids) {
               "seller_name" = "person_name",
               "sell_auth_name" = "person_auth",
               "seller_ulan_id" = "person_ulan"
-            ))
+            )) %>%
+    select(star_record_no,
+           seller_name,
+           seller_loc,
+           sell_auth_name,
+           sell_auth_loc,
+           seller_ulan_id,
+           seller_uid,
+           seller_birth_date = person_birth_date,
+           seller_death_date = person_death_date,
+           seller_active_early = person_active_early,
+           seller_active_late = person_active_late,
+           seller_aat_nationality_1 = aat_nationality_1,
+           seller_aat_nationality_2 = aat_nationality_2,
+           seller_aat_nationality_3 = aat_nationality_3)
 }
 
 produce_knoedler_buyers_tmp <- function(raw_knoedler) {
@@ -591,7 +666,21 @@ produce_knoedler_buyers <- function(knoedler_buyers_tmp, union_person_ids) {
               "buyer_name" = "person_name",
               "buy_auth_name" = "person_auth",
               "buyer_ulan_id" = "person_ulan"
-            ))
+            )) %>%
+    select(star_record_no,
+           buyer_name,
+           buyer_loc,
+           buy_auth_name,
+           buy_auth_addr,
+           buyer_ulan_id,
+           buyer_uid,
+           buyer_birth_date = person_birth_date,
+           buyer_death_date = person_death_date,
+           buyer_active_early = person_active_early,
+           buyer_active_late = person_active_late,
+           buyer_aat_nationality_1 = aat_nationality_1,
+           buyer_aat_nationality_2 = aat_nationality_2,
+           buyer_aat_nationality_3 = aat_nationality_3)
 }
 
 produce_knoedler_joint_owners_tmp <- function(raw_knoedler) {
@@ -628,7 +717,19 @@ produce_knoedler_joint_owners <- function(knoedler_joint_owners_tmp, union_perso
               "star_record_no" = "source_record_id",
               "joint_own" = "person_auth",
               "joint_ulan_id" = "person_ulan"
-            ))
+            )) %>%
+    select(star_record_no,
+           joint_own,
+           joint_own_sh,
+           joint_ulan_id,
+           joint_owner_uid,
+           joint_owner_person_birth_date = person_birth_date,
+           joint_owner_person_death_date = person_death_date,
+           joint_owner_person_active_early = person_active_early,
+           joint_owner_person_active_late = person_active_late,
+           joint_owner_aat_nationality_1 = aat_nationality_1,
+           joint_owner_aat_nationality_2 = aat_nationality_2,
+           joint_owner_aat_nationality_3 = aat_nationality_3)
 }
 
 # Joined Table ----

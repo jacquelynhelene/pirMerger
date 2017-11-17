@@ -103,10 +103,10 @@ produce_ulan_derivative_artists <- function(source_dir, repo_path) {
   write_csv(derivative, path = paste(repo_path, "derivatives", "ulan_load_artists.csv", sep = "/"))
 }
 
-produce_gpi_artists_nationality_aat <- function(raw_gpi_artist_nationality_aat) {
-  just_aat <- raw_gpi_artist_nationality_aat %>%
-    single_separate("artist_aat_nationality", sep = ";") %>%
-    mutate_at(vars(contains("artist_aat_nationality")), funs(as.integer)) %>%
+produce_gpi_nationality_aat <- function(raw_gpi_artist_nationality_aat) {
+  raw_gpi_artist_nationality_aat %>%
+    single_separate("aat_nationality", sep = ";") %>%
+    mutate_at(vars(contains("aat_nationality")), funs(as.integer)) %>%
     select(-or_and)
 }
 
@@ -267,7 +267,7 @@ produce_combined_authority <- function(owners_authority, artists_authority) {
 # - id_process (Whether ID should be derived from ULAN id, from the verbatim
 # name, from "nothing" [given an unrepeated id], from authority name, or from
 # authority name WITH a document grouping provision)
-produce_union_person_ids <- function(...) {
+produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
   list(...) %>%
     map(function(x) mutate_at(x, vars(source_record_id), funs(as.character))) %>%
     bind_rows(.id = "source_db") %>%
@@ -279,6 +279,33 @@ produce_union_person_ids <- function(...) {
         id_process == "from_nothing" ~ paste0("anon-person-", seq_along(person_auth)),
         id_process == "from_auth" ~ paste0("known-person-", group_indices(., person_auth)),
         id_process == "from_auth_grouped" ~ paste0("known-person-indoc-", group_indices(., person_auth, source_document_id)))) %>%
-    select(-id_process)
+    left_join(select(combined_authority, authority_name, birth_date, death_date, early_date, late_date, nationality), by = c("person_auth" = "authority_name")) %>%
+    mutate(joining_nationality = if_else(is.na(nationality), person_auth, nationality)) %>%
+    left_join(nationality_aat, by = c("joining_nationality" = "nationality_name")) %>%
+    mutate_at(vars(contains("date")), as.character) %>%
+    mutate(
+      # Favor the explicit dates given by authority, otherwise fall back to dates listed in concordance
+      active_early = if_else(is.na(early_date), start_year, early_date),
+      active_late = if_else(is.na(late_date), end_year, late_date)) %>%
+    select(source_db,
+           source_record_id,
+           source_document_id,
+           id_process,
+           person_name,
+           person_auth,
+           person_ulan,
+           person_uid,
+           person_birth_date = birth_date,
+           person_death_date = death_date,
+           person_active_early = active_early,
+           person_active_late = active_late,
+           person_nationality = joining_nationality,
+           contains("aat_nationality")) %>%
+    mutate_at(vars(person_birth_date,
+                   person_death_date,
+                   person_active_early,
+                   person_active_late,
+                   person_nationality),
+              funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .)))
 }
 
