@@ -228,7 +228,12 @@ produce_sales_contents_depicts_aat <- function(raw_sales_contents_subject_aat, s
 }
 
 produce_sales_contents_dimensions <- function(sales_contents_ids) {
-  general_dimension_extraction(sales_contents_ids, dimcol = "dimensions", idcol = "puri")
+  sales_contents_ids %>%
+    mutate(exclude_dimension = case_when(
+      project == "Br" & str_detect(dimensions, "bracci[oa]") ~ TRUE,
+      TRUE ~ FALSE
+    )) %>%
+    general_dimension_extraction(dimcol = "dimensions", idcol = "puri", exclusion_col = "exclude_dimension")
 }
 
 # Sales Descriptions Normalization ----
