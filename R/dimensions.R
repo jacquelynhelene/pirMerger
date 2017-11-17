@@ -1,12 +1,13 @@
-#' Create a tidy table of extracted dimensions
-#'
-#' @return A data frame with an id column for joining to original table,
-#'
-#' @import stringr
-#'
-#' @export
-general_dimension_extraction <- function(df, dimcol, idcol) {
-  df <- df[which(!is.na(df[[dimcol]])),]
+# Create a tidy table of extracted dimensions
+#
+# dimcol - name of column containing original dimension string
+# idcol - name of column contianing uid for given database record (e.g. star_record_no or puri)
+# exclusion_col - name of column with logical flag stating whether that
+# dimension ought to be parsed. Any dimension that has a missing value, or which
+# has been flagged for exclusion, will not be parsed at all.
+general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
+  df <- df[which(!is.na(df[[dimcol]]) & !df[[exclusion_col]]),]
+
   tryd <- rematch2::re_match_all(df[[dimcol]],
                                  # Find any combo of acceptable
                                  # value/unit/dimension chars IFF there is

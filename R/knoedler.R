@@ -60,7 +60,8 @@ knoedler_firm_id <- function() 500304270
 # like Sales Contents)
 produce_knoedler_dimensions <- function(kdf, dimensions_aat, units_aat) {
   kdf %>%
-    general_dimension_extraction("dimensions", "star_record_no") %>%
+    add_column(exclude_dimension = FALSE) %>%
+    general_dimension_extraction("dimensions", "star_record_no", "exclude_dimension") %>%
     mutate(
       # Assign dimension unit based on the extracted dimension character,
       # defaulting to inches (a valid default for Knoedler only)
