@@ -265,11 +265,6 @@ produce_combined_authority <- function(owners_authority, artists_authority) {
 # - person_auth ("authorized" name)
 # - person_ulan (known ULAN ID, if such an id has been entered into the original STAR record)
 # - id_process (Whether ID should be derived from ULAN id, from the verbatim
-# - person_nationality
-# - person_birth
-# - person_death
-# - person_active_early
-# - person_active_late
 # name, from "nothing" [given an unrepeated id], from authority name, or from
 # authority name WITH a document grouping provision)
 produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
@@ -289,6 +284,7 @@ produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
     left_join(nationality_aat, by = c("joining_nationality" = "nationality_name")) %>%
     mutate_at(vars(contains("date")), as.character) %>%
     mutate(
+      # Favor the explicit dates given by authority, otherwise fall back to dates listed in concordance
       active_early = if_else(is.na(early_date), start_year, early_date),
       active_late = if_else(is.na(late_date), end_year, late_date)) %>%
     select(source_db,
