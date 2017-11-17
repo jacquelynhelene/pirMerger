@@ -41,11 +41,12 @@ parse_prices <- function(currency_aat, df, amount_col_name, currency_col_name, i
       has_question = str_detect(price_amount, "\\?"),
       has_letters = str_detect(price_amount, "[a-z£]"),
       is_incomplete = str_detect(price_amount, "\\[ *\\]"),
+      no_currency = is.na(original_currency),
       # Remove start/end brackets
       price_amount = str_replace_all(price_amount, c("^\\[" = "", "\\]$" = "")),
       # If any of the following cases, do NOT attempt to parse the price. Pass
       # NA along through the remainder of the parsing function?
-      toss_record = illegible | has_letters | has_question | is_multiple | has_ellipses | is_incomplete,
+      toss_record = illegible | has_letters | has_question | is_multiple | has_ellipses | is_incomplete | no_currency,
       price_amount = if_else(toss_record, NA_character_, price_amount),
       # Compress whitespace
       price_amount = str_replace_all(price_amount, " +", " "),

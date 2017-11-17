@@ -106,8 +106,17 @@ produce_sales_contents_buyers <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("buy_name", "buy_name_so", "buy_name_ques", "buy_name_cite", "buy_mod", "buy_mod_so", "buy_auth_name", "buy_auth_nameq", "buy_auth_mod", "buy_auth_modq"), n_reps = 5, idcols = "puri")
 }
 
-produce_sales_contents_prices <- function(sales_contents) {
+produce_sales_contents_prices_tmp <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("price_amount", "price_currency", "price_note", "price_source", "price_citation"), n_reps = 3, idcols = "puri")
+}
+
+produce_sales_contents_parsed_prices <- function(sales_contents_prices_tmp, currency_aat) {
+  parse_prices(currency_aat, sales_contents_prices_tmp, amount_col_name = "price_amount", currency_col_name = "price_currency", id_col_name = "puri", decimalized_col_name = "decimalized_price_currency", aat_col_name = "price_currency_aat", amonsieurx = FALSE, replace_slashes = FALSE)
+}
+
+produce_sales_contents_prices <- function(sales_contents_prices_tmp, sales_contents_parsed_prices) {
+  sales_contents_prices_tmp %>%
+    left_join(sales_contents_parsed_prices, by = "puri")
 }
 
 produce_sales_contents_prev_owners <- function(sales_contents) {

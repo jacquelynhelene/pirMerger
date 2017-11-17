@@ -70,8 +70,12 @@ targets:
   processed_data/sales_contents_buyers.rda:
     command: save(sales_contents_buyers, file = target_name)
 
+  sales_contents_prices_tmp:
+    command: produce_sales_contents_prices_tmp(sales_contents_ids)
+  sales_contents_parsed_prices:
+    command: produce_sales_contents_parsed_prices(sales_contents_prices_tmp, currency_aat)
   sales_contents_prices:
-    command: produce_sales_contents_prices(sales_contents_ids)
+    command: produce_sales_contents_prices(sales_contents_prices_tmp, sales_contents_parsed_prices)
   processed_data/sales_contents_prices.rda:
     command: save(sales_contents_prices, file = target_name)
 
