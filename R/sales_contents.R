@@ -227,6 +227,10 @@ produce_sales_contents_depicts_aat <- function(raw_sales_contents_subject_aat, s
     na.omit()
 }
 
+produce_sales_contents_dimensions <- function(sales_contents_ids) {
+  general_dimension_extraction(sales_contents_ids, dimcol = "dimensions", idcol = "puri")
+}
+
 # Sales Descriptions Normalization ----
 
 produce_sales_descriptions_ids <- function(raw_sales_descriptions) {

@@ -162,6 +162,9 @@ targets:
   sales_contents_depicts_aat:
     command: produce_sales_contents_depicts_aat(raw_sales_contents_subject_aat, sales_contents_ids)
 
+  sales_contents_dimensions:
+    command: produce_sales_contents_dimensions(sales_contents_ids)
+
   sales_descriptions:
     command: produce_sales_descriptions(sales_descriptions_ids)
   processed_data/sales_descriptions.rda:
