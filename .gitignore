@@ -6,7 +6,7 @@
 *.rds
 *.rda
 *.csv
-scratch/
+repo_data
 data_definitions.yml
 .remake/
 raw_data.yml
