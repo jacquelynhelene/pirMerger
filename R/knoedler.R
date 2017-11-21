@@ -102,7 +102,7 @@ produce_knoedler_purchase_info <- function(knoedler, currency_aat) {
     filter(!is.na(purchase_event_id)) %>%
     group_by(purchase_event_id) %>%
     # Flag when any of the amounts or currencies are inconsistent across mutliple records of a transaction
-    mutate_at(vars(purch_amount, purch_currency, knoedpurch_amt, knoedpurch_curr), funs(inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
+    mutate_at(vars(purch_amount, purch_currency, knoedpurch_amt, knoedpurch_curr), funs(flag_inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
     summarize_at(
       vars(purch_amount,
            purch_currency,
@@ -197,7 +197,7 @@ produce_knoedler_sale_info <- function(knoedler_sales, currency_aat) {
   knoedler_sale_info <- knoedler_sales %>%
     group_by(sale_event_id) %>%
     # Flag when any of the amounts or currencies are inconsistent across mutliple records of a transaction
-    mutate_at(vars(transaction, knoedshare_amt, knoedshare_curr, price_amount, price_currency), funs(inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
+    mutate_at(vars(transaction, knoedshare_amt, knoedshare_curr, price_amount, price_currency), funs(flag_inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
     summarize_at(
       vars(transaction,
            sale_date_year,
