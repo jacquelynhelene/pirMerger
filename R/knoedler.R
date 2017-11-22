@@ -30,12 +30,29 @@ produce_knoedler_ids <- function(raw_knoedler, knoedler_stocknumber_concordance)
     order_knoedler_object_events() %>%
     pipe_message("- Identifying transactions") %>%
     identify_knoedler_transactions() %>%
+    # Flag object histories for manual review if they contain transaciton types
+    # or other elements that require editors to finish constructing their event
+    # histories within Arches post-transform
+    flag_manual_records() %>%
     # Where genre or object type is not identified, set to NA
     mutate_at(vars(genre, object_type), funs(na_if(., "[not identified]"))) %>%
     # Where month or day components of entry or sale dates are 0, set to NA
     mutate_at(vars(dplyr::contains("day"), dplyr::contains("month")), funs(na_if(., 0)))
 
   knoedler
+}
+
+# Produce logical flags indicating whether the records for a given object ought to be reviewed because there is an exhange, return, or disjointed event somewhere in that object's timeline
+flag_manual_records <- function(kdf) {
+  kdf %>%
+    group_by(object_id) %>%
+    mutate(
+      flag_exchanged = "Exchanged" %in% transaction,
+      flag_returned = "Returned" %in% transaction | any(str_detect(verbatim_notes, regex(" ret", ignore_case = TRUE)), na.rm = TRUE),
+      flag_disjointed = any(str_detect(verbatim_notes, regex("disjoint", ignore_case = TRUE)), na.rm = TRUE),
+      flag_destroyed = any(str_detect(verbatim_notes, regex("destroy", ignore_case = TRUE)), na.rm = TRUE),
+      flag_stolen = "Stolen" %in% transaction) %>%
+    ungroup()
 }
 
 # Remove columns now made redundant by other relational tables
