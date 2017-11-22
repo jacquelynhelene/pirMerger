@@ -12,8 +12,11 @@ general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
                                  # Find any combo of acceptable
                                  # value/unit/dimension chars IFF there is
                                  # at least one digit in the bunch
-                                 pattern = "(?<dim>[0-9 '\"/\\.lhwd]*(?:cm)*\\d+[0-9 '\"/\\.lhwd]*(?:cm)*)") %>%
-    add_column(star_record_no = df[[idcol]]) %>%
+                                 pattern = "(?<dim>[0-9 '\"/\\.lhwd]*(?:cm)*\\d+[0-9 '\"/\\.lhwd]*(?:cm)*)")
+
+  tryd[[idcol]] <- df[[idcol]]
+
+  tryd <- tryd %>%
     unnest() %>%
     # Extract the dimension marker to its own column, leaving only the dimension value with its unit markers
     mutate(dim = str_replace(dim, "w w", "w")) %>%
@@ -25,7 +28,7 @@ general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
     mutate_at(vars(dim_d1, dim_d2), funs(parsed = parse_fraction)) %>%
     mutate_at(vars(dim_c1, dim_c2), as.factor) %>%
     mutate(decimalized_dim_value = compile_inches(dim_d1_parsed, dim_c1, dim_d2_parsed, dim_c2)) %>%
-    group_by(star_record_no) %>%
+    group_by(.dots = idcol) %>%
     mutate(dimension_order = row_number()) %>%
     ungroup()
 }
