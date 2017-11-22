@@ -32,7 +32,7 @@ targets:
     command: produce_sales_contents_ids(raw_sales_contents)
 
   sales_contents:
-    command: produce_sales_contents(sales_contents_ids, sales_contents_prev_sales, sales_contents_post_sales)
+    command: produce_sales_contents(sales_contents_ids, sales_contents_prev_sales, sales_contents_post_sales, sales_contents_prices)
   processed_data/sales_contents.rda:
     command: save(sales_contents, file = target_name)
 

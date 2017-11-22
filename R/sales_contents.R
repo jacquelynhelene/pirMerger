@@ -12,7 +12,7 @@ produce_sales_contents_ids <- function(raw_sales_contents) {
     assert(is_uniq, puri)
 }
 
-produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sales_contents_post_sales) {
+produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sales_contents_post_sales, sales_contents_prices) {
   sales_contents %>%
     select(-(expert_auth_1:expert_auth_4)) %>%
     select(-(commissaire_pr_1:commissaire_pr_4)) %>%
@@ -25,7 +25,10 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     select(-(prev_sale_year_1:prev_sale_coll_7)) %>%
     select(-(post_sale_yr_1:post_sale_col_13)) %>%
     select(-(post_own_1:post_own_auth_q_6)) %>%
-    identify_unique_objects(sales_contents_prev_sales, sales_contents_post_sales)
+    identify_sales_unique_objects(sales_contents_prev_sales, sales_contents_post_sales) %>%
+    identify_sales_transactions(sales_contents_prices) %>%
+    assert(not_na, puri) %>%
+    assert(is_uniq, puri)
 }
 
 # Sales Contents - People ----
@@ -107,16 +110,17 @@ produce_sales_contents_buyers <- function(sales_contents) {
 }
 
 produce_sales_contents_prices_tmp <- function(sales_contents) {
-  norm_vars(sales_contents, base_names = c("price_amount", "price_currency", "price_note", "price_source", "price_citation"), n_reps = 3, idcols = "puri")
+  norm_vars(sales_contents, base_names = c("price_amount", "price_currency", "price_note", "price_source", "price_citation"), n_reps = 3, idcols = "puri") %>%
+    add_column(price_id = seq_len(nrow(.)))
 }
 
 produce_sales_contents_parsed_prices <- function(sales_contents_prices_tmp, currency_aat) {
-  parse_prices(currency_aat, sales_contents_prices_tmp, amount_col_name = "price_amount", currency_col_name = "price_currency", id_col_name = "puri", decimalized_col_name = "decimalized_price_currency", aat_col_name = "price_currency_aat", amonsieurx = FALSE, replace_slashes = FALSE)
+  parse_prices(currency_aat, sales_contents_prices_tmp, amount_col_name = "price_amount", currency_col_name = "price_currency", id_col_name = "price_id", decimalized_col_name = "decimalized_price_currency", aat_col_name = "price_currency_aat", amonsieurx = FALSE, replace_slashes = FALSE)
 }
 
 produce_sales_contents_prices <- function(sales_contents_prices_tmp, sales_contents_parsed_prices) {
   sales_contents_prices_tmp %>%
-    left_join(sales_contents_parsed_prices, by = "puri")
+    left_join(sales_contents_parsed_prices, by = "price_id")
 }
 
 produce_sales_contents_prev_owners <- function(sales_contents) {
@@ -314,7 +318,7 @@ produce_sales_catalogs_info <- function(raw_sales_catalogs_info, raw_sales_catal
 
 # Sales Contents Computations ----
 
-identify_unique_objects <- function(scdf, prev_sales, post_sales) {
+identify_sales_unique_objects <- function(scdf, prev_sales, post_sales) {
   # Produce an easily-inspected set of sales_contents that has a sale_loc
   # variable: the alphabetic part of each sale code indiciating the location.
   # This, along with lot numbers and date components, are the only shared
@@ -444,4 +448,28 @@ identify_unique_objects <- function(scdf, prev_sales, post_sales) {
   scdf %>%
     left_join(transaction_membership_list, by = "puri") %>%
     mutate(object_uid = if_else(is.na(object_uid), paste("single", "object", seq_along(puri), sep = "-"), object_uid))
+}
+
+identify_sales_transactions <- function(sales_contents_ids, sales_contents_prices) {
+  transaction_ids <- sales_contents_prices %>%
+    # When there are multiple price entries, just pick the first note in each one
+    group_by(puri) %>%
+    summarize(price_note = pick(price_note)) %>%
+    left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+    mutate(joining_note = if_else(str_detect(price_note, regex("(f[üu]r|pour|for|avec)", ignore_case = TRUE)), price_note, NA_character_)) %>%
+    mutate(transaction_id = if_else(is.na(joining_note), paste0("transaction-", seq_along(puri)), paste0("group-transaction-", group_indices(., catalog_number, joining_note))))
+
+  jt <- sales_contents_ids %>%
+    left_join(transaction_ids, by = "puri")
+}
+
+# Sales Contents Joined Table
+
+produce_joined_sales_contents <- function(sales_contents,
+                                          sales_contents_dimensions,
+                                          sales_contents_parsed_prices) {
+  sales_contents %>%
+    pipe_message(" - Joining sales_contents_dimensions") %>%
+    left_join(spread_out(sales_contents_dimensions, "puri")) %>%
+    left_join(spread_out(sales_contents_parsed_prices, "puri"))
 }
