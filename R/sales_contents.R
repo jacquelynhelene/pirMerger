@@ -473,3 +473,13 @@ produce_joined_sales_contents <- function(sales_contents,
     left_join(spread_out(sales_contents_dimensions, "puri")) %>%
     left_join(spread_out(sales_contents_parsed_prices, "puri"))
 }
+
+# Upstream Error Fixes
+
+produce_sales_unparsed_dimensions <- function(sales_contents_ids, sales_contents_dimensions) {
+  sales_contents_ids %>%
+    select(puri, dimensions) %>%
+    filter(!is.na(dimensions)) %>%
+    anti_join(sales_contents_dimensions, by = "puri")
+}
+

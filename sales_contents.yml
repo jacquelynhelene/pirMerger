@@ -170,4 +170,5 @@ targets:
   processed_data/sales_descriptions.rda:
     command: save(sales_descriptions, file = target_name)
 
-
+  sales_contents_unparsed_dimensions:
+    command: produce_sales_unparsed_dimensions(sales_contents_ids, sales_contents_dimensions)
