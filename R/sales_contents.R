@@ -258,8 +258,8 @@ produce_sales_descriptions <- function(sales_descriptions) {
     select(-(auc_copy_seller_1:auc_copy_seller_4)) %>%
     select(-(other_seller_1:other_seller_3)) %>%
     select(-(sell_auth_name_1:sell_auth_q_5)) %>%
-    select(-(expert_auth_1:expert_auth_4)) %>%
-    select(-(commissaire_pr_1:commissaire_pr_4)) %>%
+    select(-(expert_1:expert_auth_5)) %>%
+    select(-(comm_pr_1:comm_pr_auth_4)) %>%
     select(-(auc_house_name_1:auc_house_auth_4)) %>%
     select(-(country_auth_1:country_auth_2))
 }
@@ -291,12 +291,12 @@ produce_sales_descriptions_auth_seller <-  function(sales_descriptions) {
 
 produce_sales_descriptions_expert_auth <- function(sales_descriptions) {
   sales_descriptions %>%
-    norm_vars(base_names = c("expert_auth"), n_reps = 4, idcols = "description_puri")
+    norm_vars(base_names = c("expert", "expert_auth"), n_reps = 5, idcols = "description_puri")
 }
 
 produce_sales_descriptions_commissaire_pr <-  function(sales_descriptions) {
   sales_descriptions %>%
-    norm_vars(base_names = c("commissaire_pr"), n_reps = 4, idcols = "description_puri")
+    norm_vars(base_names = c("comm_pr", "comm_pr_auth"), n_reps = 4, idcols = "description_puri")
 }
 
 produce_sales_descriptions_auction_house <- function(sales_descriptions) {
