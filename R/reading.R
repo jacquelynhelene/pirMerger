@@ -18,8 +18,14 @@ read_dat <- function(..., header_file_name, stop_on_problems = TRUE) {
   probs <- map(tdata, problems)
   tdata <- bind_rows(tdata, .id = "original_file_name")
 
-  if (stop_on_problems && sum(map_int(probs, nrow)) / nrow(tdata) > 0.01)
-    warning("More than 10 percent of the rows in ", file_names, " have readr problems.")
+  if (sum(map_int(probs, nrow)) / nrow(tdata) > 0.01) {
+    msg <- paste0("More than 10 percent of the rows in ", file_names, " have readr problems.")
+    if (stop_on_problems) {
+      stop(msg)
+    } else {
+      warning(msg)
+    }
+  }
 
   attr(tdata, "problems") <- probs
   tdata
