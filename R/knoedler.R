@@ -600,6 +600,7 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
            artist_attribution_mod,
            artist_ulan_id,
            artist_uid,
+           artist_nationality,
            artist_birth_date = person_birth_date,
            artist_death_date = person_death_date,
            artist_active_early = person_active_early,
