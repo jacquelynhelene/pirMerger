@@ -43,3 +43,9 @@ rollup <- function(v, sep = "; ", collapse = TRUE) {
     return(NA_character_)
   res
 }
+
+no_dots <- function(df) {
+  if (any(str_detect(names(df), "\\.")))
+    stop("You have doubled up joins in this dataframe.")
+  df
+}
