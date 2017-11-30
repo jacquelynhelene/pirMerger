@@ -27,7 +27,7 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     select(-(post_own_1:post_own_auth_q_6)) %>%
     identify_sales_unique_objects(sales_contents_prev_sales, sales_contents_post_sales) %>%
     identify_sales_transactions(sales_contents_prices) %>%
-    assert(not_na, puri) %>%
+    assert(not_na, puri, catalog_number) %>%
     assert(is_uniq, puri) %>%
     no_dots()
 }
@@ -458,10 +458,10 @@ identify_sales_transactions <- function(sales_contents_ids, sales_contents_price
     summarize(price_note = pick(price_note)) %>%
     left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
     mutate(joining_note = if_else(str_detect(price_note, regex("(f[üu]r|pour|for|avec)", ignore_case = TRUE)), price_note, NA_character_)) %>%
-    mutate(transaction_id = if_else(is.na(joining_note), paste0("transaction-", seq_along(puri)), paste0("group-transaction-", group_indices(., catalog_number, joining_note))))
+    mutate(transaction_id = if_else(is.na(joining_note), paste0("transaction-", seq_along(puri)), paste0("group-transaction-", group_indices(., catalog_number, joining_note)))) %>%
+    select(-catalog_number)
 
   jt <- sales_contents_ids %>%
-    select(-catalog_number) %>%
     left_join(transaction_ids, by = "puri")
 }
 
