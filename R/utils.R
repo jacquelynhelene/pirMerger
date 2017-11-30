@@ -49,3 +49,18 @@ no_dots <- function(df) {
     stop("You have doubled up joins in this dataframe.")
   df
 }
+
+#' Produce a datestamped CSV of a dataframe
+#'
+#' @param df A data frame
+#'
+#' @return The path of the newly-written CSV file.
+#'
+#' @export
+make_report <- function(df) {
+  report_path <- paste0("~/Desktop/", deparse(substitute(df)), "_", Sys.Date(), ".csv")
+  readr::write_csv(df, path = report_path, na = "")
+  report_path
+}
+
+
