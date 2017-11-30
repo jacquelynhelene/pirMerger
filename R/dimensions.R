@@ -6,6 +6,10 @@
 # dimension ought to be parsed. Any dimension that has a missing value, or which
 # has been flagged for exclusion, will not be parsed at all.
 general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
+  # Exclude from parsing all records that have been marked as excluded. This
+  # exclusion column should be defined on a per-database basis (e.g. sales
+  # contents may have different methods for defining exclusions than archival
+  # inventories)
   df <- df[which(!is.na(df[[dimcol]]) & !df[[exclusion_col]]),]
 
   tryd <- rematch2::re_match_all(df[[dimcol]],
@@ -18,8 +22,12 @@ general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
 
   tryd <- tryd %>%
     unnest() %>%
-    # Extract the dimension marker to its own column, leaving only the dimension value with its unit markers
     mutate(dim = str_replace(dim, "w w", "w")) %>%
+    # Do not attempt to parse any extracted dimension containing more than one
+    # dimensions type marker. This indicates that extraction has failed, and the
+    # parse will not work.
+    filter(str_count(dim, "[lwhd]") <= 1) %>%
+    # Extract the dimension marker to its own column, leaving only the dimension value with its unit markers
     mutate(dimtype = as.factor(str_trim(str_extract(dim, "(^[lhwd] | [lhwd] | [lhwd]$)\\.?")))) %>%
     mutate(value_wo_dim = str_trim(str_replace_all(dim, c("(^[lhwd] | [lhwd] | [lhwd]$)\\.?" = "", " +" = " ")))) %>%
     # Pull out mixed & decimal numbers from their unit markers
@@ -31,6 +39,14 @@ general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
     group_by(.dots = idcol) %>%
     mutate(dimension_order = row_number()) %>%
     ungroup()
+}
+
+# Return whether a string matches any in a vector of patterns
+str_any <- function(string, patterns) {
+  map_lgl(string, function(x) {
+    match_res <- map_lgl(patterns, function(y) str_detect(x, y))
+    any(match_res)
+  })
 }
 
 #' Given a two pairs of values and feet/inches, parse
