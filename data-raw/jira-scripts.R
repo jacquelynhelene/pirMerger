@@ -1,3 +1,11 @@
+# Manual snippets used for intermediary data cleaning upstream in STAR
+
+library(remake)
+library(tidyverse)
+library(googlesheets)
+library(assertr)
+create_bindings()
+
 
 # 246 - sale contents - reimport french prices ----
 
@@ -22,7 +30,8 @@ fp %>% anti_join(currency_aat) %>% View()
 sales_contents_duplicates <- sales_contents %>%
   add_count(catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day) %>%
   filter(n >= 2) %>%
-  select(puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day, title, title_modifier, lot_notes)
+  select(puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day, title, title_modifier, lot_notes) %>%
+  arrange(catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day)
 
 applicable_artists <- sales_contents_artists %>%
   filter(puri %in% sales_contents_duplicates$puri) %>%
@@ -33,4 +42,34 @@ applicable_artists <- sales_contents_artists %>%
 sales_contents_duplicates <- sales_contents_duplicates %>%
   left_join(applicable_artists, by = "puri") %>%
   assert(is_uniq, puri)
+
 make_report(sales_contents_duplicates)
+
+# 278 - Artist Generics ----
+
+generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1yp7UkDk000mVQAM2vgpClA9wzKqQx4-HUeI26_AZnDE"), col_types = paste0(rep("c", 86), collapse = ""))
+
+ics <- c("star_record_no",
+         "artist_authority",
+         "variant_names",
+         "nationality",
+         "artist_early",
+         "artist_late",
+         "century_active",
+         "active_city_date",
+         "subjects_painted",
+         "notes",
+         "num_of_records",
+         "ulan_id",
+         "artist_authority_clean")
+
+mj <- generics %>%
+  norm_vars(base_names = c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles"), n_reps = 10, idcols = ics) %>%
+  arrange(desc(as.integer(num_of_records)), artist_authority) %>%
+  group_by(artist_authority) %>%
+  mutate(is_first = row_number() == 1) %>%
+  ungroup() %>%
+  mutate_at(vars(one_of(ics[-1])), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
+  select(-is_first)
+
+
