@@ -77,6 +77,8 @@ knoedler_firm_id <- function() 500304270
 # like Sales Contents)
 produce_knoedler_dimensions <- function(kdf, dimensions_aat, units_aat) {
   kdf %>%
+    # No dimensions are being excluded from Knoedler, so we need to add a dummy,
+    # all-FALSE column to pass to general_dimension_extraction
     add_column(exclude_dimension = FALSE) %>%
     general_dimension_extraction("dimensions", "star_record_no", "exclude_dimension") %>%
     mutate(
