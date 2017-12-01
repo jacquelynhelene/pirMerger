@@ -16,7 +16,7 @@ general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
                                  # Find any combo of acceptable
                                  # value/unit/dimension chars IFF there is
                                  # at least one digit in the bunch
-                                 pattern = "(?<dim>[0-9 '\"/\\.lhwd]*(?:cm)*\\d+[0-9 '\"/\\.lhwd]*(?:cm)*)")
+                                 pattern = "(?<dim>[0-9 '\"/\\.lhwd]*(?:cm|m|mm)*\\d+[0-9 '\"/\\.lhwd]*(?:cm|m|mm)*\\d*[0-9 '\"/\\.lhwd]*(?:cm|m|mm)*)")
 
   tryd[[idcol]] <- df[[idcol]]
 
@@ -26,18 +26,23 @@ general_dimension_extraction <- function(df, dimcol, idcol, exclusion_col) {
     # Do not attempt to parse any extracted dimension containing more than one
     # dimensions type marker. This indicates that extraction has failed, and the
     # parse will not work.
-    filter(str_count(dim, "[lwhd]") <= 1) %>%
+    mutate(
+      bad_dimension = str_count(dim, "[lwhd]") > 1,
+      dim_length = nchar(dim)) %>%
     # Extract the dimension marker to its own column, leaving only the dimension value with its unit markers
     mutate(dimtype = as.factor(str_trim(str_extract(dim, "(^[lhwd] | [lhwd] | [lhwd]$)\\.?")))) %>%
     mutate(value_wo_dim = str_trim(str_replace_all(dim, c("(^[lhwd] | [lhwd] | [lhwd]$)\\.?" = "", " +" = " ")))) %>%
     # Pull out mixed & decimal numbers from their unit markers
-    rematch2::bind_re_match(value_wo_dim, "^(?<dim_d1>[0-9]{1,2}/[0-9]{1,2}|[0-9\\.]+(?: [0-9]{1,2}/[0-9]{1,2})?)(?<dim_c1>[^0-9\\./]*)(?<dim_d2>[0-9]{1,2}/[0-9]{1,2}|[0-9\\.]*(?: [0-9]{1,2}/[0-9]{1,2})?)(?<dim_c2>[^0-9\\./]*)") %>%
-    mutate_at(vars(dim_d1, dim_c1, dim_d2, dim_c2), funs(na_if(str_trim(.), ""))) %>%
-    mutate_at(vars(dim_d1, dim_d2), funs(parsed = parse_fraction)) %>%
-    mutate_at(vars(dim_c1, dim_c2), as.factor) %>%
+    rematch2::bind_re_match(value_wo_dim, "^(?<dim_d1>[0-9]{1,2}/[0-9]{1,2}|[0-9\\.]+(?: [0-9]{1,2}/[0-9]{1,2})?)(?<dim_c1>[^0-9\\./]*)(?<dim_d2>[0-9]{1,2}/[0-9]{1,2}|[0-9\\.]*(?: [0-9]{1,2}/[0-9]{1,2})?)(?<dim_c2>[^0-9\\./]*)(?<dim_d3>[0-9]{1,2}/[0-9]{1,2}|[0-9\\.]*(?: [0-9]{1,2}/[0-9]{1,2})?)(?<dim_c3>[^0-9\\./]*)") %>%
+    mutate_at(vars(contains("dim_d"), contains("dim_c")), funs(na_if(str_trim(.), ""))) %>%
+    mutate_at(vars(contains("dim_d")), funs(parsed = parse_fraction)) %>%
+    mutate_at(vars(contains("dim_c")), as.factor) %>%
     mutate(decimalized_dim_value = compile_inches(dim_d1_parsed, dim_c1, dim_d2_parsed, dim_c2)) %>%
     group_by(.dots = idcol) %>%
-    mutate(dimension_order = row_number()) %>%
+    mutate(
+      dimension_order = row_number(),
+      n_dim = n(),
+      contains_bad_dimension = any(bad_dimension)) %>%
     ungroup()
 }
 
