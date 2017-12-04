@@ -172,3 +172,61 @@ targets:
 
   sales_contents_unparsed_dimensions:
     command: produce_sales_unparsed_dimensions(sales_contents_ids, sales_contents_dimensions)
+
+  all_gh_sales_catalogs:
+    depends:
+      - ../provenance-index-csv/sales_catalogs/sales_contents_1.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_2.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_3.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_4.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_5.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_6.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_7.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_8.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_9.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_10.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_11.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_12.csv
+      - ../provenance-index-csv/sales_catalogs/sales_contents_13.csv
+      - ../provenance-index-csv/sales_catalogs/sales_descriptions.csv
+      - ../provenance-index-csv/sales_catalogs/sales_catalogs_info.csv
+
+  gh_sales_contents:
+    command: produce_gh_sales_contents(raw_sales_contents)
+
+  ../provenance-index-csv/sales_catalogs/sales_contents_1.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(1))
+  ../provenance-index-csv/sales_catalogs/sales_contents_2.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(2))
+  ../provenance-index-csv/sales_catalogs/sales_contents_3.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(3))
+  ../provenance-index-csv/sales_catalogs/sales_contents_4.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(4))
+  ../provenance-index-csv/sales_catalogs/sales_contents_5.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(5))
+  ../provenance-index-csv/sales_catalogs/sales_contents_6.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(6))
+  ../provenance-index-csv/sales_catalogs/sales_contents_7.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(7))
+  ../provenance-index-csv/sales_catalogs/sales_contents_8.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(8))
+  ../provenance-index-csv/sales_catalogs/sales_contents_9.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(9))
+  ../provenance-index-csv/sales_catalogs/sales_contents_10.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(10))
+  ../provenance-index-csv/sales_catalogs/sales_contents_11.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(11))
+  ../provenance-index-csv/sales_catalogs/sales_contents_12.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(12))
+  ../provenance-index-csv/sales_catalogs/sales_contents_13.csv:
+    command: write_gh_sales_contents(gh_sales_contents, path = target_name, index = I(13))
+
+  gh_sales_descriptions:
+    command: produce_gh_sales_descriptions(raw_sales_descriptions)
+  ../provenance-index-csv/sales_catalogs/sales_descriptions.csv:
+    command: write_csv(gh_sales_descriptions, path = target_name, na = I(""))
+
+  gh_sales_catalogs_info:
+    command: produce_gh_sales_catalogs_info(raw_sales_catalogs_info, raw_sales_catalogs_loccodes)
+  ../provenance-index-csv/sales_catalogs/sales_catalogs_info.csv:
+    command: write_csv(gh_sales_catalogs_info, path = target_name, na = I(""))

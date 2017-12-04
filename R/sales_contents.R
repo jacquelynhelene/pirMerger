@@ -485,3 +485,36 @@ produce_sales_unparsed_dimensions <- function(sales_contents_ids, sales_contents
     anti_join(sales_contents_dimensions, by = "puri")
 }
 
+# GH Export ----
+
+produce_gh_sales_contents <- function(raw_sales_contents) {
+  nsc <- nrow(raw_sales_contents)
+  nsplits <- ceiling(nsc / 100000)
+  split_vector <- rep(1:nsplits, each = 100000)[1:nsc]
+
+  raw_sales_contents %>%
+    select(-star_record_no, -file_segment, -(contains("ulan"))) %>%
+    select(persistent_puid, everything()) %>%
+    mutate_at(vars(contains("auth")), redact) %>%
+    split(split_vector)
+}
+
+# write_gh_sales_contents <- function(split_sc, path_base) {
+#   iwalk(split_sc, function(x, i) write_csv(x, path = paste0(path_base, "_", i, ".csv"), na = ""))
+# }
+
+write_gh_sales_contents <- function(split_sc, path, index) {
+  write_csv(split_sc[[index]], path = path, na = "")
+}
+
+produce_gh_sales_descriptions <- function(raw_sales_descriptions) {
+  raw_sales_descriptions %>%
+    select(-original_file_name, -star_record_no, -cat_input_status, -persistent_puid)
+}
+
+produce_gh_sales_catalogs_info <- function(raw_sales_catalogs_info, raw_sales_catalogs_loccodes) {
+  raw_sales_catalogs_info %>%
+    left_join(select(raw_sales_catalogs_loccodes, owner_code, owner_location), by = "owner_code") %>%
+    select(catalog_number, copy_number, gri_has_copy, price_recorded, owner_code, owner_location)
+}
+

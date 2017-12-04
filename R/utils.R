@@ -63,4 +63,8 @@ make_report <- function(df) {
   report_path
 }
 
+# Easily pull names not wanted in GitHub exports
+redact <- function(x, redactions = c("NEW", "NON-UNIQUE", "non-unique")) {
+  ifelse(x %in% redactions, NA_character_, x)
+}
 

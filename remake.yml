@@ -32,7 +32,8 @@ targets:
 
   all_github:
     depends:
-      - ../provenance-index-csv/knoedler/knoedler.csv
+      - all_gh_knoedler
+      - all_gh_sales_catalogs
 
   artists_authority:
     command: produce_artists_authority(raw_artists_authority)
