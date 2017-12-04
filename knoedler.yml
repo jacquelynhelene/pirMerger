@@ -138,3 +138,9 @@ targets:
 
   ../pirdata/knoedler_join.csv:
     command: write_csv(path = target_name, x = joined_knoedler, na = I(""))
+
+  gh_knoedler:
+    command: produce_gh_knoedler(raw_knoedler)
+  ../provenance-index-csv/knoedler/knoedler.csv:
+    command: write_csv(gh_knoedler, path = target_name, na = I(""))
+
