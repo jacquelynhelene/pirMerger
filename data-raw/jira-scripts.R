@@ -65,11 +65,11 @@ ics <- c("star_record_no",
 
 mj <- generics %>%
   norm_vars(base_names = c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles"), n_reps = 10, idcols = ics) %>%
-  arrange(desc(as.integer(num_of_records)), artist_authority) %>%
+  arrange(desc(as.integer(num_of_records)), artist_authority, type, desc(Score)) %>%
   group_by(artist_authority) %>%
   mutate(is_first = row_number() == 1) %>%
   ungroup() %>%
   mutate_at(vars(one_of(ics[-1])), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
   select(-is_first)
 
-
+write_clip(mj)
