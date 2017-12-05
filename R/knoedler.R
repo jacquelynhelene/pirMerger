@@ -831,7 +831,7 @@ produce_joined_knoedler <- function(knoedler,
 
 produce_gh_knoedler <- function(raw_knoedler) {
   raw_knoedler %>%
-    mutate_at(vars(art_authority_1, sell_auth_name_1, sell_auth_name_2, buy_auth_name_1, buy_auth_name_2), redact) %>%
+    mutate_at(vars(contains("auth")), redact) %>%
     select(-(contains("ulan")), -star_record_no, -original_file_name, -working_note) %>%
     # Add absolute url to page image filename
     mutate(link = paste0("http://archives.getty.edu:30008/getty_images/digitalresources/goupil/jpgs/", link))
