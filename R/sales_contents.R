@@ -499,10 +499,6 @@ produce_gh_sales_contents <- function(raw_sales_contents) {
     split(split_vector)
 }
 
-# write_gh_sales_contents <- function(split_sc, path_base) {
-#   iwalk(split_sc, function(x, i) write_csv(x, path = paste0(path_base, "_", i, ".csv"), na = ""))
-# }
-
 write_gh_sales_contents <- function(split_sc, path, index) {
   write_csv(split_sc[[index]], path = path, na = "")
 }
