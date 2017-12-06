@@ -47,7 +47,7 @@ make_report(sales_contents_duplicates)
 
 # 278 - Artist Generics ----
 
-generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1yp7UkDk000mVQAM2vgpClA9wzKqQx4-HUeI26_AZnDE"), col_types = paste0(rep("c", 86), collapse = ""))
+generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1yp7UkDk000mVQAM2vgpClA9wzKqQx4-HUeI26_AZnDE"), ws = "generic_authorities_queries_label_reconciled.csv", col_types = paste0(rep("c", 86), collapse = ""))
 
 ics <- c("star_record_no",
          "artist_authority",
@@ -63,13 +63,20 @@ ics <- c("star_record_no",
          "ulan_id",
          "artist_authority_clean")
 
+# Prioritize Knoedler records first
+k_generics_count <- knoedler_artists %>%
+  filter(artist_authority %in% generics$artist_authority) %>%
+  count(artist_authority, sort = TRUE) %>%
+  rename(k_count = n)
+
 mj <- generics %>%
   norm_vars(base_names = c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles"), n_reps = 10, idcols = ics) %>%
-  arrange(desc(as.integer(num_of_records)), artist_authority, type, desc(Score)) %>%
+  left_join(k_generics_count, by = "artist_authority") %>%
+  arrange(desc(k_count), desc(as.integer(num_of_records)), artist_authority, type, desc(Score)) %>%
   group_by(artist_authority) %>%
   mutate(is_first = row_number() == 1) %>%
   ungroup() %>%
-  mutate_at(vars(one_of(ics[-1])), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
+  mutate_at(vars(one_of(setdiff(ics, c("star_record_no", "k_count")))), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
   select(-is_first)
 
 write_clip(mj)
