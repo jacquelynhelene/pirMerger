@@ -8,7 +8,7 @@ produce_sales_contents_ids <- function(raw_sales_contents) {
     mutate_at(vars(subject, genre, object_type, materials), funs(tolower)) %>%
     rename(puri = persistent_puid) %>%
     select(-star_record_no) %>%
-    assert(not_na, puri) %>%
+    assert(not_na, puri, catalog_number) %>%
     assert(is_uniq, puri)
 }
 
