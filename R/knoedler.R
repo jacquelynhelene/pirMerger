@@ -566,10 +566,10 @@ identify_knoedler_id_process <- function(person_df) {
 
 produce_knoedler_artists_tmp <- function(raw_knoedler) {
   raw_knoedler %>%
-    norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
+    norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attrib_mod", "attrib_mod_auth", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     rename(artist_star_record_no = star_rec_no) %>%
     # Join ulan ids to this list
-    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod)
+    rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attrib_mod, artist_attribution_mod_auth = attrib_mod_auth)
 }
 
 produce_knoedler_artists_lookup <- function(knoedler_artists_tmp) {
@@ -598,6 +598,7 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
            artist_name,
            artist_authority,
            artist_attribution_mod,
+           artist_attribution_mod_auth,
            artist_ulan_id,
            artist_uid,
            artist_nationality,
