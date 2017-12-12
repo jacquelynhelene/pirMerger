@@ -613,7 +613,7 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
 
 produce_knoedler_sellers_tmp <- function(raw_knoedler) {
   raw_knoedler %>%
-    norm_vars(base_names = c("seller_name", "seller_loc", "sell_auth_name", "sell_auth_loc", "seller_ulan_id"), n_reps = 2, idcols = "star_record_no")
+    norm_vars(base_names = c("seller_name", "seller_loc", "seller_mod", "sell_auth_name", "sell_auth_loc", "sell_auth_mod", "seller_ulan_id"), n_reps = 2, idcols = "star_record_no")
 }
 
 produce_knoedler_sellers_lookup <- function(knoedler_sellers_tmp) {
@@ -645,6 +645,8 @@ produce_knoedler_sellers <- function(knoedler_sellers_tmp, union_person_ids) {
            seller_loc,
            sell_auth_name,
            sell_auth_loc,
+           seller_mod,
+           sell_auth_mod,
            seller_ulan_id,
            seller_uid,
            seller_birth_date = person_birth_date,
@@ -660,7 +662,7 @@ produce_knoedler_buyers_tmp <- function(raw_knoedler) {
   raw_knoedler %>%
     # As Knoedler is technically one of the joint owners, they need to be
     # present in every sale
-    norm_vars(base_names = c("buyer_name", "buyer_loc", "buy_auth_name", "buy_auth_addr", "buyer_ulan_id"), n_reps = 2, idcols = "star_record_no")
+    norm_vars(base_names = c("buyer_name", "buyer_loc", "buyer_mod", "buy_auth_name", "buy_auth_addr", "buy_auth_mod", "buyer_ulan_id"), n_reps = 2, idcols = "star_record_no")
 }
 
 produce_knoedler_buyers_lookup <- function(knoedler_buyers_tmp) {
@@ -692,6 +694,8 @@ produce_knoedler_buyers <- function(knoedler_buyers_tmp, union_person_ids) {
            buyer_loc,
            buy_auth_name,
            buy_auth_addr,
+           buyer_mod,
+           buy_auth_mod,
            buyer_ulan_id,
            buyer_uid,
            buyer_birth_date = person_birth_date,
@@ -711,7 +715,7 @@ produce_knoedler_joint_owners_tmp <- function(raw_knoedler) {
     joint_own_5 = "Knoedler",
     joint_own_sh_5 = NA_character_,
     joint_ulan_id_5 = knoedler_firm_id()) %>%
-    norm_vars(base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 5, idcols = "star_record_no")
+    norm_vars(base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 4, idcols = "star_record_no")
 }
 
 produce_knoedler_joint_owners_lookup <- function(knoedler_joint_owners_tmp) {

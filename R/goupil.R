@@ -25,7 +25,7 @@ produce_goupil_artists <- function(goupil) {
 }
 
 produce_goupil_buyers <- function(goupil) {
-  norm_vars(goupil, base_names = c("buyer_name", "buyer_loc", "buyer_mod", "buy_auth_name", "buy_auth_mod", "buyer_ulan_id"), n_reps = 2, idcols = "star_record_no")
+  norm_vars(goupil, base_names = c("buyer_name", "buyer_loc", "buyer_mod", "buy_auth_name", "buy_auth_addr", "buy_auth_mod", "buyer_ulan_id"), n_reps = 2, idcols = "star_record_no")
 }
 
 produce_goupil_previous_owners <- function(goupil) {

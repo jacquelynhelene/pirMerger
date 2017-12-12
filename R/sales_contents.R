@@ -103,7 +103,7 @@ produce_sales_contents_hand_notes <- function(sales_contents) {
 }
 
 produce_sales_contents_sellers <- function(sales_contents) {
-  norm_vars(sales_contents, base_names = c("sell_name", "sell_name_so", "sell_name_ques", "sell_mod", "sell_auth_name", "sell_auth_mod"), n_reps = 5, idcols = "puri")
+  norm_vars(sales_contents, base_names = c("sell_name", "sell_name_so", "sell_name_ques", "sell_mod", "sell_auth_name", "sell_auth_nameq", "sell_auth_mod"), n_reps = 5, idcols = "puri")
 }
 
 produce_sales_contents_buyers <- function(sales_contents) {
@@ -259,7 +259,7 @@ produce_sales_descriptions <- function(sales_descriptions) {
     select(-(auc_copy_seller_1:auc_copy_seller_4)) %>%
     select(-(other_seller_1:other_seller_3)) %>%
     select(-(sell_auth_name_1:sell_auth_q_5)) %>%
-    select(-(expert_1:expert_auth_5)) %>%
+    select(-(expert_1:expert_auth_4)) %>%
     select(-(comm_pr_1:comm_pr_auth_4)) %>%
     select(-(auc_house_name_1:auc_house_auth_4)) %>%
     select(-(country_auth_1:country_auth_2))
@@ -292,7 +292,7 @@ produce_sales_descriptions_auth_seller <-  function(sales_descriptions) {
 
 produce_sales_descriptions_expert_auth <- function(sales_descriptions) {
   sales_descriptions %>%
-    norm_vars(base_names = c("expert", "expert_auth"), n_reps = 5, idcols = "description_puri")
+    norm_vars(base_names = c("expert", "expert_auth"), n_reps = 4, idcols = "description_puri")
 }
 
 produce_sales_descriptions_commissaire_pr <-  function(sales_descriptions) {
