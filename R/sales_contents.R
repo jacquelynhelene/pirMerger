@@ -493,7 +493,7 @@ produce_gh_sales_contents <- function(raw_sales_contents) {
   split_vector <- rep(1:nsplits, each = 100000)[1:nsc]
 
   raw_sales_contents %>%
-    select(-star_record_no, -file_segment, -(contains("ulan"))) %>%
+    select(-contains("star"), -original_file_name, -sale_code, -file_segment, -(contains("ulan"))) %>%
     select(persistent_puid, everything()) %>%
     mutate_at(vars(contains("auth")), redact) %>%
     split(split_vector)
