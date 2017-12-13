@@ -80,3 +80,25 @@ mj <- generics %>%
   select(-is_first)
 
 write_clip(mj)
+
+# 306 - Join new Artist ULAN ids from Vocabs
+
+artist_ulan_ids <- readxl::read_excel("~/Downloads/ProvArtists_ULANConcordance_20171207.xlsx", col_names = c("star_record_no", "ulan_id"), col_types = c("text", "text"), skip = 1) %>%
+  mutate(star_record_no = str_replace(star_record_no, "a", "")) %>%
+  mutate_all(as.integer)
+
+artists_authority_reimport <- artist_ulan_ids %>%
+  inner_join(select(artists_authority, -ulan_id), by = "star_record_no") %>%
+  select(star_record_no, ulan_id)
+
+artist_ulan_ids_star <- artist_ulan_ids %>%
+  left_join(select(artists_authority, star_record_no, artist_authority), by = "star_record_no") %>%
+  select(-star_record_no)
+
+knoedler_artists_ulan_id <- raw_knoedler %>%
+  select(star_record_no, art_authority_1, art_authority_2) %>%
+  left_join(artist_ulan_ids_star, by = c("art_authority_1" = "artist_authority")) %>%
+  left_join(artist_ulan_ids_star, by = c("art_authority_2" = "artist_authority")) %>%
+  rename(artist_ulan_id_1 = ulan_id.x, artist_ulan_id_2 = ulan_id.y)
+
+make_report(knoedler_artists_ulan_id)
