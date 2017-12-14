@@ -81,7 +81,7 @@ mj <- generics %>%
 
 write_clip(mj)
 
-# 306 - Join new Artist ULAN ids from Vocabs
+# 306 - Join new Artist ULAN ids from Vocabs ----
 
 artist_ulan_ids <- readxl::read_excel("~/Downloads/ProvArtists_ULANConcordance_20171207.xlsx", col_names = c("star_record_no", "ulan_id"), col_types = c("text", "text"), skip = 1) %>%
   mutate(star_record_no = str_replace(star_record_no, "a", "")) %>%
@@ -102,3 +102,11 @@ knoedler_artists_ulan_id <- raw_knoedler %>%
   rename(artist_ulan_id_1 = ulan_id.x, artist_ulan_id_2 = ulan_id.y)
 
 make_report(knoedler_artists_ulan_id)
+
+# 294 - Sales Contents - Unvalidated Artist Authority Names ----
+
+unvalidated_authority_names <- sales_contents_artists %>%
+  filter(!is.na(art_authority) & !(art_authority %in% c("NEW", "NON-UNIQUE", "Non-unique"))) %>%
+  anti_join(artists_authority, by = c("art_authority" = "artist_authority"))
+
+make_report(unvalidated_authority_names)
