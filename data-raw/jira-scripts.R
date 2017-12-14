@@ -110,3 +110,24 @@ unvalidated_authority_names <- sales_contents_artists %>%
   anti_join(artists_authority, by = c("art_authority" = "artist_authority"))
 
 make_report(unvalidated_authority_names)
+
+# 308 - Sales Contents join ULAN ids to validated artists
+
+artist_ulan_ids_star <- artists_authority %>%
+  select(artist_authority, ulan_id)
+
+sales_contents_artists_reimport <- raw_sales_contents %>%
+  select(star_record_no, art_authority_1, art_authority_2, art_authority_3, art_authority_4, art_authority_5) %>%
+  left_join(artist_ulan_ids_star, by = c("art_authority_1" = "artist_authority")) %>%
+  rename(artist_ulan_id_1 = ulan_id) %>%
+  left_join(artist_ulan_ids_star, by = c("art_authority_2" = "artist_authority")) %>%
+  rename(artist_ulan_id_2 = ulan_id) %>%
+  left_join(artist_ulan_ids_star, by = c("art_authority_3" = "artist_authority")) %>%
+  rename(artist_ulan_id_3 = ulan_id) %>%
+  left_join(artist_ulan_ids_star, by = c("art_authority_4" = "artist_authority")) %>%
+  rename(artist_ulan_id_4 = ulan_id) %>%
+  left_join(artist_ulan_ids_star, by = c("art_authority_5" = "artist_authority")) %>%
+  rename(artist_ulan_id_5 = ulan_id) %>%
+  filter(!is.na(artist_ulan_id_1) | !is.na(artist_ulan_id_2) | !is.na(artist_ulan_id_3) | !is.na(artist_ulan_id_4) | !is.na(artist_ulan_id_5))
+
+make_report(sales_contents_artists_reimport)
