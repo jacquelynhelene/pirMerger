@@ -14,14 +14,16 @@
 #'   when gathering these column groups.
 #'
 #' @export
-norm_vars <- function(data, newcol = "group_no", base_names, n_reps, n_sep_char = "_", idcols, ...) {
+norm_vars <- function(data, newcol = "group_no", base_names, n_reps, n_sep_char = "_", idcols, check_names = TRUE, ...) {
 
-  # Validate that the names are indeed in sequence in the original table
-  candidate_names <- paste(rep(base_names, times = n_reps), rep(seq_len(n_reps), each = length(base_names)), sep = n_sep_char)
-  match_indices <- match(candidate_names, names(data))
-  if (!identical(seq(from = first(match_indices), length.out = length(match_indices)), match_indices)) {
-    try_names <- names(data)[first(match_indices):last(match_indices)]
-    stop("Provided column name sequence is not contiguous in source data.\nPresent in source but not target: ", paste(setdiff(try_names, candidate_names), collapse = ", "))
+  if (check_names) {
+    # Validate that the names are indeed in sequence in the original table
+    candidate_names <- paste(rep(base_names, times = n_reps), rep(seq_len(n_reps), each = length(base_names)), sep = n_sep_char)
+    match_indices <- match(candidate_names, names(data))
+    if (!identical(seq(from = first(match_indices), length.out = length(match_indices)), match_indices)) {
+      try_names <- names(data)[first(match_indices):last(match_indices)]
+      stop("Provided column name sequence is not contiguous in source data.\nPresent in source but not target: ", paste(setdiff(try_names, candidate_names), collapse = ", "))
+    }
   }
 
   dd <- reduce(seq_len(n_reps), function(x, y) {

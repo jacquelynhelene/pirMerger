@@ -715,7 +715,7 @@ produce_knoedler_joint_owners_tmp <- function(raw_knoedler) {
     joint_own_5 = "Knoedler",
     joint_own_sh_5 = NA_character_,
     joint_ulan_id_5 = knoedler_firm_id()) %>%
-    norm_vars(base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 4, idcols = "star_record_no")
+    norm_vars(base_names = c("joint_own", "joint_own_sh", "joint_ulan_id"), n_reps = 5, idcols = "star_record_no", check_names = FALSE)
 }
 
 produce_knoedler_joint_owners_lookup <- function(knoedler_joint_owners_tmp) {
