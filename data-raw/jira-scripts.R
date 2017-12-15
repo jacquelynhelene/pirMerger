@@ -131,3 +131,34 @@ sales_contents_artists_reimport <- raw_sales_contents %>%
   filter(!is.na(artist_ulan_id_1) | !is.na(artist_ulan_id_2) | !is.na(artist_ulan_id_3) | !is.na(artist_ulan_id_4) | !is.na(artist_ulan_id_5))
 
 make_report(sales_contents_artists_reimport)
+
+# 310 - reimport old dimensions to sales contents
+
+load("~/Desktop/march_sales_contents.rda")
+
+unmodified_dimensions <- march_sales_contents %>%
+  select(catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day, dimensions) %>%
+  filter(!is.na(dimensions))
+
+joined_unmodified_dimensions <- raw_sales_contents %>%
+  select(persistent_puid, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day, modified_dimensions = dimensions) %>%
+  inner_join(unmodified_dimensions, by = c("catalog_number", "lot_number", "lot_sale_year", "lot_sale_month", "lot_sale_day")) %>%
+  group_by(persistent_puid) %>%
+  summarize_all(funs(pick))
+
+joined_unmodified_dimensions <- joined_unmodified_dimensions %>%
+  assert(is_uniq, persistent_puid) %>%
+  select(persistent_puid, dimensions, modified_dimensions)
+
+changed_joined <- joined_unmodified_dimensions %>%
+  filter(dimensions != modified_dimensions)
+
+original_dimensions_reimport <- joined_unmodified_dimensions %>%
+  select(persistent_puid, original_dimensions = dimensions)
+
+unfixed_dimensions <- raw_sales_contents %>%
+  select(persistent_puid, dimensions) %>%
+  filter(!is.na(dimensions)) %>%
+  anti_join(joined_unmodified_dimensions, by = "persistent_puid")
+
+make_report(joined_unmodified_dimensions)
