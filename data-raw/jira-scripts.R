@@ -162,3 +162,78 @@ unfixed_dimensions <- raw_sales_contents %>%
   anti_join(joined_unmodified_dimensions, by = "persistent_puid")
 
 make_report(joined_unmodified_dimensions)
+
+# 248 - Knoedler present location institution reconciliation  ----
+
+knoedler_present_location_worksheet <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1FpHe4zWjFzBrxAm1CQ-VwnC0LmszDIyZ1u-X-DD8rqI")) %>%
+  select(star_record_no, pres_own_ulan_id = ulan_id) %>%
+  mutate_all(as.character) %>%
+  filter(!is.na(pres_own_ulan_id)) %>%
+  distinct()
+
+knoedler_present_location_ulan_reimport <- raw_knoedler %>%
+  select(star_record_no, present_loc_inst) %>%
+  filter(!is.na(present_loc_inst)) %>%
+  left_join(knoedler_present_location_worksheet) %>%
+  filter(!is.na(pres_own_ulan_id))
+
+make_report(knoedler_present_location_ulan_reimport)
+
+# 260 - Goupil object type and material ----
+
+goupil_objecttype_materials <- raw_goupil %>%
+  count(object_type, materials, sort = TRUE)
+write_clip(goupil_objecttype_materials)
+
+# 202 - Sales Contents artist attribution modifiers ----
+
+sc_attr <- sales_contents_artists %>%
+  filter(!is.na(attrib_mod_auth)) %>%
+  single_separate(source_col = "attrib_mod_auth") %>%
+  norm_vars(base_names = "attrib_mod_auth", n_reps = 4, idcols = "puri")
+
+# 161 - Sales contents shared prices ----
+
+transaction_ids <- sales_contents_prices %>%
+  # When there are multiple price entries, just pick the first note in each one
+  group_by(puri) %>%
+  summarize(price_note = pick(price_note)) %>%
+  left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+  mutate(joining_note = if_else(str_detect(price_note, regex("(f[üu]r|pour|for|avec)", ignore_case = TRUE)), price_note, NA_character_)) %>%
+  mutate(transaction_id = if_else(is.na(joining_note), paste0("transaction-", seq_along(puri)), paste0("group-transaction-", group_indices(., catalog_number, joining_note))))
+
+missing_price_note_candidates <- transaction_ids %>%
+  filter(str_detect(transaction_id, 'group')) %>%
+  add_count(transaction_id) %>%
+  filter(n == 1) %>%
+  select(-joining_note, -transaction_id, -n) %>%
+  left_join(select(sales_contents, puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = "puri") %>%
+  arrange(catalog_number)
+
+error_fixes <- read_csv("~/Downloads/error_paired_sales_2017-08-01.csv") %>%
+  mutate_at(vars(lot_number), funs(str_pad(., width = 4, side = "left", pad = "0"))) %>%
+  mutate_at(vars(price_note), funs(str_replace(., "\xcc_", "ü")))
+
+
+
+merged_joins <- missing_price_note_candidates %>%
+  left_join(select(error_fixes, catalog_number, lot_number, new_price_note = price_note, absent_lots, star_edit), by = c("catalog_number", "lot_number"))
+
+absent_lots <- merged_joins %>%
+  mutate_at(vars(absent_lots), funs(if_else(is.na(absent_lots), lot_number, paste0(lot_number, absent_lots, sep = ";")))) %>%
+  single_separate("absent_lots") %>%
+  norm_vars(base_names = "absent_lots", n_reps = 17, idcols = "puri") %>%
+  rename(lot_number = absent_lots) %>%
+  left_join(select(merged_joins, -absent_lots, -lot_number), by = "puri")
+
+
+price_notes_reimport <- merged_joins %>%
+  filter(price_note != new_price_note) %>%
+  select(puri, price_note_1 = new_price_note) %>%
+  assert(is_uniq, puri) %>%
+  left_join(select(sales_contents_prices, -price_note), by = "puri")
+
+make_report(price_notes_reimport)
+
+write_clip(missing_price_note_candidates)
+
