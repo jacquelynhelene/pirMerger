@@ -132,6 +132,9 @@ single_separate <- function(df, source_col, sep = ";") {
 
   target_separations <- max_separations + 1
 
+  into_names <- paste(source_col, seq_len(target_separations), sep = "_")
+
   df %>%
-    separate_(col = source_col, into = paste(source_col, seq_len(target_separations), sep = "_"), sep = sep, extra = "merge", fill = "right")
+    separate_(col = source_col, into = into_names, sep = sep, extra = "merge", fill = "right") %>%
+    mutate_at(vars(one_of(into_names)), str_trim)
 }
