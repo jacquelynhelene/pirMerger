@@ -19,7 +19,7 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     select(-(artist_name_1:star_rec_no_5)) %>%
     select(-(hand_note_1:hand_note_so_7)) %>%
     select(-(dplyr::contains("sell_"))) %>%
-    select(-(buy_name_1:buy_mod_5)) %>%
+    select(-(buy_name_1:buy_mod_4)) %>%
     select(-(price_amount_1:price_citation_3)) %>%
     select(-(prev_owner_1:prev_own_auth_q_9)) %>%
     select(-(prev_sale_year_1:prev_sale_coll_7)) %>%
@@ -103,11 +103,11 @@ produce_sales_contents_hand_notes <- function(sales_contents) {
 }
 
 produce_sales_contents_sellers <- function(sales_contents) {
-  norm_vars(sales_contents, base_names = c("sell_name", "sell_name_so", "sell_name_ques", "sell_mod", "sell_auth_name", "sell_auth_nameq", "sell_auth_mod"), n_reps = 5, idcols = "puri")
+  norm_vars(sales_contents, base_names = c("sell_name", "sell_name_so", "sell_name_ques", "sell_mod", "sell_auth_name", "sell_auth_nameq", "sell_auth_mod", "sell_auth_mod_a"), n_reps = 5, idcols = "puri")
 }
 
 produce_sales_contents_buyers <- function(sales_contents) {
-  norm_vars(sales_contents, base_names = c("buy_name", "buy_name_so", "buy_name_ques", "buy_name_cite", "buy_mod", "buy_auth_name", "buy_auth_nameq", "buy_auth_mod"), n_reps = 5, idcols = "puri")
+  norm_vars(sales_contents, base_names = c("buy_name", "buy_name_so", "buy_name_ques", "buy_name_cite", "buy_mod", "buy_auth_name", "buy_auth_nameq", "buy_auth_mod", "buy_auth_mod_a"), n_reps = 4, idcols = "puri")
 }
 
 produce_sales_contents_prices_tmp <- function(sales_contents) {
