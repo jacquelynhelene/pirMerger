@@ -64,8 +64,7 @@ produce_knoedler <- function(knoedler_tmp) {
     select(-(buyer_name_1:buyer_ulan_id_2)) %>%
     select(-(purch_amount:knoedpurch_note)) %>%
     select(-(entry_date_year:entry_date_day)) %>%
-    select(-(sale_date_year:knoedshare_note), -transaction) %>%
-    select(-pres_own_ulan_id)
+    select(-(sale_date_year:knoedshare_note), -transaction)
 }
 
 # Returns the ULAN ID for knoedler
@@ -530,12 +529,6 @@ produce_knoedler_depicts_aat <- function(raw_knoedler_subjects_aat, kdf) {
     filter(!is.na(star_record_no))
 }
 
-produce_knoedler_present_owner_ulan <- function(raw_knoedler_present_owner_ulan) {
-  kdf %>%
-    select(-present_own_ulan_id) %>%
-    left_join(raw_knoedler_present_owner_ulan, by = "star_record_no")
-}
-
 produce_knoedler_owners_lookup <- function(knoedler_owner_uids) {
   knoedler_owner_uids %>%
     group_by(person_uid) %>%
@@ -756,6 +749,25 @@ produce_knoedler_joint_owners <- function(knoedler_joint_owners_tmp, union_perso
            joint_owner_aat_nationality_3 = aat_nationality_3)
 }
 
+produce_knoedler_present_owners_lookup <- function(knoedler_with_ids) {
+  knoedler_with_ids %>%
+    filter(!is.na(present_loc_inst)) %>%
+    select(
+      source_record_id = star_record_no,
+      person_auth = present_loc_inst,
+      person_ulan = pres_own_ulan_id) %>%
+    mutate(person_name = NA_character_, person_ulan = as.integer(person_ulan)) %>%
+    add_column(source_document_id = "KNOEDLER") %>%
+    identify_knoedler_id_process()
+}
+
+produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, union_person_ids) {
+  left_join(
+    select(knoedler_present_owners_lookup, star_record_no = source_record_id),
+    select(union_person_ids, source_record_id, present_loc_uid = person_uid),
+    by = c("star_record_no" = "source_record_id"))
+}
+
 # Joined Table ----
 
 #' Produce a joined Knoedler table
@@ -788,7 +800,7 @@ produce_joined_knoedler <- function(knoedler,
                                     knoedler_depicts_aat,
                                     currency_aat,
                                     knoedler_dimensions,
-                                    knoedler_present_owner_ulan) {
+                                    knoedler_present_owners) {
 
   message("- Merge knoedler purchase data into single table")
   knoedler_purchases <- knoedler_purchase_info %>%
@@ -800,7 +812,9 @@ produce_joined_knoedler <- function(knoedler,
     left_join(spread_out(knoedler_sale_sellers, "sale_event_id"), by = "sale_event_id") %>%
     left_join(spread_out(knoedler_sale_buyers, "sale_event_id"), by = "sale_event_id")
 
-    joined_knoedler <- knoedler %>%
+  knoedler %>%
+    pipe_message("- Join knoedler_present_owners uids to knoedler") %>%
+    left_join(knoedler_present_owners, by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_artists to knoedler") %>%
     left_join(spread_out(knoedler_artists, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join knoedler_purchases to knoedler") %>%
@@ -827,9 +841,6 @@ produce_joined_knoedler <- function(knoedler,
     left_join(spread_out(knoedler_style_aat, "star_record_no"), by = "star_record_no") %>%
     pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
     left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no")
-  joined_knoedler %>%
-    pipe_message("- Join knoedler_present_owner_ulan to knoedler") %>%
-    left_join(knoedler_present_owner_ulan, by = "star_record_no")
 }
 
 # GH Export ----
