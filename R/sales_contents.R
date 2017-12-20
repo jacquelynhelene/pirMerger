@@ -19,7 +19,7 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     select(-(artist_name_1:star_rec_no_5)) %>%
     select(-(hand_note_1:hand_note_so_7)) %>%
     select(-(dplyr::contains("sell_"))) %>%
-    select(-(buy_name_1:buy_mod_4)) %>%
+    select(-(buy_name_1:buy_auth_mod_a_4)) %>%
     select(-(price_amount_1:price_citation_3)) %>%
     select(-(prev_owner_1:prev_own_auth_q_9)) %>%
     select(-(prev_sale_year_1:prev_sale_coll_7)) %>%
