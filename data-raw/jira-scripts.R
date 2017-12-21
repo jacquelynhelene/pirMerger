@@ -164,6 +164,14 @@ unfixed_dimensions <- raw_sales_contents %>%
 
 make_report(joined_unmodified_dimensions)
 
+missing_dims <- read_csv("~/Downloads/missing.csv") %>%
+  select(-(X5:X9)) %>%
+  separate(lot_sale_date, into = c("lot_sale_year", "lot_sale_month", "lot_sale_day")) %>%
+  mutate_at(vars(lot_number), funs(str_pad(., width = 4, side = "left", pad = "0"))) %>%
+  left_join(select(sales_contents, puri, project), by = c("persistent_uid" = "puri")) %>%
+  mutate(catalog_number = paste(project, catalog_number, sep = "-")) %>%
+  left_join(select(march_sales_contents, catalog_number, lot_number, contains("lot_sale"), dimensions), by = c("catalog_number", "lot_number"))
+
 # 248 - Knoedler present location institution reconciliation  ----
 
 knoedler_present_location_worksheet <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1FpHe4zWjFzBrxAm1CQ-VwnC0LmszDIyZ1u-X-DD8rqI")) %>%
