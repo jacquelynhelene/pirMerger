@@ -111,7 +111,7 @@ unvalidated_authority_names <- sales_contents_artists %>%
 
 make_report(unvalidated_authority_names)
 
-# 308 - Sales Contents join ULAN ids to validated artists
+# 308 - Sales Contents join ULAN ids to validated artists ----
 
 artist_ulan_ids_star <- artists_authority %>%
   select(artist_authority, ulan_id)
@@ -128,11 +128,12 @@ sales_contents_artists_reimport <- raw_sales_contents %>%
   rename(artist_ulan_id_4 = ulan_id) %>%
   left_join(artist_ulan_ids_star, by = c("art_authority_5" = "artist_authority")) %>%
   rename(artist_ulan_id_5 = ulan_id) %>%
-  filter(!is.na(artist_ulan_id_1) | !is.na(artist_ulan_id_2) | !is.na(artist_ulan_id_3) | !is.na(artist_ulan_id_4) | !is.na(artist_ulan_id_5))
+  filter(!is.na(artist_ulan_id_1) | !is.na(artist_ulan_id_2) | !is.na(artist_ulan_id_3) | !is.na(artist_ulan_id_4) | !is.na(artist_ulan_id_5)) %>%
+  select(-(contains("art_authority")))
 
 make_report(sales_contents_artists_reimport)
 
-# 310 - reimport old dimensions to sales contents
+# 310 - reimport old dimensions to sales contents ----
 
 load("~/Desktop/march_sales_contents.rda")
 
@@ -206,8 +207,10 @@ missing_price_note_candidates <- transaction_ids %>%
   filter(str_detect(transaction_id, 'group')) %>%
   add_count(transaction_id) %>%
   filter(n == 1) %>%
-  select(-joining_note, -transaction_id, -n) %>%
+  select(-joining_note, -transaction_id, -n, -catalog_number) %>%
   left_join(select(sales_contents, puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day), by = "puri") %>%
+  mutate_at(vars(lot_number), funs(str_pad(., width = 4, side = "left", pad = "0"))) %>%
+
   arrange(catalog_number)
 
 error_fixes <- read_csv("~/Downloads/error_paired_sales_2017-08-01.csv") %>%
@@ -220,20 +223,15 @@ merged_joins <- missing_price_note_candidates %>%
   left_join(select(error_fixes, catalog_number, lot_number, new_price_note = price_note, absent_lots, star_edit), by = c("catalog_number", "lot_number"))
 
 absent_lots <- merged_joins %>%
-  mutate_at(vars(absent_lots), funs(if_else(is.na(absent_lots), lot_number, paste0(lot_number, absent_lots, sep = ";")))) %>%
+  mutate_at(vars(absent_lots), funs(if_else(is.na(absent_lots), lot_number, paste(lot_number, absent_lots, sep = ";")))) %>%
   single_separate("absent_lots") %>%
   norm_vars(base_names = "absent_lots", n_reps = 17, idcols = "puri") %>%
   rename(lot_number = absent_lots) %>%
-  left_join(select(merged_joins, -absent_lots, -lot_number), by = "puri")
+  mutate_at(vars(lot_number), funs(str_pad(., width = 4, side = "left", pad = "0"))) %>%
+  left_join(select(merged_joins, -absent_lots, -lot_number), by = "puri") %>%
+  left_join(select(sales_contents, target_puri = puri, catalog_number, lot_number, lot_sale_year, lot_sale_month, lot_sale_day)) %>%
+  mutate(inferred_row = factor(if_else(puri != target_puri, "matched row", "original row", missing = "no match found"), levels = c("original row", "matched row", "no match found"), ordered = TRUE)) %>%
+  select(target_puri, source_puri = puri, inferred_row, original_price_note = price_note, new_price_note, everything()) %>%
+  arrange(catalog_number, source_puri, inferred_row)
 
-
-price_notes_reimport <- merged_joins %>%
-  filter(price_note != new_price_note) %>%
-  select(puri, price_note_1 = new_price_note) %>%
-  assert(is_uniq, puri) %>%
-  left_join(select(sales_contents_prices, -price_note), by = "puri")
-
-make_report(price_notes_reimport)
-
-write_clip(missing_price_note_candidates)
-
+make_report(absent_lots)
