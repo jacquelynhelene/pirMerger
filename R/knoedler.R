@@ -295,7 +295,7 @@ identify_knoedler_transactions <- function(df) {
     # Detect the number of artworks between which a given purchase/sale amt. was
     # split, first by standardizing all purchase/price notes, then finding matches.
     mutate_at(
-      vars(purch_note, knoedpurch_note, price_note),
+      vars(purch_note, knoedpurch_note, price_note, knoedshare_note),
       funs(working =
         str_replace_all(., c(
           "(?:shared[,;])|(?:[;,] shared)|(?:shared)" = "",
@@ -305,7 +305,9 @@ identify_knoedler_transactions <- function(df) {
           na_if(""))) %>%
     # Prefer the purch note over the knoedpurch note, only falling back to
     # knoedpurch when reuglar note is NA
-    mutate(purch_note_working = if_else(is.na(purch_note_working), knoedpurch_note_working, purch_note_working)) %>%
+    mutate(
+      purch_note_working = if_else(is.na(purch_note_working), knoedpurch_note_working, purch_note_working),
+      price_note_working = if_else(is.na(price_note_working), knoedshare_note_working, price_note_working)) %>%
     # Only keep those notes that refer to prices paid "for" n objects
     mutate_at(vars(purch_note_working, price_note_working),
               funs(if_else(str_detect(., regex("for", ignore_case = TRUE)), ., NA_character_))) %>%
