@@ -117,7 +117,7 @@ artist_ulan_ids_star <- artists_authority %>%
   select(artist_authority, ulan_id)
 
 sales_contents_artists_reimport <- raw_sales_contents %>%
-  select(star_record_no, art_authority_1, art_authority_2, art_authority_3, art_authority_4, art_authority_5) %>%
+  select(persistent_puid, art_authority_1, art_authority_2, art_authority_3, art_authority_4, art_authority_5) %>%
   left_join(artist_ulan_ids_star, by = c("art_authority_1" = "artist_authority")) %>%
   rename(artist_ulan_id_1 = ulan_id) %>%
   left_join(artist_ulan_ids_star, by = c("art_authority_2" = "artist_authority")) %>%
