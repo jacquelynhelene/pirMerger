@@ -764,10 +764,14 @@ produce_knoedler_present_owners_lookup <- function(knoedler_with_ids) {
 }
 
 produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, union_person_ids) {
+  present_ids <- union_person_ids %>%
+    filter(source_db == "knoedler_present_owners")
+
   left_join(
     select(knoedler_present_owners_lookup, star_record_no = source_record_id),
-    select(union_person_ids, source_record_id, present_loc_uid = person_uid),
-    by = c("star_record_no" = "source_record_id"))
+    select(present_ids, source_record_id, present_loc_uid = person_uid),
+    by = c("star_record_no" = "source_record_id")) %>%
+    assert(is_uniq, star_record_no)
 }
 
 # Joined Table ----
