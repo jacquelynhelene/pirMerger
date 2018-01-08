@@ -819,34 +819,64 @@ produce_joined_knoedler <- function(knoedler,
     left_join(spread_out(knoedler_sale_buyers, "sale_event_id"), by = "sale_event_id")
 
   knoedler %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join knoedler_present_owners uids to knoedler") %>%
     left_join(knoedler_present_owners, by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_artists to knoedler") %>%
     left_join(spread_out(knoedler_artists, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join knoedler_purchases to knoedler") %>%
     left_join(knoedler_purchases, by = "purchase_event_id") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join knoedler_inventory_events to knoedler") %>%
     left_join(knoedler_inventory_events, by = "inventory_event_id") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Joint knoedler_sales to knoedler") %>%
     left_join(knoedler_sales, by = "sale_event_id") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join knoedler_dimensions to knoedler") %>%
     left_join(spread_out(knoedler_dimensions, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_materials_classified_as_aat to knoedler") %>%
     left_join(spread_out(knoedler_materials_classified_as_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_materials_support_aat to knoedler") %>%
     left_join(spread_out(knoedler_materials_support_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_materials_object_aat to knoedler") %>%
     left_join(spread_out(knoedler_materials_object_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_materials_technique_as_aat to knoedler") %>%
     left_join(spread_out(knoedler_materials_technique_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_depicts_aat to knoedler") %>%
     left_join(spread_out(knoedler_depicts_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_subject_classified_as_aat to knoedler") %>%
     left_join(spread_out(knoedler_subject_classified_as_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_style_aat to knoedler") %>%
     left_join(spread_out(knoedler_style_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no) %>%
     pipe_message("- Join spread knoedler_subject_aat to knoedler") %>%
-    left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no")
+    left_join(spread_out(knoedler_subject_aat, "star_record_no"), by = "star_record_no") %>%
+    assert(not_na, star_record_no) %>%
+    assert(is_uniq, star_record_no)
 }
 
 # GH Export ----
