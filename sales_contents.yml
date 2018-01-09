@@ -24,6 +24,7 @@ targets:
       - processed_data/sales_contents_prev_sales.rda
       - processed_data/sales_contents_post_sales.rda
       - processed_data/sales_contents_post_owners.rda
+      - processed_data/sales_contents_auction_houses.rda
       - processed_data/sales_contents.rda
 
   # Sales Contents
@@ -98,6 +99,11 @@ targets:
     command: proudce_sales_contents_post_owners(sales_contents_ids)
   processed_data/sales_contents_post_owners.rda:
     command: save(sales_contents_post_owners, file = target_name)
+
+  sales_contents_auction_houses:
+    command: produce_sales_contents_auction_houses(sales_contents_ids)
+  processed_data/sales_contents_auction_houses.rda:
+    command: save(sales_contents_auction_houses, file = target_name)
 
   # Sales Descriptions
 
