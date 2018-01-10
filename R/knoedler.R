@@ -124,6 +124,8 @@ produce_knoedler_purchase_info <- function(knoedler, currency_aat) {
            purch_currency,
            knoedpurch_amt,
            knoedpurch_curr,
+           purch_note,
+           knoedpurch_note,
            entry_date_year,
            entry_date_month,
            entry_date_day,
@@ -226,6 +228,7 @@ produce_knoedler_sale_info <- function(knoedler_sales, currency_aat) {
            knoedshare_note,
            price_amount,
            price_currency,
+           price_note,
            contains("inconsistent")),
       funs(pick))
 
