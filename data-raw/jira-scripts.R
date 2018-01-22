@@ -47,36 +47,31 @@ make_report(sales_contents_duplicates)
 
 # 278 - Artist Generics ----
 
-generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1yp7UkDk000mVQAM2vgpClA9wzKqQx4-HUeI26_AZnDE"), ws = "generic_authorities_queries_label_reconciled.csv", col_types = paste0(rep("c", 86), collapse = ""))
+generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1RayaMcdJbGvZctVZr4lAOEzMIwlllhEGUjj-DisS7Hc/edit#gid=1520044280"), ws = "unvalidated_authority_names_queries_label_reconciled.csv", col_types = paste0(rep("c", 82), collapse = "")) %>%
+  filter(art_authority != "ITALIAN")
 
-ics <- c("star_record_no",
-         "artist_authority",
-         "variant_names",
+ics <- c("puri",
+         "artist_name",
+         "artist_info",
          "nationality",
-         "artist_early",
-         "artist_late",
-         "century_active",
-         "active_city_date",
-         "subjects_painted",
-         "notes",
-         "num_of_records",
-         "ulan_id",
-         "artist_authority_clean")
+         "art_authority")
 
-# Prioritize Knoedler records first
-k_generics_count <- knoedler_artists %>%
-  filter(artist_authority %in% generics$artist_authority) %>%
-  count(artist_authority, sort = TRUE) %>%
-  rename(k_count = n)
+# Prioritize Sales Contents records first
+sc_generics_count <- sales_contents_artists %>%
+  filter(art_authority %in% generics$art_authority) %>%
+  count(art_authority, sort = TRUE) %>%
+  rename(sc_count = n)
 
 mj <- generics %>%
   norm_vars(base_names = c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles"), n_reps = 10, idcols = ics) %>%
-  left_join(k_generics_count, by = "artist_authority") %>%
-  arrange(desc(k_count), desc(as.integer(num_of_records)), artist_authority, type, desc(Score)) %>%
-  group_by(artist_authority) %>%
+  filter(type == "Person") %>%
+  left_join(sc_generics_count, by = "art_authority") %>%
+  distinct(art_authority, sc_count, Vocab_ID, URL, Score, type, names, nationalities, roles) %>%
+  arrange(desc(sc_count), art_authority, type, desc(Score)) %>%
+  group_by(art_authority) %>%
   mutate(is_first = row_number() == 1) %>%
   ungroup() %>%
-  mutate_at(vars(one_of(setdiff(ics, c("star_record_no", "k_count")))), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
+  mutate_at(vars(art_authority), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
   select(-is_first)
 
 write_clip(mj)
