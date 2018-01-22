@@ -47,7 +47,7 @@ make_report(sales_contents_duplicates)
 
 # 278 - Artist Generics ----
 
-generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1yp7UkDk000mVQAM2vgpClA9wzKqQx4-HUeI26_AZnDE"), ws = "generic_authorities_queries_label_reconciled.csv", col_types = paste0(rep("c", 86), collapse = ""))
+generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1ZwjVSwaVjBnA_n8p3Fd5X2nX1JOHi3LYK1pE8ZrfOJU"), ws = "generic_authorities_queries_label_reconciled.csv", col_types = paste0(rep("c", 86), collapse = ""))
 
 ics <- c("star_record_no",
          "artist_authority",
