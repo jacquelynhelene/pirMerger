@@ -247,11 +247,9 @@ make_report(absent_lots)
 price_corrections <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1iMQ3014EhVdtgqhsX2qLnA9qrBEcWfexSyqhJCVZ6T8"))
 
 price_notes_reimport <- price_corrections %>%
-  filter(target_puri != "X" & !is.na(new_price_note) & is.na(star_edit)) %>%
+  filter(target_puri != "X" & !is.na(new_price_note) & original_price_note != new_price_note & is.na(star_edit)) %>%
   select(puri = target_puri, price_note = new_price_note) %>%
   distinct()
-
-filter(sales_contents_prices, puri == "BRITISHSALES-328013") %>% t() %>% View()
 
 make_report(price_notes_reimport)
 
