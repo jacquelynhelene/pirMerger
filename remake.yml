@@ -74,6 +74,9 @@ targets:
   processed_data/exchange_rates.rda:
     command: save(exchange_rates, file = target_name)
 
+  generic_artists:
+    command: produce_generic_artists(raw_generic_artists, artists_authority, union_person_ids)
+
   us_cpi:
     command: produce_cpi(raw_us_cpi)
   processed_data/us_cpi.rda:

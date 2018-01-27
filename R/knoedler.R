@@ -584,13 +584,13 @@ produce_knoedler_artists_lookup <- function(knoedler_artists_tmp) {
     identify_knoedler_id_process()
 }
 
-produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
+produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids, generic_artists) {
   upi_subset <- union_person_ids %>%
     filter(source_db == "knoedler_artists") %>%
     select(-source_db, -source_document_id) %>%
     rename(artist_uid = person_uid)
 
-  left_join(knoedler_artists_tmp,
+  provisional_knoedler_artists <- left_join(knoedler_artists_tmp,
             upi_subset,
             by = c("star_record_no" = "source_record_id",
                    "artist_name" = "person_name",
@@ -611,6 +611,15 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
            artist_aat_nationality_1 = aat_nationality_1,
            artist_aat_nationality_2 = aat_nationality_2,
            artist_aat_nationality_3 = aat_nationality_3)
+
+  # Expand "generic" artists into multiple "possibly by" relationships
+  pka <- provisional_knoedler_artists %>%
+    left_join(select(generic_artists, generic_artist_ulan_id = artist_ulan_id, artist_authority, generic_artist_uid = person_uid), by = "artist_authority") %>%
+    mutate(
+      artist_ulan_id = if_else(is.na(generic_artist_ulan_id), artist_ulan_id, generic_artist_ulan_id),
+      artist_uid = if_else(is.na(generic_artist_uid), artist_uid, generic_artist_uid),
+      artist_attribution_mod_auth = if_else(is.na(generic_artist_ulan_id), artist_attribution_mod_auth, "possibly by")
+    )
 }
 
 produce_knoedler_sellers_tmp <- function(raw_knoedler) {

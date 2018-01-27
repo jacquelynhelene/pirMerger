@@ -309,3 +309,17 @@ produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
               funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .)))
 }
 
+produce_generic_artists <- function(raw_generic_artists, artists_authority, union_person_ids) {
+  subset_union_ids <- union_person_ids %>%
+    select(person_ulan, person_uid) %>%
+    semi_join(raw_generic_artists, by = c("person_ulan" = "Vocab_ID")) %>%
+    distinct()
+
+  raw_generic_artists %>%
+    filter(selected == "x") %>%
+    select(star_record_no, artist_ulan_id = Vocab_ID) %>%
+    left_join(select(artists_authority, star_record_no, artist_authority), by = "star_record_no") %>%
+    select(-star_record_no) %>%
+    left_join(subset_union_ids, by = c("artist_ulan_id" = "person_ulan")) %>%
+    mutate(person_uid = if_else(is.na(person_uid), paste0("ulan-person-", artist_ulan_id), person_uid))
+}
