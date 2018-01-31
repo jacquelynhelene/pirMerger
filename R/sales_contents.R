@@ -37,19 +37,27 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
 
 identify_sales_contents_id_process <- function(person_df, combined_authority) {
 
+  # Identify those "authority names" that are not actually present in the
+  # artists authority, and so should not be linked to it
   missing_auth_names <- person_df %>%
     filter(!is.na(person_auth) & !(person_auth %in% combined_authority$authority_name)) %>%
     pull(person_auth)
 
   mutate(person_df,
-         is_bracketed = str_detect(person_auth, "^\\["),
-         is_anon_collex = person_auth %in% c("Anonymous Collection"),
-         is_new = person_auth == "NEW" | is.na(person_auth),
+         is_bracketed = !is.na(person_auth) & str_detect(person_auth, "^\\["),
+         is_anon_collex = !is.na(person_auth) & person_auth %in% c("Anonymous Collection"),
+         is_new = is.na(person_auth) | person_auth == "NEW",
          is_anon =  is_anon_collex | is_bracketed,
-         is_ulan = !is.na(person_ulan) & !is_anon,
+         is_ulan = !is.na(person_ulan),
          is_known = !is.na(person_auth) & !is_anon & !is_new,
          is_bad_authority = person_auth %in% missing_auth_names,
          id_process = case_when(
+           !is_new & !is_anon & !is_ulan & is_known & !is_bad_authority ~ "from_auth",
+           !is_new & !is_anon & !is_ulan & is_known & is_bad_authority ~ "from_auth_grouped",
+           !is_new & !is_anon & is_ulan & is_known & !is_bad_authority ~ "from_ulan",
+           !is_new & is_anon & is_ulan & is_known ~ "from_nothing",
+           is_new & !is_anon & !is_ulan & !is_known & !is_bad_authority ~ "from_nothing",
+           is_new & !is_anon & is_ulan & !is_known & !is_bad_authority ~ "from_ulan",
            is_ulan ~ "from_ulan",
            is_new ~ "from_name",
            is_anon ~ "from_nothing",
@@ -71,9 +79,20 @@ produce_sales_contents_auction_houses <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("auction_house", "house_ulan"), n_reps = 4, idcols = "puri")
 }
 
-produce_sales_contents_artists_tmp <- function(sales_contents) {
-  norm_vars(sales_contents, base_names = c("artist_name", "artist_info", "art_authority", "nationality", "attrib_mod", "attrib_mod_auth", "star_rec_no", "artist_ulan"), n_reps = 5, idcols = "puri") %>%
+produce_sales_contents_artists_tmp <- function(sales_contents, generic_artists) {
+  provisional_sales_contents_artists <- norm_vars(sales_contents, base_names = c("artist_name", "artist_info", "art_authority", "nationality", "attrib_mod", "attrib_mod_auth", "star_rec_no", "artist_ulan"), n_reps = 5, idcols = "puri") %>%
     select(-star_rec_no)
+
+  # Expand "generic" artists into multiple "possibly by" relationships
+  provisional_sales_contents_artists %>%
+    left_join(select(generic_artists, -generic_artist_star_record_no, generic_artist_ulan_id), by = c("art_authority" = "generic_artist_authority")) %>%
+    mutate(
+      is_generic = !is.na(generic_artist_ulan_id),
+      art_authority = if_else(is_generic, NA_character_, art_authority),
+      artist_ulan = if_else(is_generic, generic_artist_ulan_id, artist_ulan),
+      attrib_mod_auth = if_else(is_generic, "possibly by", attrib_mod_auth)
+    ) %>%
+    select(-generic_artist_ulan_id, -is_generic)
 }
 
 produce_sales_contents_artists_lookup <- function(sales_contents_artists_tmp, sales_contents_ids, combined_authority) {
@@ -100,7 +119,9 @@ produce_sales_contents_artists <- function(sales_contents_artists_tmp, union_per
             by = c(
               "puri" = "source_record_id",
               "artist_name" = "person_name",
-              "art_authority" = "person_auth"))
+              "art_authority" = "person_auth",
+              "artist_ulan" = "person_ulan")) %>%
+    distinct()
 }
 
 produce_sales_contents_hand_notes <- function(sales_contents) {

@@ -29,7 +29,8 @@ produce_artists_authority <- function(raw_artists_authority) {
     # exceptional cases
     mutate(nationality = recode(nationality, New = "New Zealander", probably = "Flemish", South = "South African")) %>%
     # Select the final combination of columns to include in the table
-    select(one_of(names(raw_artists_authority)), artist_early, artist_late, artist_display, artist_authority_clean, parenthetical_text)
+    select(one_of(names(raw_artists_authority)), artist_early, artist_late, artist_display, artist_authority_clean, parenthetical_text) %>%
+    mutate_at(vars(ulan_id), as.integer)
 
   artists_authority
 }
@@ -130,8 +131,8 @@ produce_owners_authority <- function(raw_owners_authority) {
     mutate(owner_authority_clean = ifelse(is.na(location_from_name), owner_authority_clean, str_replace(owner_authority_clean, fixed(location_from_name), ""))) %>%
     # Recode the nationality column to standardize a handful of nonstandard values
     mutate(nationality = recode(nationality, "French ?" = "French", "Dutch?" = "Dutch", "British or French" = "British", "Unknown" = NA_character_)) %>%
-
-    select(one_of(names(raw_owners_authority)), owner_early, owner_late, owner_display, owner_authority_clean, parenthetical_text, location_from_name)
+    select(one_of(names(raw_owners_authority)), owner_early, owner_late, owner_display, owner_authority_clean, parenthetical_text, location_from_name) %>%
+    mutate_at(vars(ulan_id), as.integer)
 
   owners_authority
 }
@@ -306,6 +307,20 @@ produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
                    person_active_early,
                    person_active_late,
                    person_nationality),
-              funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .)))
+              funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .))) %>%
+    distinct()
 }
 
+produce_generic_artists <- function(raw_generic_artists) {
+  raw_generic_artists %>%
+    # Fill back in empty artist_authority cells
+    group_by(star_record_no) %>%
+    mutate(artist_authority = pick(artist_authority)) %>%
+    ungroup() %>%
+    # Keep only those identities selected by editors
+    filter(selected == "x") %>%
+    select(
+      generic_artist_star_record_no = star_record_no,
+      generic_artist_authority = artist_authority,
+      generic_artist_ulan_id = Vocab_ID)
+}
