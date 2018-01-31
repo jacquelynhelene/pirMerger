@@ -29,7 +29,8 @@ produce_artists_authority <- function(raw_artists_authority) {
     # exceptional cases
     mutate(nationality = recode(nationality, New = "New Zealander", probably = "Flemish", South = "South African")) %>%
     # Select the final combination of columns to include in the table
-    select(one_of(names(raw_artists_authority)), artist_early, artist_late, artist_display, artist_authority_clean, parenthetical_text)
+    select(one_of(names(raw_artists_authority)), artist_early, artist_late, artist_display, artist_authority_clean, parenthetical_text) %>%
+    mutate_at(vars(ulan_id), as.integer)
 
   artists_authority
 }
