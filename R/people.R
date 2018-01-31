@@ -131,8 +131,8 @@ produce_owners_authority <- function(raw_owners_authority) {
     mutate(owner_authority_clean = ifelse(is.na(location_from_name), owner_authority_clean, str_replace(owner_authority_clean, fixed(location_from_name), ""))) %>%
     # Recode the nationality column to standardize a handful of nonstandard values
     mutate(nationality = recode(nationality, "French ?" = "French", "Dutch?" = "Dutch", "British or French" = "British", "Unknown" = NA_character_)) %>%
-
-    select(one_of(names(raw_owners_authority)), owner_early, owner_late, owner_display, owner_authority_clean, parenthetical_text, location_from_name)
+    select(one_of(names(raw_owners_authority)), owner_early, owner_late, owner_display, owner_authority_clean, parenthetical_text, location_from_name) %>%
+    mutate_at(vars(ulan_id), as.integer)
 
   owners_authority
 }
@@ -310,17 +310,16 @@ produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
               funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .)))
 }
 
-produce_generic_artists <- function(raw_generic_artists, artists_authority, union_person_ids) {
-  subset_union_ids <- union_person_ids %>%
-    select(person_ulan, person_uid) %>%
-    semi_join(raw_generic_artists, by = c("person_ulan" = "Vocab_ID")) %>%
-    distinct()
-
+produce_generic_artists <- function(raw_generic_artists) {
   raw_generic_artists %>%
+    # Fill back in empty artist_authority cells
+    group_by(star_record_no) %>%
+    mutate(artist_authority = pick(artist_authority)) %>%
+    ungroup() %>%
+    # Keep only those identities selected by editors
     filter(selected == "x") %>%
-    select(star_record_no, artist_ulan_id = Vocab_ID) %>%
-    left_join(select(artists_authority, star_record_no, artist_authority), by = "star_record_no") %>%
-    select(-star_record_no) %>%
-    left_join(subset_union_ids, by = c("artist_ulan_id" = "person_ulan")) %>%
-    mutate(person_uid = if_else(is.na(person_uid), paste0("ulan-person-", artist_ulan_id), person_uid))
+    select(
+      generic_artist_star_record_no = star_record_no,
+      generic_artist_authority = artist_authority,
+      generic_artist_ulan_id = Vocab_ID)
 }

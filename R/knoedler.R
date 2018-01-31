@@ -550,28 +550,40 @@ produce_knoedler_owners_lookup <- function(knoedler_owner_uids) {
 # UID be generated based on a ULAN id? The auth name? The verbatim name? Or
 # uniquely generated (for all anonymous people)?
 identify_knoedler_id_process <- function(person_df) {
-  mutate(person_df,
-         is_bracketed = str_detect(person_auth, "^\\["),
-         is_anon_collex = person_auth %in% c("Anonymous Collection"),
+  id_process <- mutate(person_df,
+         is_bracketed = !is.na(person_auth) & str_detect(person_auth, "^\\["),
+         is_anon_collex = !is.na(person_auth) & person_auth %in% c("Anonymous Collection"),
          is_new = person_auth == "NEW" | is.na(person_auth),
          is_anon =  is_anon_collex | is_bracketed,
-         is_ulan = !is.na(person_ulan) & !is_anon,
+         is_ulan = !is.na(person_ulan),
          is_known = !is.na(person_auth) & !is_anon & !is_new,
          id_process = case_when(
-           is_ulan ~ "from_ulan",
-           is_new ~ "from_name",
-           is_anon ~ "from_nothing",
-           is_known ~ "from_auth")) %>%
-    select(source_record_id, source_document_id, person_name, person_auth, person_ulan, id_process) %>%
-    assertr::assert(assertr::not_na, id_process)
+           is_new & is_ulan & !is_anon & !is_known ~ "from_ulan",
+           is_new & !is_ulan & !is_anon & !is_known ~ "from_name",
+           !is_new & is_ulan & !is_anon & is_known ~ "from_ulan",
+           !is_new & !is_ulan & is_anon & !is_known ~ "from_nothing",
+           !is_new & !is_ulan & !is_anon & is_known ~ "from_auth")) %>%
+           select(source_record_id, source_document_id, person_name, person_auth, person_ulan, id_process) %>%
+           assertr::assert(assertr::not_na, id_process)
 }
 
-produce_knoedler_artists_tmp <- function(raw_knoedler) {
-  raw_knoedler %>%
+produce_knoedler_artists_tmp <- function(raw_knoedler, generic_artists) {
+  provisional_knoedler_artists <- raw_knoedler %>%
     norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attrib_mod", "attrib_mod_auth", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     rename(artist_star_record_no = star_rec_no) %>%
     # Join ulan ids to this list
     rename(artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attrib_mod, artist_attribution_mod_auth = attrib_mod_auth)
+
+  # Expand "generic" artists into multiple "possibly by" relationships
+  provisional_knoedler_artists %>%
+    left_join(select(generic_artists, -generic_artist_star_record_no, generic_artist_ulan_id), by = c("artist_authority" = "generic_artist_authority")) %>%
+    mutate(
+      is_generic = !is.na(generic_artist_ulan_id),
+      artist_authority = if_else(is_generic, NA_character_, artist_authority),
+      artist_ulan_id = if_else(is_generic, generic_artist_ulan_id, artist_ulan_id),
+      artist_attribution_mod_auth = if_else(is_generic, "possibly by", artist_attribution_mod_auth)
+    ) %>%
+    select(-generic_artist_ulan_id, -is_generic)
 }
 
 produce_knoedler_artists_lookup <- function(knoedler_artists_tmp) {
@@ -584,7 +596,7 @@ produce_knoedler_artists_lookup <- function(knoedler_artists_tmp) {
     identify_knoedler_id_process()
 }
 
-produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids, generic_artists) {
+produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
   upi_subset <- union_person_ids %>%
     filter(source_db == "knoedler_artists") %>%
     select(-source_db, -source_document_id) %>%
@@ -611,15 +623,6 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids, gen
            artist_aat_nationality_1 = aat_nationality_1,
            artist_aat_nationality_2 = aat_nationality_2,
            artist_aat_nationality_3 = aat_nationality_3)
-
-  # Expand "generic" artists into multiple "possibly by" relationships
-  pka <- provisional_knoedler_artists %>%
-    left_join(select(generic_artists, generic_artist_ulan_id = artist_ulan_id, artist_authority, generic_artist_uid = person_uid), by = "artist_authority") %>%
-    mutate(
-      artist_ulan_id = if_else(is.na(generic_artist_ulan_id), artist_ulan_id, generic_artist_ulan_id),
-      artist_uid = if_else(is.na(generic_artist_uid), artist_uid, generic_artist_uid),
-      artist_attribution_mod_auth = if_else(is.na(generic_artist_ulan_id), artist_attribution_mod_auth, "possibly by")
-    )
 }
 
 produce_knoedler_sellers_tmp <- function(raw_knoedler) {

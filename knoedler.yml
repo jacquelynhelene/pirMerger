@@ -33,7 +33,7 @@ targets:
     command: save(knoedler, file = target_name)
 
   knoedler_artists_tmp:
-    command: produce_knoedler_artists_tmp(knoedler_with_ids)
+    command: produce_knoedler_artists_tmp(knoedler_with_ids, generic_artists)
   knoedler_artists_lookup:
     command: produce_knoedler_artists_lookup(knoedler_artists_tmp)
   knoedler_artists:
