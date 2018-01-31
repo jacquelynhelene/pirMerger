@@ -127,6 +127,11 @@ sales_contents_artists_reimport <- raw_sales_contents %>%
 
 make_report(sales_contents_artists_reimport)
 
+multi_artists <- sales_contents_artists %>%
+  add_count(puri) %>%
+  filter(n > 1) %>%
+  arrange(puri)
+
 # 310 - reimport old dimensions to sales contents ----
 
 load("~/Desktop/march_sales_contents.rda")
