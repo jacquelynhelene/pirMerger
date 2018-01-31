@@ -307,7 +307,8 @@ produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
                    person_active_early,
                    person_active_late,
                    person_nationality),
-              funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .)))
+              funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .))) %>%
+    distinct()
 }
 
 produce_generic_artists <- function(raw_generic_artists) {

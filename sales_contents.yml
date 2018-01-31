@@ -48,7 +48,7 @@ targets:
     command: save(sales_contents_commissaire_pr, file = target_name)
 
   sales_contents_artists_tmp:
-    command: produce_sales_contents_artists_tmp(sales_contents_ids)
+    command: produce_sales_contents_artists_tmp(sales_contents_ids, generic_artists)
   sales_contents_artists_lookup:
     command: produce_sales_contents_artists_lookup(sales_contents_artists_tmp, sales_contents_ids, combined_authority)
   sales_contents_artists:
