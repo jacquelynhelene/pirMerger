@@ -247,3 +247,16 @@ price_notes_reimport <- price_corrections %>%
 
 make_report(price_notes_reimport)
 
+# 314 1-to-1 between Buyer and Buy Auth Mod ----
+
+mismatch_buy_mod_auth <- sales_contents_buyers %>%
+  filter(!is.na(buy_auth_mod_a) & is.na(buy_auth_name))
+
+make_report(mismatch_buy_mod_auth)
+
+# 320 1-to-1 between Seller and Sell Auth Mods ----
+
+mismatch_sell_mod_auth <- sales_contents_sellers %>%
+  filter(!is.na(sell_auth_mod_a) & is.na(sell_auth_name))
+
+make_report(mismatch_sell_mod_auth)
