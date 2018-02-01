@@ -245,8 +245,23 @@ make_report(absent_lots)
 
 price_corrections <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1iMQ3014EhVdtgqhsX2qLnA9qrBEcWfexSyqhJCVZ6T8"), ws = "processed 2018-01-22")
 
-out_of_scope_lots <- price_corrections <- price_corrections %>%
-  filter(target_puri == "X")
+out_of_scope_lots <- price_corrections %>%
+  filter(target_puri == "X") %>%
+  inner_join(select(sales_contents_prices, puri, price_amount, price_currency, price_source, price_citation), by = c("source_puri" = "puri")) %>%
+  select(
+    catalog_number,
+    lot_number,
+    lot_sale_year,
+    lot_sale_month,
+    lot_sale_day,
+    price_amount,
+    price_currency,
+    price_note = new_price_note,
+    price_source,
+    price_citation) %>%
+  anti_join(sales_contents, by = c("catalog_number", "lot_number", "lot_sale_year", "lot_sale_month", "lot_sale_day"))
+
+make_report(out_of_scope_lots)
 
 price_notes_reimport <- price_corrections %>%
   filter(target_puri != "X" & !is.na(new_price_note) & original_price_note != new_price_note & is.na(star_edit)) %>%
