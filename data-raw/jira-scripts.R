@@ -243,7 +243,10 @@ absent_lots <- merged_joins %>%
 
 make_report(absent_lots)
 
-price_corrections <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1iMQ3014EhVdtgqhsX2qLnA9qrBEcWfexSyqhJCVZ6T8"))
+price_corrections <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1iMQ3014EhVdtgqhsX2qLnA9qrBEcWfexSyqhJCVZ6T8"), ws = "processed 2018-01-22")
+
+out_of_scope_lots <- price_corrections <- price_corrections %>%
+  filter(target_puri == "X")
 
 price_notes_reimport <- price_corrections %>%
   filter(target_puri != "X" & !is.na(new_price_note) & original_price_note != new_price_note & is.na(star_edit)) %>%
