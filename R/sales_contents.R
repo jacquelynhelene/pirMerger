@@ -67,12 +67,68 @@ identify_sales_contents_id_process <- function(person_df, combined_authority) {
     assertr::assert(assertr::not_na, id_process)
 }
 
-produce_sales_contents_experts <- function(sales_contents) {
+produce_sales_contents_experts_tmp <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("expert_auth", "expert_ulan"), n_reps = 4, idcols = "puri")
 }
 
-produce_sales_contents_commissaire_pr <- function(sales_contents) {
+produce_sales_contents_experts_lookup <- function(sales_contents_experts_tmp, sales_contents_ids, combined_authority) {
+  sales_contents_experts_tmp %>%
+    left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+    select(
+      source_record_id = puri,
+      source_document_id = catalog_number,
+      person_auth = expert_auth,
+      person_ulan = expert_ulan
+    ) %>%
+    mutate(person_name = NA_character_) %>%
+    identify_sales_contents_id_process(combined_authority)
+}
+
+produce_sales_contents_experts <- function(sales_contents_experts_tmp, union_person_ids) {
+  experts_ids <- union_person_ids %>%
+    filter(source_db == "sales_contents_experts") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(expert_uid = person_uid)
+
+  left_join(sales_contents_experts_tmp,
+            experts_ids,
+            by = c(
+              "puri" = "source_record_id",
+              "expert_auth" = "person_auth",
+              "expert_ulan" = "person_ulan")) %>%
+    distinct()
+}
+
+produce_sales_contents_commissaire_pr_tmp <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("commissaire_pr", "comm_ulan"), n_reps = 4, idcols = "puri")
+}
+
+produce_sales_contents_commissaire_pr_lookup <- function(sales_contents_commissaire_pr_tmp, sales_contents_ids, combined_authority) {
+  sales_contents_commissaire_pr_tmp %>%
+    left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+    select(
+      source_record_id = puri,
+      source_document_id = catalog_number,
+      person_name = commissaire_pr,
+      person_ulan = comm_ulan
+    ) %>%
+    mutate(person_auth = NA_character_) %>%
+    identify_sales_contents_id_process(combined_authority)
+}
+
+produce_sales_contents_commissaire_pr <- function(sales_contents_commissaire_pr_tmp, union_person_ids) {
+  commissaire_pr_ids <- union_person_ids %>%
+    filter(source_db == "sales_contents_commissaire_pr") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(comm_uid = person_uid)
+
+  left_join(sales_contents_commissaire_pr_tmp,
+            commissaire_pr_ids,
+            by = c(
+              "puri" = "source_record_id",
+              "commissaire_pr" = "person_name",
+              "comm_ulan" = "person_ulan")) %>%
+    distinct()
 }
 
 produce_sales_contents_auction_houses_tmp <- function(sales_contents) {

@@ -62,6 +62,8 @@ targets:
       sales_contents_buyers = sales_contents_buyers_lookup,
       sales_contents_sellers = sales_contents_sellers_lookup,
       sales_contents_auction_houses = sales_contents_auction_houses_lookup,
+      sales_contents_experts = sales_contents_experts_lookup,
+      sales_contents_commissaire_pr = sales_contents_commissaire_pr_lookup,
       combined_authority = combined_authority,
       nationality_aat = gpi_nationality_aat)
   processed_data/union_person_ids.rda:
