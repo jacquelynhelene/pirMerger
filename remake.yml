@@ -59,6 +59,9 @@ targets:
       knoedler_joint_owners = knoedler_joint_owners_lookup,
       knoedler_present_owners = knoedler_present_owners_lookup,
       sales_contents_artists = sales_contents_artists_lookup,
+      sales_contents_buyers = sales_contents_buyers_lookup,
+      sales_contents_sellers = sales_contents_sellers_lookup,
+      sales_contents_auction_houses = sales_contents_auction_houses_lookup,
       combined_authority = combined_authority,
       nationality_aat = gpi_nationality_aat)
   processed_data/union_person_ids.rda:

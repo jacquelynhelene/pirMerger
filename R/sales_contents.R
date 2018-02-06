@@ -75,8 +75,36 @@ produce_sales_contents_commissaire_pr <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("commissaire_pr", "comm_ulan"), n_reps = 4, idcols = "puri")
 }
 
-produce_sales_contents_auction_houses <- function(sales_contents) {
+produce_sales_contents_auction_houses_tmp <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("auction_house", "house_ulan"), n_reps = 4, idcols = "puri")
+}
+
+produce_sales_contents_auction_houses_lookup <- function(sales_contents_auction_houses_tmp, sales_contents_ids, combined_authority) {
+  sales_contents_auction_houses_tmp %>%
+    left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+    select(
+      source_record_id = puri,
+      source_document_id = catalog_number,
+      person_name = auction_house,
+      person_ulan = house_ulan
+    ) %>%
+    mutate(person_auth = NA_character_) %>%
+    identify_sales_contents_id_process(combined_authority)
+}
+
+produce_sales_contents_auction_houses <- function(sales_contents_auction_houses_tmp, union_person_ids) {
+  auction_house_ids <- union_person_ids %>%
+    filter(source_db == "sales_contents_auction_houses") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(auction_house_uid = person_uid)
+
+  left_join(sales_contents_auction_houses_tmp,
+            auction_house_ids,
+            by = c(
+              "puri" = "source_record_id",
+              "auction_house" = "person_name",
+              "house_ulan" = "person_ulan")) %>%
+    distinct()
 }
 
 produce_sales_contents_artists_tmp <- function(sales_contents, generic_artists) {
@@ -128,12 +156,70 @@ produce_sales_contents_hand_notes <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("hand_note", "hand_note_so"), n_reps = 7, idcols = "puri")
 }
 
-produce_sales_contents_sellers <- function(sales_contents) {
+produce_sales_contents_sellers_tmp <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("sell_name", "sell_name_so", "sell_name_ques", "sell_mod", "sell_auth_name", "sell_auth_nameq", "sell_auth_mod", "sell_auth_mod_a", "sell_ulan"), n_reps = 5, idcols = "puri")
 }
 
-produce_sales_contents_buyers <- function(sales_contents) {
+produce_sales_contents_sellers_lookup <- function(sales_contents_sellers_tmp, sales_contents_ids, combined_authority) {
+  sales_contents_sellers_tmp %>%
+    left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+    select(
+      source_record_id = puri,
+      source_document_id = catalog_number,
+      person_name = sell_name,
+      person_auth = sell_auth_name,
+      person_ulan = sell_ulan
+    ) %>%
+    identify_sales_contents_id_process(combined_authority)
+}
+
+produce_sales_contents_sellers <- function(sales_contents_sellers_tmp, union_person_ids) {
+  seller_ids <- union_person_ids %>%
+    filter(source_db == "sales_contents_sellers") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(seller_uid = person_uid)
+
+  left_join(sales_contents_sellers_tmp,
+            seller_ids,
+            by = c(
+              "puri" = "source_record_id",
+              "sell_name" = "person_name",
+              "sell_auth_name" = "person_auth",
+              "sell_ulan" = "person_ulan")) %>%
+    distinct()
+}
+
+produce_sales_contents_buyers_tmp <- function(sales_contents) {
   norm_vars(sales_contents, base_names = c("buy_name", "buy_name_so", "buy_name_ques", "buy_name_cite", "buy_mod", "buy_auth_name", "buy_auth_nameq", "buy_auth_mod", "buy_auth_mod_a", "buy_ulan"), n_reps = 4, idcols = "puri")
+}
+
+produce_sales_contents_buyers_lookup <- function(sales_contents_buyers_tmp, sales_contents_ids, combined_authority) {
+  sales_contents_buyers_tmp %>%
+    left_join(select(sales_contents_ids, puri, catalog_number), by = "puri") %>%
+    select(
+      source_record_id = puri,
+      source_document_id = catalog_number,
+      person_name = buy_name,
+      person_auth = buy_auth_name,
+      person_ulan = buy_ulan
+    ) %>%
+    identify_sales_contents_id_process(combined_authority)
+}
+
+produce_sales_contents_buyers <- function(sales_contents_buyers_tmp, union_person_ids) {
+  buyers_ids <- union_person_ids %>%
+    filter(source_db == "sales_contents_buyers") %>%
+    select(-source_db, -source_document_id) %>%
+    rename(buyer_uid = person_uid)
+
+  left_join(sales_contents_buyers_tmp,
+            buyers_ids,
+            by = c(
+              "puri" = "source_record_id",
+              "buy_name" = "person_name",
+              "buy_auth_name" = "person_auth",
+              "buy_ulan" = "person_ulan")) %>%
+    distinct()
 }
 
 produce_sales_contents_prices_tmp <- function(sales_contents) {

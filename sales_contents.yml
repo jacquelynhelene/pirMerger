@@ -61,13 +61,21 @@ targets:
   processed_data/sales_contents_hand_notes.rda:
     command: save(sales_contents_hand_notes, file = target_name)
 
+  sales_contents_sellers_tmp:
+    command: produce_sales_contents_sellers_tmp(sales_contents_ids)
+  sales_contents_sellers_lookup:
+    command: produce_sales_contents_sellers_lookup(sales_contents_sellers_tmp, sales_contents_ids, combined_authority)
   sales_contents_sellers:
-    command: produce_sales_contents_sellers(sales_contents_ids)
+    command: produce_sales_contents_sellers(sales_contents_sellers_tmp, union_person_ids)
   processed_data/sales_contents_sellers.rda:
     command: save(sales_contents_sellers, file = target_name)
 
+  sales_contents_buyers_tmp:
+    command: produce_sales_contents_buyers_tmp(sales_contents_ids)
+  sales_contents_buyers_lookup:
+    command: produce_sales_contents_buyers_lookup(sales_contents_buyers_tmp, sales_contents_ids, combined_authority)
   sales_contents_buyers:
-    command: produce_sales_contents_buyers(sales_contents_ids)
+    command: produce_sales_contents_buyers(sales_contents_buyers_tmp, union_person_ids)
   processed_data/sales_contents_buyers.rda:
     command: save(sales_contents_buyers, file = target_name)
 
@@ -100,8 +108,12 @@ targets:
   processed_data/sales_contents_post_owners.rda:
     command: save(sales_contents_post_owners, file = target_name)
 
+  sales_contents_auction_houses_tmp:
+    command: produce_sales_contents_auction_houses_tmp(sales_contents_ids)
+  sales_contents_auction_houses_lookup:
+    command: produce_sales_contents_auction_houses_lookup(sales_contents_auction_houses_tmp, sales_contents_ids, combined_authority)
   sales_contents_auction_houses:
-    command: produce_sales_contents_auction_houses(sales_contents_ids)
+    command: produce_sales_contents_auction_houses(sales_contents_auction_houses_tmp, union_person_ids)
   processed_data/sales_contents_auction_houses.rda:
     command: save(sales_contents_auction_houses, file = target_name)
 
