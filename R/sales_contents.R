@@ -96,6 +96,7 @@ produce_sales_contents_experts <- function(sales_contents_experts_tmp, union_per
               "puri" = "source_record_id",
               "expert_auth" = "person_auth",
               "expert_ulan" = "person_ulan")) %>%
+    select(puri, contains("expert")) %>%
     distinct()
 }
 
@@ -128,6 +129,7 @@ produce_sales_contents_commissaire_pr <- function(sales_contents_commissaire_pr_
               "puri" = "source_record_id",
               "commissaire_pr" = "person_name",
               "comm_ulan" = "person_ulan")) %>%
+    select(puri, contains("comm")) %>%
     distinct()
 }
 
@@ -160,6 +162,7 @@ produce_sales_contents_auction_houses <- function(sales_contents_auction_houses_
               "puri" = "source_record_id",
               "auction_house" = "person_name",
               "house_ulan" = "person_ulan")) %>%
+    select(puri, contains("house")) %>%
     distinct()
 }
 
