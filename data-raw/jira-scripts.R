@@ -261,8 +261,6 @@ out_of_scope_lots <- price_corrections %>%
     price_citation) %>%
   anti_join(sales_contents, by = c("catalog_number", "lot_number", "lot_sale_year", "lot_sale_month", "lot_sale_day"))
 
-make_report(out_of_scope_lots)
-
 price_notes_reimport <- price_corrections %>%
   filter(target_puri != "X" & !is.na(new_price_note) & original_price_note != new_price_note & is.na(star_edit)) %>%
   select(puri = target_puri, price_note = new_price_note) %>%
@@ -383,6 +381,12 @@ ggsave("~/Desktop/failed_prev_sale.png")
 make_report(failed_post_match)
 make_report(failed_prev_match)
 
+all_oos_lots <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1CyUvyNcEeFgzTVmUpRvrVjZ7SDsILCSfCaETzU_T3Yk"), ws = "post sales")
+
+inscope_failed_post_match <- failed_post_match %>%
+  anti_join(all_oos_lots, by = c("puri", "post_sale_yr", "post_sale_mo", "post_sale_day", "post_sale_loc"))
+
+
 # Create transaction graph
 # For any given record, it is not guaranteed that it has prev/post references
 # to every single sale that may have concerned the same object. It is
@@ -431,3 +435,11 @@ transaction_membership_list <- data_frame(
 scdf %>%
   left_join(transaction_membership_list, by = "puri") %>%
   mutate(object_uid = if_else(is.na(object_uid), paste("single", "object", seq_along(puri), sep = "-"), object_uid))
+
+# Prioritized failed prev/post sale matches based on which ones would otherwise
+# have no matches whatsoever.
+otherwise_unreached_post_sales <- failed_post_match %>%
+  anti_join(all_oos_lots, by = c("puri", "post_sale_yr", "post_sale_mo", "post_sale_day", "post_sale_loc")) %>%
+  mutate(has_other_match = puri %in% transaction_nodes$name) %>%
+  arrange(has_other_match)
+
