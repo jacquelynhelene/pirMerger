@@ -470,6 +470,40 @@ otherwise_unreached_post_sales <- failed_post_match %>%
   mutate(has_other_match = puri %in% transaction_nodes$name) %>%
   arrange(has_other_match)
 
+summarized_artists <- sales_contents_artists %>%
+  group_by(puri) %>%
+  summarize(artist_name = rollup(artist_name))
+
+sc_title_artist <- sales_contents %>%
+  mutate(truncated_sale_code = str_extract(sale_code, "[A-Z]{2}")) %>%
+  select(puri, catalog_number, lot_number, title, sale_code, truncated_sale_code, lot_sale_year, lot_sale_month, lot_sale_day) %>%
+  left_join(summarized_artists, by = "puri")
+
+# Try to match failed sales by truncating sale code
+truncated_attempt_post_sales <- otherwise_unreached_post_sales %>%
+  left_join(select(sc_title_artist, puri, title, truncated_sale_code, artist_name), by = "puri") %>%
+  select(source_puri = puri, catalog_number, lot_number, title, artist_name, lot_sale_year, lot_sale_month, lot_sale_day, everything()) %>%
+  mutate(truncated_post_code = str_sub(post_sale_loc, 1, 2)) %>%
+  left_join(select(sc_title_artist,
+                   target_puri = puri,
+                   target_catalog_number = catalog_number,
+                   target_lot_number = lot_number,
+                   target_title = title,
+                   target_artist = artist_name,
+                   target_sale_code = sale_code,
+                   everything()), by = c("truncated_post_code" = "truncated_sale_code", "post_sale_yr" = "lot_sale_year", "post_sale_mo" = "lot_sale_month", "post_sale_day" =  "lot_sale_day", "post_sale_lot" = "target_lot_number")) %>%
+  arrange(source_puri) %>%
+  add_count(source_puri, post_sale_yr, post_sale_mo, post_sale_day, post_sale_loc, post_sale_lot)
+
+still_failing <- truncated_attempt_post_sales %>%
+  filter(is.na(target_puri))
+
+some_match_post_sales <- truncated_attempt_post_sales %>%
+  filter(!is.na(target_puri)) %>%
+  arrange(has_other_match, source_puri)
+
+make_report(some_match_post_sales)
+
 # 268 - Goupil stocknumbers / record matching ----
 
 goupil_sn <- raw_goupil %>%
