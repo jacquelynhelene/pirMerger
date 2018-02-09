@@ -105,6 +105,33 @@ unvalidated_authority_names <- sales_contents_artists %>%
 
 make_report(unvalidated_authority_names)
 
+sc_unvalidated <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1RayaMcdJbGvZctVZr4lAOEzMIwlllhEGUjj-DisS7Hc"), ws = "unvalidated_authority_names_queries_label_reconciled.csv", col_types = paste0(rep("c", 82), collapse = ""))
+
+ics <- c("star_record_no",	"artist_authority",	"variant_names",	"nationality",	"artist_early",	"artist_late",	"century_active",	"active_city_date",	"subjects_painted",	"notes")
+
+reconcile_col_names <- c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles")
+
+sc_validation_worksheet <- sc_unvalidated %>%
+  add_count(art_authority) %>%
+  norm_vars(base_names = reconcile_col_names, n_reps = 10, idcols = c("puri", "n", "art_authority")) %>%
+  filter(type == "Person") %>%
+  distinct(Vocab_ID,
+           URL,
+           Score,
+           type,
+           names,
+           nationalities,
+           roles, art_authority, n) %>%
+  arrange(desc(n), art_authority, type, desc(Score)) %>%
+  group_by(art_authority) %>%
+  mutate(is_first = row_number() == 1) %>%
+  ungroup() %>%
+  mutate_at(vars(art_authority), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
+  select(-is_first, -n)
+
+make_report(sc_validation_worksheet)
+
+
 # 308 - Sales Contents join ULAN ids to validated artists ----
 
 artist_ulan_ids_star <- artists_authority %>%
@@ -442,4 +469,16 @@ otherwise_unreached_post_sales <- failed_post_match %>%
   anti_join(all_oos_lots, by = c("puri", "post_sale_yr", "post_sale_mo", "post_sale_day", "post_sale_loc")) %>%
   mutate(has_other_match = puri %in% transaction_nodes$name) %>%
   arrange(has_other_match)
+
+# 268 - Goupil stocknumbers / record matching ----
+
+goupil_sn <- raw_goupil %>%
+  select(star_record_no,
+         goupil_number,
+         curr_stock_book,
+         page_number,
+         row_number,
+         contains("stock")
+         ) %>%
+  norm_vars(base_names = c("stock_book_no", "stock_book_goupil_no", "stock_book_page", "stock_book_row"), n_reps = 15, idcols = "star_record_no")
 
