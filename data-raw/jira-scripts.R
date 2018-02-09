@@ -49,28 +49,28 @@ make_report(sales_contents_duplicates)
 
 generics <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1ZwjVSwaVjBnA_n8p3Fd5X2nX1JOHi3LYK1pE8ZrfOJU"), ws = "generic_authorities_queries_label_reconciled.csv", col_types = paste0(rep("c", 86), collapse = ""))
 
-ics <- c("puri",
-         "artist_name",
-         "artist_info",
-         "nationality",
-         "art_authority")
+ics <- c("star_record_no",	"artist_authority",	"variant_names",	"nationality",	"artist_early",	"artist_late",	"century_active",	"active_city_date",	"subjects_painted",	"notes")
 
-# Prioritize Sales Contents records first
 sc_generics_count <- sales_contents_artists %>%
-  filter(art_authority %in% generics$art_authority) %>%
+  filter(art_authority %in% generics$artist_authority) %>%
   count(art_authority, sort = TRUE) %>%
   rename(sc_count = n)
+
+k_generics_count <- knoedler_artists %>%
+  filter(artist_authority %in% generics$artist_authority) %>%
+  count(artist_authority, sort = TRUE) %>%
+  rename(k_count = n)
 
 mj <- generics %>%
   norm_vars(base_names = c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles"), n_reps = 10, idcols = ics) %>%
   filter(type == "Person") %>%
-  left_join(sc_generics_count, by = "art_authority") %>%
-  distinct(art_authority, sc_count, Vocab_ID, URL, Score, type, names, nationalities, roles) %>%
-  arrange(desc(sc_count), art_authority, type, desc(Score)) %>%
-  group_by(art_authority) %>%
+  left_join(k_generics_count, by = "artist_authority") %>%
+  left_join(sc_generics_count, by = c("artist_authority" = "art_authority")) %>%
+  arrange(desc(k_count), desc(sc_count), artist_authority, type, desc(Score)) %>%
+  group_by(artist_authority) %>%
   mutate(is_first = row_number() == 1) %>%
   ungroup() %>%
-  mutate_at(vars(art_authority), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
+  mutate_at(vars(artist_authority), funs(case_when(is_first ~ ., TRUE ~ NA_character_))) %>%
   select(-is_first)
 
 write_clip(mj)
