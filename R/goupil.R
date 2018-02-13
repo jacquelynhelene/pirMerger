@@ -19,7 +19,7 @@ produce_goupil_stock_book_nos <- function(goupil) {
 }
 
 produce_goupil_artists <- function(goupil) {
-  norm_vars(goupil, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
+  norm_vars(goupil, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "attribution_mod_auth", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     # Join ulan ids to this list
     rename(artist_star_record_no = star_rec_no, artist_authority = art_authority, artist_nationality = nationality, artist_attribution_mod = attribution_mod)
 }
