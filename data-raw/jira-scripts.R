@@ -516,3 +516,32 @@ goupil_sn <- raw_goupil %>%
          ) %>%
   norm_vars(base_names = c("stock_book_no", "stock_book_goupil_no", "stock_book_page", "stock_book_row"), n_reps = 15, idcols = "star_record_no")
 
+fuzz_title <- function(s) {
+  s %>%
+    str_to_lower() %>%
+    str_replace_all("[[:punct:][:blank:]]", "")
+}
+
+all_matches <- raw_goupil %>%
+  mutate(
+    matching_artist = case_when(
+      str_detect(art_authority_1, "^\\[") ~ paste0("artist-", row_number(art_authority_1)),
+      is.na(art_authority_1) ~ paste0("missing-artist-", row_number(art_authority_1)),
+      TRUE ~ art_authority_1
+    ),
+    matching_title = case_when(
+      str_detect(title, "titre") ~ paste0("untitled-", row_number(title)),
+      is.na(title) ~ paste0("empty-", row_number(title)),
+      TRUE ~ fuzz_title(title)
+    )) %>%
+  mutate(
+    sn_index = group_indices(., goupil_number),
+    sn_artist_index = group_indices(., goupil_number, matching_artist),
+    sn_artist_title_index = group_indices(., goupil_number, matching_artist, matching_title)) %>%
+  add_count(sn_artist_index)
+
+nrow(all_matches)
+nrow(all_matches) - n_distinct(all_matches$sn_index)
+nrow(all_matches) - n_distinct(all_matches$sn_artist_index)
+nrow(all_matches) - n_distinct(all_matches$sn_artist_title_index)
+
