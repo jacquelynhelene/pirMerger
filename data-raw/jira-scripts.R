@@ -522,6 +522,22 @@ fuzz_title <- function(s) {
     str_replace_all("[[:punct:][:blank:]]", "")
 }
 
+goupil_stock_no_mismatch <- raw_goupil %>%
+  select(star_record_no, pi_record_no, goupil_number, stock_book_goupil_no_1, row_number) %>%
+  filter(goupil_number != stock_book_goupil_no_1)
+
+goupil_row_mismatch <- raw_goupil %>%
+  select(star_record_no, pi_record_no, row_number, stock_book_row_1) %>%
+  filter(row_number != stock_book_row_1)
+
+goupil_page_mismatch <- raw_goupil %>%
+  select(star_record_no, pi_record_no, page_number, stock_book_page_1) %>%
+  filter(page_number != stock_book_page_1)
+
+make_report(goupil_stock_no_mismatch)
+make_report(goupil_page_mismatch)
+make_report(goupil_row_mismatch)
+
 all_matches <- raw_goupil %>%
   mutate(
     matching_artist = case_when(
