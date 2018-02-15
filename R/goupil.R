@@ -8,14 +8,14 @@ produce_goupil_ids <- function(raw_goupil) {
 
 produce_goupil <- function(goupil_with_ids) {
   goupil_with_ids %>%
-    select(-(stock_book_no_1:stock_book_row_15)) %>%
+    select(-(other_stock_book_no_1:other_stock_book_row_14)) %>%
     select(-(artist_name_1:artist_ulan_id_2)) %>%
     select(-(buyer_name_1:buyer_ulan_id_2)) %>%
     select(-(previous_owner_1:previous_owner_2))
 }
 
 produce_goupil_stock_book_nos <- function(goupil) {
-  norm_vars(goupil, base_names = c("stock_book_no", "stock_book_goupil_no", "stock_book_page", "stock_book_row"), n_reps = 15, idcols = "star_record_no")
+  norm_vars(goupil, base_names = c("other_stock_book_no", "other_stock_book_goupil_no", "other_stock_book_page", "other_stock_book_row"), n_reps = 14, idcols = "star_record_no")
 }
 
 produce_goupil_artists <- function(goupil) {
