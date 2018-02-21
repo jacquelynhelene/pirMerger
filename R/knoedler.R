@@ -17,6 +17,7 @@ produce_knoedler_ids <- function(raw_knoedler, knoedler_stocknumber_concordance)
   knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
     mutate_at(vars(stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer)) %>%
+    rename(transaction_type = transaction) %>%
     assert(not_na, star_record_no) %>%
     assert(is_uniq, star_record_no)
 
@@ -47,11 +48,11 @@ flag_manual_records <- function(kdf) {
   kdf %>%
     group_by(object_id) %>%
     mutate(
-      flag_exchanged = "Exchanged" %in% transaction,
-      flag_returned = "Returned" %in% transaction | any(str_detect(verbatim_notes, regex(" ret", ignore_case = TRUE)), na.rm = TRUE),
+      flag_exchanged = "Exchanged" %in% transaction_type,
+      flag_returned = "Returned" %in% transaction_type | any(str_detect(verbatim_notes, regex(" ret", ignore_case = TRUE)), na.rm = TRUE),
       flag_disjointed = any(str_detect(verbatim_notes, regex("disjoint", ignore_case = TRUE)), na.rm = TRUE),
       flag_destroyed = any(str_detect(verbatim_notes, regex("destroy", ignore_case = TRUE)), na.rm = TRUE),
-      flag_stolen = "Stolen" %in% transaction) %>%
+      flag_stolen = "Stolen" %in% transaction_type) %>%
     ungroup()
 }
 
@@ -64,7 +65,7 @@ produce_knoedler <- function(knoedler_tmp) {
     select(-(buyer_name_1:buyer_ulan_id_2)) %>%
     select(-(purch_amount:knoedpurch_note)) %>%
     select(-(entry_date_year:entry_date_day)) %>%
-    select(-(sale_date_year:knoedshare_note), -transaction)
+    select(-(sale_date_year:knoedshare_note), -transaction_type)
 }
 
 # Returns the ULAN ID for knoedler
@@ -215,11 +216,12 @@ produce_knoedler_sales <- function(knoedler) {
 
 produce_knoedler_sale_info <- function(knoedler_sales, currency_aat) {
   knoedler_sale_info <- knoedler_sales %>%
+    filter(!is.na(sale_event_id)) %>%
     group_by(sale_event_id) %>%
     # Flag when any of the amounts or currencies are inconsistent across mutliple records of a transaction
-    mutate_at(vars(transaction, knoedshare_amt, knoedshare_curr, price_amount, price_currency), funs(flag_inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
+    mutate_at(vars(transaction_type, knoedshare_amt, knoedshare_curr, price_amount, price_currency), funs(flag_inconsistent = n_distinct(., na.rm = TRUE) > 1)) %>%
     summarize_at(
-      vars(transaction,
+      vars(transaction_type,
            sale_date_year,
            sale_date_month,
            sale_date_day,
@@ -326,7 +328,7 @@ identify_knoedler_transactions <- function(df) {
       sale_event_id = paste("k", "sale", group_indices(., stock_book_no, price_note_working), sep = "-"),
       # No sale_event_id in the case that the record is not showing any sold
       # info, and has no transaction date info or price info.
-      sale_event_id = ifelse(transaction == "Unsold" & is.na(sale_date_year) & is.na(price_amount), NA_character_, sale_event_id)) %>%
+      sale_event_id = ifelse(transaction_type == "Unsold" & is.na(sale_date_year) & is.na(price_amount), NA_character_, sale_event_id)) %>%
     # Calculate the order of events
     order_knoedler_object_events() %>%
     # If the entry event was the first of that object's lifetime, we assume it
@@ -910,6 +912,34 @@ produce_gh_knoedler <- function(raw_knoedler) {
 
 # SQLite Export
 
+field_defs <- function(cnames, ctypes, p_key) {
+  paste0(map2_chr(cnames, ctypes, function(x, y) {
+    if (!is.null(p_key) && x == p_key)
+      return(paste0(x, " ", y, " PRIMARY KEY"))
+    paste0(x, " ", y)
+  }), collapse = ",")
+}
+
+format_pf_key <- function(db, df, tbl_name, p_key, f_key, parent_f_key, parent_tbl_name) {
+
+  cnames <-  names(df)
+  ctypes <- map_chr(df, dbDataType, db = kdb)
+
+  all_fields <- field_defs(cnames, ctypes, p_key)
+  foreign_key <- ""
+  if (!is.null(f_key))
+    foreign_key <- str_interp(",FOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${f_key})")
+
+  str_interp("CREATE TABLE ${tbl_name} (${all_fields}${foreign_key})")
+}
+
+write_tbl_key <- function(db, df, tbl_name, p_key = NULL, f_key = NULL, parent_f_key = NULL, parent_tbl_name = NULL) {
+  command <- format_pf_key(db, df, tbl_name, p_key, f_key, parent_f_key, parent_tbl_name)
+  message(command)
+  dbExecute(db, command)
+  dbWriteTable(db, tbl_name, df, append = TRUE, overwrite = FALSE)
+}
+
 produce_knoedler_sqlite <- function(knoedler,
                                     knoedler_artists,
                                     knoedler_buyers,
@@ -935,53 +965,42 @@ produce_knoedler_sqlite <- function(knoedler,
                                     knoedler_present_owners,
                                     dbpath) {
 
-  format_f_key <- function(db, df, tbl_name, p_key = NULL, f_key, parent_f_key, parent_tbl_name) {
 
-    cnames <-  names(df)
-    ctypes <- map_chr(df, dbDataType, db = kdb)
 
-    all_fields <- paste0(cnames, " ", ctypes, collapse = ",\n")
-    str_interp("CREATE TABLE ${tbl_name} (${all_fields},FOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${f_key}))")
-  }
+  # dbExecute(kdb, "DROP TABLE t_artists")
+  # write_with_f_key(kdb, knoedler_artists, "t_artists", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  # dbWriteTable(kdb, "t_artists", knoedler_artists, append = TRUE)
 
-  write_with_f_key <- function(db, ...) {
-    command <- format_f_key(db, ...)
-    message(command)
-    dbExecute(db, command)
-  }
-
-  dbExecute(kdb, "DROP TABLE t_artists")
-  write_with_f_key(kdb, knoedler_artists, "t_artists", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
-  dbWriteTable(kdb, "t_artists", knoedler_artists, append = TRUE)
-
+  dbpath <- "knoedler.sqlite"
+  unlink(dbpath)
   kdb <- dbConnect(RSQLite::SQLite(), dbpath)
+  dbExecute(kdb, "PRAGMA foreign_keys = ON")
+  dbGetQuery(kdb, "PRAGMA foreign_keys")
 
-  dbWriteTable(kdb, "knoedler", knoedler)
-  dbExecute(kdb, "CREATE TABLE t_knoedler (a TEXT PRIMARY KEY,b)")
-  dbExecute(kdb, "CREATE TABLE t_knoedler_artists (a INTEGER,c, FOREIGN KEY (a) REFERENCES t_knoedler(a))")
+  write_tbl_key(kdb, knoedler, tbl_name = "knoedler", p_key = "star_record_no")
+  # write_tbl_key(kdb, knoedler_artists, "knoedler_artists", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  # write_tbl_key(kdb, knoedler_buyers, "knoedler_buyers", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  # write_tbl_key(kdb, knoedler_sellers, "knoedler_sellers", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  # write_tbl_key(kdb, knoedler_joint_owners, "knoedler_joint_owners", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_purchase_info, "knoedler_purchase_info", p_key = "purchase_event_id", f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_purchase_buyers, "knoedler_purchase_buyers", f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info")
+  write_tbl_key(kdb, knoedler_purchase_sellers, "knoedler_purchase_sellers", f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info")
+  write_tbl_key(kdb, knoedler_inventory_events, "knoedler_inventory_events", f_key = "inventory_event_id", parent_f_key = "inventory_event_id", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_sale_info, "knoedler_sale_info", p_key = "sale_event_id", f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_sale_buyers, "knoedler_sale_buyers", f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info")
+  write_tbl_key(kdb, knoedler_sale_sellers, "knoedler_sale_sellers", f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info")
+  write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_materials_object_aat, "knoedler_materials_object_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_materials_support_aat, "knoedler_materials_support_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_materials_technique_aat, "knoedler_materials_technique_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_subject_aat, "knoedler_subject_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_style_aat, "knoedler_style_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_subject_classified_as_aat, "knoedler_subject_classified_as_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  # write_tbl_key(kdb, currency_aat, "currency_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_dimensions, "knoedler_dimensions", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
 
-  dbWriteTable(kdb, "knoedler_artists", knoedler_artists)
-  dbWriteTable(kdb, "knoedler_buyers", knoedler_buyers)
-  dbWriteTable(kdb, "knoedler_sellers", knoedler_sellers)
-  dbWriteTable(kdb, "knoedler_joint_owners", knoedler_joint_owners)
-  dbWriteTable(kdb, "knoedler_purchase_info", knoedler_purchase_info)
-  dbWriteTable(kdb, "knoedler_purchase_buyers", knoedler_purchase_buyers)
-  dbWriteTable(kdb, "knoedler_purchase_sellers", knoedler_purchase_sellers)
-  dbWriteTable(kdb, "knoedler_inventory_events", knoedler_inventory_events)
-  dbWriteTable(kdb, "knoedler_sale_info", knoedler_sale_info)
-  dbWriteTable(kdb, "knoedler_sale_buyers", knoedler_sale_buyers)
-  dbWriteTable(kdb, "knoedler_sale_sellers", knoedler_sale_sellers)
-  dbWriteTable(kdb, "knoedler_materials_classified_as_aat", knoedler_materials_classified_as_aat)
-  dbWriteTable(kdb, "knoedler_materials_object_aat", knoedler_materials_object_aat)
-  dbWriteTable(kdb, "knoedler_materials_support_aat", knoedler_materials_support_aat)
-  dbWriteTable(kdb, "knoedler_materials_technique_aat", knoedler_materials_technique_aat)
-  dbWriteTable(kdb, "knoedler_subject_aat", knoedler_subject_aat)
-  dbWriteTable(kdb, "knoedler_style_aat", knoedler_style_aat)
-  dbWriteTable(kdb, "knoedler_subject_classified_as_aat", knoedler_subject_classified_as_aat)
-  dbWriteTable(kdb, "knoedler_depicts_aat", knoedler_depicts_aat)
-  dbWriteTable(kdb, "currency_aat", currency_aat)
-  dbWriteTable(kdb, "knoedler_dimensions", knoedler_dimensions)
-  dbWriteTable(kdb, "knoedler_present_owners", knoedler_present_owners)
   dbListTables(kdb)
 
 }
