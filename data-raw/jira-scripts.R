@@ -121,7 +121,11 @@ sc_validation_worksheet <- sc_unvalidated %>%
            type,
            names,
            nationalities,
-           roles, art_authority, n) %>%
+           roles,
+           birthDate,
+           startDate,
+           endDate,
+           deathDate, art_authority, n) %>%
   arrange(desc(n), art_authority, type, desc(Score)) %>%
   group_by(art_authority) %>%
   mutate(is_first = row_number() == 1) %>%
