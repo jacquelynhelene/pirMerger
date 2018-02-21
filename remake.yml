@@ -6,6 +6,7 @@ packages:
   - rematch2
   - igraph
   - assertr
+  - DBI
 
 include:
   - knoedler.yml

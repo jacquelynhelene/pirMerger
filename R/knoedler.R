@@ -907,3 +907,81 @@ produce_gh_knoedler <- function(raw_knoedler) {
     # Add absolute url to page image filename
     mutate(link = paste0("http://archives.getty.edu:30008/getty_images/digitalresources/goupil/jpgs/", link))
 }
+
+# SQLite Export
+
+produce_knoedler_sqlite <- function(knoedler,
+                                    knoedler_artists,
+                                    knoedler_buyers,
+                                    knoedler_sellers,
+                                    knoedler_joint_owners,
+                                    knoedler_purchase_info,
+                                    knoedler_purchase_buyers,
+                                    knoedler_purchase_sellers,
+                                    knoedler_inventory_events,
+                                    knoedler_sale_info,
+                                    knoedler_sale_buyers,
+                                    knoedler_sale_sellers,
+                                    knoedler_materials_classified_as_aat,
+                                    knoedler_materials_object_aat,
+                                    knoedler_materials_support_aat,
+                                    knoedler_materials_technique_aat,
+                                    knoedler_subject_aat,
+                                    knoedler_style_aat,
+                                    knoedler_subject_classified_as_aat,
+                                    knoedler_depicts_aat,
+                                    currency_aat,
+                                    knoedler_dimensions,
+                                    knoedler_present_owners,
+                                    dbpath) {
+
+  format_f_key <- function(db, df, tbl_name, p_key = NULL, f_key, parent_f_key, parent_tbl_name) {
+
+    cnames <-  names(df)
+    ctypes <- map_chr(df, dbDataType, db = kdb)
+
+    all_fields <- paste0(cnames, " ", ctypes, collapse = ",\n")
+    str_interp("CREATE TABLE ${tbl_name} (${all_fields},FOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${f_key}))")
+  }
+
+  write_with_f_key <- function(db, ...) {
+    command <- format_f_key(db, ...)
+    message(command)
+    dbExecute(db, command)
+  }
+
+  dbExecute(kdb, "DROP TABLE t_artists")
+  write_with_f_key(kdb, knoedler_artists, "t_artists", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  dbWriteTable(kdb, "t_artists", knoedler_artists, append = TRUE)
+
+  kdb <- dbConnect(RSQLite::SQLite(), dbpath)
+
+  dbWriteTable(kdb, "knoedler", knoedler)
+  dbExecute(kdb, "CREATE TABLE t_knoedler (a TEXT PRIMARY KEY,b)")
+  dbExecute(kdb, "CREATE TABLE t_knoedler_artists (a INTEGER,c, FOREIGN KEY (a) REFERENCES t_knoedler(a))")
+
+  dbWriteTable(kdb, "knoedler_artists", knoedler_artists)
+  dbWriteTable(kdb, "knoedler_buyers", knoedler_buyers)
+  dbWriteTable(kdb, "knoedler_sellers", knoedler_sellers)
+  dbWriteTable(kdb, "knoedler_joint_owners", knoedler_joint_owners)
+  dbWriteTable(kdb, "knoedler_purchase_info", knoedler_purchase_info)
+  dbWriteTable(kdb, "knoedler_purchase_buyers", knoedler_purchase_buyers)
+  dbWriteTable(kdb, "knoedler_purchase_sellers", knoedler_purchase_sellers)
+  dbWriteTable(kdb, "knoedler_inventory_events", knoedler_inventory_events)
+  dbWriteTable(kdb, "knoedler_sale_info", knoedler_sale_info)
+  dbWriteTable(kdb, "knoedler_sale_buyers", knoedler_sale_buyers)
+  dbWriteTable(kdb, "knoedler_sale_sellers", knoedler_sale_sellers)
+  dbWriteTable(kdb, "knoedler_materials_classified_as_aat", knoedler_materials_classified_as_aat)
+  dbWriteTable(kdb, "knoedler_materials_object_aat", knoedler_materials_object_aat)
+  dbWriteTable(kdb, "knoedler_materials_support_aat", knoedler_materials_support_aat)
+  dbWriteTable(kdb, "knoedler_materials_technique_aat", knoedler_materials_technique_aat)
+  dbWriteTable(kdb, "knoedler_subject_aat", knoedler_subject_aat)
+  dbWriteTable(kdb, "knoedler_style_aat", knoedler_style_aat)
+  dbWriteTable(kdb, "knoedler_subject_classified_as_aat", knoedler_subject_classified_as_aat)
+  dbWriteTable(kdb, "knoedler_depicts_aat", knoedler_depicts_aat)
+  dbWriteTable(kdb, "currency_aat", currency_aat)
+  dbWriteTable(kdb, "knoedler_dimensions", knoedler_dimensions)
+  dbWriteTable(kdb, "knoedler_present_owners", knoedler_present_owners)
+  dbListTables(kdb)
+
+}
