@@ -105,11 +105,11 @@ unvalidated_authority_names <- sales_contents_artists %>%
 
 make_report(unvalidated_authority_names)
 
-sc_unvalidated <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1RayaMcdJbGvZctVZr4lAOEzMIwlllhEGUjj-DisS7Hc"), ws = "unvalidated_authority_names_queries_label_reconciled.csv", col_types = paste0(rep("c", 82), collapse = ""))
+sc_unvalidated <- gs_read(gs_url("https://docs.google.com/spreadsheets/d/1fzhFjXWnMAio5wJePvaz81xPhKFV3rBrTSiaMiL2TUQ"), ws = "unvalidated_authority_names_queries_label_reconciled", col_types = paste0(rep("c", 122), collapse = ""))
 
 ics <- c("star_record_no",	"artist_authority",	"variant_names",	"nationality",	"artist_early",	"artist_late",	"century_active",	"active_city_date",	"subjects_painted",	"notes")
 
-reconcile_col_names <- c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles")
+reconcile_col_names <- c("Vocab_ID", "URL", "Score", "type", "names", "nationalities", "roles", "birthDate", "startDate", "endDate", "deathDate")
 
 sc_validation_worksheet <- sc_unvalidated %>%
   add_count(art_authority) %>%
