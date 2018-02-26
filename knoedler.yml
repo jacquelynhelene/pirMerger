@@ -17,7 +17,7 @@ targets:
       - processed_data/knoedler_purchase_sellers.rda
       - processed_data/knoedler_purchase_buyers.rda
       - processed_data/joined_knoedler.rda
-      - ../pirdata/knoedler_join.csv
+      - ../pirdata/knoedler.sqlite
 
   knoedler_stocknumber_concordance:
     command: produce_knoedler_stocknumber_concordance(raw_knoedler_stocknumber_concordance)
@@ -144,6 +144,32 @@ targets:
   ../pirdata/knoedler_join.csv:
     command: write_csv(path = target_name, x = joined_knoedler, na = I(""))
 
+  ../pirdata/knoedler.sqlite:
+    command: produce_knoedler_sqlite(dbpath = target_name,
+                                      knoedler,
+                                      knoedler_artists,
+                                      knoedler_buyers,
+                                      knoedler_sellers,
+                                      knoedler_joint_owners,
+                                      knoedler_purchase_info,
+                                      knoedler_purchase_buyers,
+                                      knoedler_purchase_sellers,
+                                      knoedler_inventory_events,
+                                      knoedler_sale_info,
+                                      knoedler_sale_buyers,
+                                      knoedler_sale_sellers,
+                                      knoedler_materials_classified_as_aat,
+                                      knoedler_materials_object_aat,
+                                      knoedler_materials_support_aat,
+                                      knoedler_materials_technique_aat,
+                                      knoedler_subject_aat,
+                                      knoedler_style_aat,
+                                      knoedler_subject_classified_as_aat,
+                                      knoedler_depicts_aat,
+                                      currency_aat,
+                                      knoedler_dimensions,
+                                      knoedler_present_owners)
+
   all_gh_knoedler:
     depends:
       - ../provenance-index-csv/knoedler/knoedler.csv
@@ -152,4 +178,3 @@ targets:
     command: produce_gh_knoedler(raw_knoedler)
   ../provenance-index-csv/knoedler/knoedler.csv:
     command: write_csv(gh_knoedler, path = target_name, na = I(""))
-
