@@ -18,6 +18,7 @@ targets:
       - processed_data/knoedler_purchase_buyers.rda
       - processed_data/joined_knoedler.rda
       - ../pirdata/knoedler.sqlite
+      - ../pirdata/knoedler_schema.pdf
 
   knoedler_stocknumber_concordance:
     command: produce_knoedler_stocknumber_concordance(raw_knoedler_stocknumber_concordance)
@@ -169,6 +170,9 @@ targets:
                                       currency_aat,
                                       knoedler_dimensions,
                                       knoedler_present_owners)
+
+  ../pirdata/knoedler_schema.pdf:
+    command: produce_knoedler_schema(dbpath = "../pirdata/knoedler.sqlite", outpath = target_name)
 
   all_gh_knoedler:
     depends:

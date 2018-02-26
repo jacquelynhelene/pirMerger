@@ -1019,3 +1019,16 @@ produce_knoedler_sqlite <- function(dbpath,
   dbDisconnect(kdb)
 }
 
+# Use schemacrawler (https://www.schemacrawler.com/diagramming.html) to generate a PDF displaying the sqlite schema
+produce_knoedler_schema <- function(dbpath, outpath) {
+  system2("schemacrawler.sh",
+          args = c(
+            "-server sqlite",
+            str_interp("-database ${dbpath}"),
+            "-command schema",
+            "-outputformat pdf",
+            str_interp("-outputfile ${outpath}"),
+            "-password",
+            "-infolevel maximum"))
+}
+
