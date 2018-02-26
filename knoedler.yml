@@ -16,7 +16,6 @@ targets:
       - processed_data/knoedler_purchase_info.rda
       - processed_data/knoedler_purchase_sellers.rda
       - processed_data/knoedler_purchase_buyers.rda
-      - processed_data/joined_knoedler.rda
       - ../pirdata/knoedler.sqlite
       - ../pirdata/knoedler_schema.pdf
 
