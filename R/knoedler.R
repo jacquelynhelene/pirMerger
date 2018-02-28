@@ -450,9 +450,9 @@ produce_knoedler_materials_object_aat <- function(raw_knoedler_materials_aat, kd
     gather(gcol, aat_materials, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(aat_materials), as.integer) %>%
-    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, object_type, materials), by = c("object_type", "materials")) %>%
+    distinct(object_id, aat_materials) %>%
+    na.omit()
 }
 
 produce_knoedler_materials_support_aat <- function(raw_knoedler_materials_aat, kdf) {
@@ -462,9 +462,9 @@ produce_knoedler_materials_support_aat <- function(raw_knoedler_materials_aat, k
     gather(gcol, aat_support, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(aat_support), as.integer) %>%
-    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, object_type, materials), by = c("object_type", "materials")) %>%
+    distinct(object_id, aat_support) %>%
+    na.omit()
 }
 
 produce_knoedler_materials_classified_as_aat <- function(raw_knoedler_materials_aat, kdf) {
@@ -475,9 +475,9 @@ produce_knoedler_materials_classified_as_aat <- function(raw_knoedler_materials_
     gather(gcol, aat_classified_as, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(aat_classified_as), as.integer) %>%
-    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, object_type, materials), by = c("object_type", "materials")) %>%
+    distinct(object_id, aat_classified_as) %>%
+    na.omit()
 }
 
 produce_knoedler_materials_technique_aat <- function(raw_knoedler_materials_aat, kdf) {
@@ -487,9 +487,9 @@ produce_knoedler_materials_technique_aat <- function(raw_knoedler_materials_aat,
     gather(gcol, aat_technique, -materials, -object_type, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(aat_technique), as.integer) %>%
-    left_join(select(kdf, star_record_no, object_type, materials), by = c("object_type", "materials")) %>%
-    select(-object_type, -materials) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, object_type, materials), by = c("object_type", "materials")) %>%
+    distinct(object_id, aat_technique) %>%
+    na.omit()
 }
 
 produce_knoedler_subject_aat <- function(raw_knoedler_subjects_aat, kdf) {
@@ -499,9 +499,9 @@ produce_knoedler_subject_aat <- function(raw_knoedler_subjects_aat, kdf) {
     gather(gcol, aat_subject, -subject, -genre, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(aat_subject), as.integer) %>%
-    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
-    select(-subject, -genre) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, subject, genre), by = c("subject", "genre")) %>%
+    distinct(object_id, aat_subject) %>%
+    na.omit()
 }
 
 produce_knoedler_style_aat <- function(raw_knoedler_subjects_aat, kdf) {
@@ -511,9 +511,9 @@ produce_knoedler_style_aat <- function(raw_knoedler_subjects_aat, kdf) {
     gather(gcol, aat_style, -subject, -genre, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(aat_style), as.integer) %>%
-    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
-    select(-subject, -genre) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, subject, genre), by = c("subject", "genre")) %>%
+    distinct(object_id, aat_style) %>%
+    na.omit()
 }
 
 produce_knoedler_subject_classified_as_aat <- function(raw_knoedler_subjects_aat, kdf) {
@@ -523,9 +523,9 @@ produce_knoedler_subject_classified_as_aat <- function(raw_knoedler_subjects_aat
     gather(gcol, subject_classified_as, -subject, -genre, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(subject_classified_as), as.integer) %>%
-    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
-    select(-subject, -genre) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, subject, genre), by = c("subject", "genre")) %>%
+    distinct(object_id, subject_classified_as) %>%
+    na.omit()
 }
 
 produce_knoedler_depicts_aat <- function(raw_knoedler_subjects_aat, kdf) {
@@ -535,9 +535,9 @@ produce_knoedler_depicts_aat <- function(raw_knoedler_subjects_aat, kdf) {
     gather(gcol, depicts_aat, -subject, -genre, na.rm = TRUE) %>%
     select(-gcol) %>%
     mutate_at(vars(depicts_aat), as.integer) %>%
-    left_join(select(kdf, star_record_no, subject, genre), by = c("subject", "genre")) %>%
-    select(-subject, -genre) %>%
-    filter(!is.na(star_record_no))
+    left_join(select(kdf, star_record_no, object_id, subject, genre), by = c("subject", "genre")) %>%
+    distinct(object_id, depicts_aat) %>%
+    na.omit()
 }
 
 produce_knoedler_owners_lookup <- function(knoedler_owner_uids) {
@@ -983,8 +983,13 @@ produce_knoedler_sqlite <- function(dbpath,
   dbExecute(kdb, "PRAGMA foreign_keys = ON")
   stopifnot(dbGetQuery(kdb, "PRAGMA foreign_keys")[["foreign_keys"]][1] == 1)
 
-  k_srn_pointer <- list(list(f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler"))
+  k_srn_pointer_single <- list(f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
+  k_srn_pointer <- list(k_srn_pointer_single)
 
+  obj_pointer_single <- list(f_key = "object_id", parent_f_key = "object_id", parent_tbl_name = "knoedler_objects")
+  obj_pointer <- list(obj_pointer_single)
+
+  write_tbl_key(kdb, knoedler_objects, "knoedler_objects", p_key = "object_id")
   write_tbl_key(kdb, knoedler_purchase_info, "knoedler_purchase_info", p_key = "purchase_event_id")
   write_tbl_key(kdb, knoedler_purchase_buyers, "knoedler_purchase_buyers", f_keys = list(list(f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info")))
   write_tbl_key(kdb, knoedler_purchase_sellers, "knoedler_purchase_sellers", f_keys = list(list(f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info")))
