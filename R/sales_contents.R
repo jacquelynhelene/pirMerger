@@ -6,7 +6,9 @@ produce_sales_contents_ids <- function(raw_sales_contents) {
     mutate(project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
     # Lowercase all text fields that need to be used as joining keys
     mutate_at(vars(subject, genre, object_type, materials), funs(tolower)) %>%
-    rename(puri = persistent_puid) %>%
+    rename(
+      puri = persistent_puid,
+      transaction_type = transaction) %>%
     select(-star_record_no) %>%
     assert(not_na, puri, catalog_number) %>%
     assert(is_uniq, puri)
@@ -409,7 +411,17 @@ produce_sales_contents_dimensions <- function(sales_contents_ids) {
       project == "Br" & str_detect(dimensions, "bracci[oa]") ~ TRUE,
       TRUE ~ FALSE
     )) %>%
-    general_dimension_extraction(dimcol = "dimensions", idcol = "puri", exclusion_col = "exclude_dimension")
+    general_dimension_extraction(dimcol = "dimensions", idcol = "puri", exclusion_col = "exclude_dimension") %>%
+    select(-.text, -.match)
+}
+
+# Sales Contents Objects ----
+
+
+produce_sales_contents_objects <- function(sales_contents) {
+  sales_contents %>%
+    select(object_uid) %>%
+    distinct(object_uid)
 }
 
 # Sales Descriptions Normalization ----
@@ -485,7 +497,8 @@ produce_sales_descriptions_country <-  function(sales_descriptions) {
 produce_sales_catalogs_info <- function(raw_sales_catalogs_info, raw_sales_catalogs_loccodes) {
   message("Reading raw_sales_catalogs_info")
   sales_catalogs_info <- raw_sales_catalogs_info %>%
-    left_join(select(raw_sales_catalogs_loccodes, -star_record_no), by = "owner_code")
+    select(-original_file_name) %>%
+    left_join(select(raw_sales_catalogs_loccodes, -star_record_no, -original_file_name), by = "owner_code")
 }
 
 # Sales Contents Computations ----
@@ -685,3 +698,82 @@ produce_gh_sales_catalogs_info <- function(raw_sales_catalogs_info, raw_sales_ca
     select(catalog_number, copy_number, gri_has_copy, price_recorded, owner_code, owner_location)
 }
 
+# SQLite Export ----
+
+produce_sales_contents_sqlite <- function(dbpath,
+                                          sales_contents,
+                                          sales_contents_objects,
+                                          sales_contents_experts,
+                                          sales_contents_commissaire_pr,
+                                          sales_contents_auction_houses,
+                                          sales_contents_artists,
+                                          sales_contents_hand_notes,
+                                          sales_contents_sellers,
+                                          sales_contents_buyers,
+                                          sales_contents_parsed_prices,
+                                          sales_contents_prev_owners,
+                                          sales_contents_post_owners,
+                                          sales_contents_materials_classified_as_aat,
+                                          sales_contents_made_of_materials_aat,
+                                          sales_contents_support_materials_aat,
+                                          sales_contents_technique_aat,
+                                          sales_contents_subject_aat,
+                                          sales_contents_subject_classified_as_aat,
+                                          sales_contents_style_aat,
+                                          sales_contents_depicts_aat,
+                                          sales_contents_dimensions,
+                                          sales_descriptions_lugt_numbers,
+                                          sales_descriptions_title_seller,
+                                          sales_descriptions_auc_copy_seller,
+                                          sales_descriptions_other_seller,
+                                          sales_descriptions_auth_seller,
+                                          sales_descriptions_expert_auth,
+                                          sales_descriptions_commissaire_pr,
+                                          sales_descriptions_auction_house,
+                                          sales_descriptions_country,
+                                          sales_catalogs_info,
+                                          sales_descriptions) {
+
+  unlink(dbpath)
+  scdb <- dbConnect(RSQLite::SQLite(), dbpath)
+
+  # Enforce foreign key constraints
+  dbExecute(scdb, "PRAGMA foreign_keys = ON")
+  stopifnot(dbGetQuery(scdb, "PRAGMA foreign_keys")[["foreign_keys"]][1] == 1)
+
+  write_tbl_key(scdb, sales_contents, "sales_contents")
+  write_tbl_key(scdb, sales_contents_objects, "sales_contents_objects")
+  write_tbl_key(scdb, sales_contents_experts, "sales_contents_experts")
+  write_tbl_key(scdb, sales_contents_commissaire_pr, "sales_contents_commissaire_pr")
+  write_tbl_key(scdb, sales_contents_auction_houses, "sales_contents_auction_houses")
+  write_tbl_key(scdb, sales_contents_artists, "sales_contents_artists")
+  write_tbl_key(scdb, sales_contents_hand_notes, "sales_contents_hand_notes")
+  write_tbl_key(scdb, sales_contents_sellers, "sales_contents_sellers")
+  write_tbl_key(scdb, sales_contents_buyers, "sales_contents_buyers")
+  write_tbl_key(scdb, sales_contents_parsed_prices, "sales_contents_parsed_prices")
+  write_tbl_key(scdb, sales_contents_prev_owners, "sales_contents_prev_owners")
+  write_tbl_key(scdb, sales_contents_post_owners, "sales_contents_post_owners")
+  write_tbl_key(scdb, sales_contents_materials_classified_as_aat, "sales_contents_materials_classified_as_aat")
+  write_tbl_key(scdb, sales_contents_made_of_materials_aat, "sales_contents_made_of_materials_aat")
+  write_tbl_key(scdb, sales_contents_support_materials_aat, "sales_contents_support_materials_aat")
+  write_tbl_key(scdb, sales_contents_technique_aat, "sales_contents_technique_aat")
+  write_tbl_key(scdb, sales_contents_subject_aat, "sales_contents_subject_aat")
+  write_tbl_key(scdb, sales_contents_subject_classified_as_aat, "sales_contents_subject_classified_as_aat")
+  write_tbl_key(scdb, sales_contents_style_aat, "sales_contents_style_aat")
+  write_tbl_key(scdb, sales_contents_depicts_aat, "sales_contents_depicts_aat")
+  write_tbl_key(scdb, sales_contents_dimensions, "sales_contents_dimensions")
+
+  write_tbl_key(scdb, sales_descriptions_lugt_numbers, "sales_descriptions_lugt_numbers")
+  write_tbl_key(scdb, sales_descriptions_title_seller, "sales_descriptions_title_seller")
+  write_tbl_key(scdb, sales_descriptions_auc_copy_seller, "sales_descriptions_auc_copy_seller")
+  write_tbl_key(scdb, sales_descriptions_other_seller, "sales_descriptions_other_seller")
+  write_tbl_key(scdb, sales_descriptions_auth_seller, "sales_descriptions_auth_seller")
+  write_tbl_key(scdb, sales_descriptions_expert_auth, "sales_descriptions_expert_auth")
+  write_tbl_key(scdb, sales_descriptions_commissaire_pr, "sales_descriptions_commissaire_pr")
+  write_tbl_key(scdb, sales_descriptions_auction_house, "sales_descriptions_auction_house")
+  write_tbl_key(scdb, sales_descriptions_country, "sales_descriptions_country")
+  write_tbl_key(scdb, sales_catalogs_info, "sales_catalogs_info")
+  write_tbl_key(scdb, sales_descriptions, "sales_descriptions")
+
+  dbDisconnect(scdb)
+}
