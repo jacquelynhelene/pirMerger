@@ -79,6 +79,7 @@ produce_knoedler_dimensions <- function(kdf, dimensions_aat, units_aat) {
   kdf %>%
     add_column(exclude_dimension = FALSE) %>%
     general_dimension_extraction("dimensions", "star_record_no", "exclude_dimension") %>%
+    left_join(select(kdf, star_record_no, object_id, event_order), by = "star_record_no") %>%
     mutate(
       # Assign dimension unit based on the extracted dimension character,
       # defaulting to inches (a valid default for Knoedler only)
@@ -102,9 +103,16 @@ produce_knoedler_dimensions <- function(kdf, dimensions_aat, units_aat) {
     # Join AAT ids for dimension types and distance units
     inner_join(dimensions_aat, by = c("dimension_type" = "dimension")) %>%
     inner_join(units_aat, by = c("dimension_unit" = "unit")) %>%
+    group_by(object_id) %>%
+    mutate(dimension_is_preferred = row_number(desc(event_order)) == 1) %>%
+    ungroup() %>%
     # Return final table with dimension valu, unit, unit aat, dimension type,
     # and dimension aat, which can be joined to orginal records.
-    select(star_record_no, dimension_value = decimalized_dim_value, dimension_unit,
+    select(object_id,
+           star_record_no,
+           dimension_is_preferred,
+           dimension_value = decimalized_dim_value,
+           dimension_unit,
            dimension_unit_aat = unit_aat, dimension_type,
            dimension_type_aat = dimension_aat)
 }
@@ -627,6 +635,14 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
            artist_aat_nationality_3 = aat_nationality_3)
 }
 
+produce_knoedler_artists_preferred <- function(knoedler_artists, knoedler_with_ids) {
+  knoedler_artists %>%
+    left_join(select(knoedler_with_ids, star_record_no, object_id, event_order), by = "star_record_no") %>%
+    group_by(object_id) %>%
+    mutate(attribution_is_preferred = row_number(desc(event_order) == 1)) %>%
+    ungroup()
+}
+
 produce_knoedler_sellers_tmp <- function(raw_knoedler) {
   raw_knoedler %>%
     norm_vars(base_names = c("seller_name", "seller_loc", "seller_mod", "sell_auth_name", "sell_auth_loc", "sell_auth_mod", "seller_ulan_id"), n_reps = 2, idcols = "star_record_no")
@@ -784,7 +800,7 @@ produce_knoedler_present_owners_lookup <- function(knoedler_with_ids) {
     identify_knoedler_id_process()
 }
 
-produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, union_person_ids) {
+produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, union_person_ids, knoedler_with_ids) {
   present_ids <- union_person_ids %>%
     filter(source_db == "knoedler_present_owners")
 
@@ -792,16 +808,21 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
     select(knoedler_present_owners_lookup, star_record_no = source_record_id),
     select(present_ids, source_record_id, present_loc_uid = person_uid),
     by = c("star_record_no" = "source_record_id")) %>%
-    assert(is_uniq, star_record_no)
+    assert(is_uniq, star_record_no) %>%
+    left_join(select(knoedler_with_ids, star_record_no, object_id)) %>%
+    distinct(object_id, present_loc_uid) %>%
+    na.omit()
 }
 
 # Objects ----
 
 produce_knoedler_objects <- function(knoedler) {
-  k_objects <- knoedler %>%
-    select(object_id, star_record_no, title, genre, subject, object_type, materials)
+  knoedler %>%
+    select(object_id, title, event_order) %>%
     group_by(object_id) %>%
-    filter(min_rank(desc(event_order)) == 1)
+    filter(min_rank(desc(event_order)) == 1) %>%
+    ungroup() %>%
+    select(-event_order)
 }
 
 # Joined Table ----
@@ -975,7 +996,9 @@ produce_knoedler_sqlite <- function(dbpath,
                                     knoedler_depicts_aat,
                                     currency_aat,
                                     knoedler_dimensions,
-                                    knoedler_present_owners) {
+                                    knoedler_present_owners,
+                                    knoedler_objects,
+                                    knoedler_artists_preferred) {
   unlink(dbpath)
   kdb <- dbConnect(RSQLite::SQLite(), dbpath)
 
@@ -998,28 +1021,30 @@ produce_knoedler_sqlite <- function(dbpath,
   write_tbl_key(kdb, knoedler_sale_buyers, "knoedler_sale_buyers", f_keys = list(list(f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info")))
   write_tbl_key(kdb, knoedler_sale_sellers, "knoedler_sale_sellers", f_keys = list(list(f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info")))
 
-
+  # Create knoedler records
   write_tbl_key(kdb, knoedler, tbl_name = "knoedler", p_key = "star_record_no", f_keys = list(
     list(f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info"),
     list(f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info"),
-    list(f_key = "inventory_event_id", parent_f_key = "inventory_event_id", parent_tbl_name = "knoedler_inventory_events")
+    list(f_key = "inventory_event_id", parent_f_key = "inventory_event_id", parent_tbl_name = "knoedler_inventory_events"),
+    obj_pointer_single
     )
   )
-  # write_tbl_key(kdb, knoedler_artists, "knoedler_artists", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
-  # write_tbl_key(kdb, knoedler_buyers, "knoedler_buyers", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
-  # write_tbl_key(kdb, knoedler_sellers, "knoedler_sellers", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
-  # write_tbl_key(kdb, knoedler_joint_owners, "knoedler_joint_owners", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
-  write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat", f_keys = k_srn_pointer)
-  write_tbl_key(kdb, knoedler_materials_object_aat, "knoedler_materials_object_aat", f_keys = k_srn_pointer)
-  write_tbl_key(kdb, knoedler_materials_support_aat, "knoedler_materials_support_aat", f_keys = )
-  write_tbl_key(kdb, knoedler_materials_technique_aat, "knoedler_materials_technique_aat", f_keys = k_srn_pointer)
-  write_tbl_key(kdb, knoedler_subject_aat, "knoedler_subject_aat", f_keys = k_srn_pointer)
-  write_tbl_key(kdb, knoedler_style_aat, "knoedler_style_aat", f_keys = k_srn_pointer)
-  write_tbl_key(kdb, knoedler_subject_classified_as_aat, "knoedler_subject_classified_as_aat", f_keys = k_srn_pointer)
-  write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat", f_keys = k_srn_pointer)
+
+  # Tables that rely on both objects and records (aka all reified statements)
+  write_tbl_key(kdb, knoedler_dimensions, "knoedler_dimensions", f_keys = list(obj_pointer_single, k_srn_pointer_single))
+
+  write_tbl_key(kdb, knoedler_artists_preferred, "knoedler_artists", f_keys = list(obj_pointer_single, k_srn_pointer_single))
+
+  write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_materials_object_aat, "knoedler_materials_object_aat", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_materials_support_aat, "knoedler_materials_support_aat", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_materials_technique_aat, "knoedler_materials_technique_aat", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_subject_aat, "knoedler_subject_aat", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_style_aat, "knoedler_style_aat", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_subject_classified_as_aat, "knoedler_subject_classified_as_aat", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat", f_keys = obj_pointer)
   # write_tbl_key(kdb, currency_aat, "currency_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
-  write_tbl_key(kdb, knoedler_dimensions, "knoedler_dimensions", f_keys = k_srn_pointer)
-  write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners", f_keys = k_srn_pointer)
+  write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners", f_keys = obj_pointer)
 
   dbDisconnect(kdb)
 }
