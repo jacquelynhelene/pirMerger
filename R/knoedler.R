@@ -819,7 +819,7 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
 
 produce_knoedler_objects <- function(knoedler) {
   knoedler %>%
-    select(object_id, title, event_order) %>%
+    select(object_id, preferred_title = title, event_order) %>%
     group_by(object_id) %>%
     filter(min_rank(desc(event_order)) == 1) %>%
     ungroup() %>%
