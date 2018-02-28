@@ -640,7 +640,8 @@ produce_knoedler_artists_preferred <- function(knoedler_artists, knoedler_with_i
     left_join(select(knoedler_with_ids, star_record_no, object_id, event_order), by = "star_record_no") %>%
     group_by(object_id) %>%
     mutate(attribution_is_preferred = row_number(desc(event_order) == 1)) %>%
-    ungroup()
+    ungroup() %>%
+    select(-event_order)
 }
 
 produce_knoedler_sellers_tmp <- function(raw_knoedler) {
