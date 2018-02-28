@@ -26,3 +26,17 @@ produce_union_aat <- function(source_dir) {
 
   return(unique_knoedler_aat_ids)
 }
+
+# Use schemacrawler (https://www.schemacrawler.com/diagramming.html) to generate
+# a PDF displaying the sqlite schema
+produce_db_schema <- function(dbpath, outpath) {
+  system2("schemacrawler.sh",
+          args = c(
+            "-server sqlite",
+            str_interp("-database ${dbpath}"),
+            "-command schema",
+            "-outputformat pdf",
+            str_interp("-outputfile ${outpath}"),
+            "-password",
+            "-infolevel maximum"))
+}

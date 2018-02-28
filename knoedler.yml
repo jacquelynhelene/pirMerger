@@ -180,7 +180,7 @@ targets:
                                       knoedler_object_titles)
 
   ../pirdata/knoedler_schema.pdf:
-    command: produce_knoedler_schema(dbpath = "../pirdata/knoedler.sqlite", outpath = target_name)
+    command: produce_db_schema(dbpath = "../pirdata/knoedler.sqlite", outpath = target_name)
 
   all_gh_knoedler:
     depends:
