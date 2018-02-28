@@ -65,7 +65,8 @@ produce_knoedler <- function(knoedler_tmp) {
     select(-(buyer_name_1:buyer_ulan_id_2)) %>%
     select(-(purch_amount:knoedpurch_note)) %>%
     select(-(entry_date_year:entry_date_day)) %>%
-    select(-(sale_date_year:knoedshare_note), -transaction_type)
+    select(-(sale_date_year:knoedshare_note), -transaction_type) %>%
+    select(-title)
 }
 
 # Returns the ULAN ID for knoedler
@@ -819,11 +820,16 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
 
 produce_knoedler_objects <- function(knoedler) {
   knoedler %>%
-    select(object_id, title_source_record = star_record_no, preferred_title = title, event_order) %>%
+    distinct(object_id)
+}
+
+produce_knoedler_object_titles <- function(knoedler) {
+  knoedler %>%
+    filter(!is.na(title)) %>%
+    select(object_id, star_record_no, title, event_order) %>%
     group_by(object_id) %>%
-    filter(min_rank(desc(event_order)) == 1) %>%
-    ungroup() %>%
-    select(-event_order)
+    mutate(is_preferred_title = row_number(desc(event_order)) == 1) %>%
+    ungroup()
 }
 
 # Joined Table ----
@@ -999,7 +1005,8 @@ produce_knoedler_sqlite <- function(dbpath,
                                     knoedler_dimensions,
                                     knoedler_present_owners,
                                     knoedler_objects,
-                                    knoedler_artists_preferred) {
+                                    knoedler_artists_preferred,
+                                    knoedler_object_titles) {
   unlink(dbpath)
   kdb <- dbConnect(RSQLite::SQLite(), dbpath)
 
@@ -1035,6 +1042,8 @@ produce_knoedler_sqlite <- function(dbpath,
   write_tbl_key(kdb, knoedler_dimensions, "knoedler_dimensions", f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
   write_tbl_key(kdb, knoedler_artists_preferred, "knoedler_artists", f_keys = list(obj_pointer_single, k_srn_pointer_single))
+
+  write_tbl_key(kdb, knoedler_object_titles, "knoedler_object_titles", f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
   write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat", f_keys = obj_pointer)
   write_tbl_key(kdb, knoedler_materials_object_aat, "knoedler_materials_object_aat", f_keys = obj_pointer)
