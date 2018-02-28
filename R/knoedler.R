@@ -810,12 +810,10 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
 
   left_join(
     select(knoedler_present_owners_lookup, star_record_no = source_record_id),
-    select(present_ids, source_record_id, present_loc_uid = person_uid),
-    by = c("star_record_no" = "source_record_id")) %>%
+    present_ids, by = c("star_record_no" = "source_record_id")) %>%
     assert(is_uniq, star_record_no) %>%
-    left_join(select(knoedler_with_ids, star_record_no, object_id)) %>%
-    distinct(object_id, present_loc_uid) %>%
-    na.omit()
+    left_join(select(knoedler_with_ids, star_record_no, object_id), by = "star_record_no") %>%
+    select(-c(source_db:id_process), -star_record_no)
 }
 
 # Objects ----
@@ -1055,7 +1053,6 @@ produce_knoedler_sqlite <- function(dbpath,
   write_tbl_key(kdb, knoedler_style_aat, "knoedler_style_aat", f_keys = obj_pointer)
   write_tbl_key(kdb, knoedler_subject_classified_as_aat, "knoedler_subject_classified_as_aat", f_keys = obj_pointer)
   write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat", f_keys = obj_pointer)
-  # write_tbl_key(kdb, currency_aat, "currency_aat", f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
   write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners", f_keys = obj_pointer)
 
   dbDisconnect(kdb)
