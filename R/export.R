@@ -27,6 +27,39 @@ produce_union_aat <- function(source_dir) {
   return(unique_knoedler_aat_ids)
 }
 
+# SQL Export helpers ----
+
+format_pf_key <- function(db, df, tbl_name, p_key, f_keys) {
+
+  cnames <-  names(df)
+  ctypes <- map_chr(df, dbDataType, db = db)
+
+  all_fields <- paste0(cnames, " ", ctypes, collapse = ",")
+  primary_key <- ""
+  if (!is.null(p_key)) {
+    primary_key <- str_interp(",PRIMARY KEY (${p_key})")
+  }
+
+  foreign_key <- ""
+  if (!is.null(f_keys)) {
+    foreign_key <- paste0(",", paste0(map_chr(f_keys, function(x) {
+      f_key <- x$f_key
+      parent_tbl_name <- x$parent_tbl_name
+      parent_f_key <- x$parent_f_key
+      str_interp("FOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${parent_f_key})")
+    }), collapse = ","))
+  }
+
+  str_interp("CREATE TABLE ${tbl_name} (${all_fields}${primary_key}${foreign_key})")
+}
+
+write_tbl_key <- function(db, df, tbl_name, p_key = NULL, f_keys = NULL) {
+  command <- format_pf_key(db, df, tbl_name, p_key, f_keys)
+  message(command)
+  dbExecute(db, command)
+  dbWriteTable(db, tbl_name, df, append = TRUE, overwrite = FALSE)
+}
+
 # Use schemacrawler (https://www.schemacrawler.com/diagramming.html) to generate
 # a PDF displaying the sqlite schema
 produce_db_schema <- function(dbpath, outpath) {
