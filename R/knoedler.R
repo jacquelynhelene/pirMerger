@@ -66,7 +66,9 @@ produce_knoedler <- function(knoedler_tmp) {
     select(-(purch_amount:knoedpurch_note)) %>%
     select(-(entry_date_year:entry_date_day)) %>%
     select(-(sale_date_year:knoedshare_note), -transaction_type) %>%
-    select(-title)
+    select(-title) %>%
+    select(-(contains("flag"))) %>%
+    select(-original_file_name)
 }
 
 # Returns the ULAN ID for knoedler
@@ -820,7 +822,8 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
 
 produce_knoedler_objects <- function(knoedler) {
   knoedler %>%
-    distinct(object_id)
+    select(object_id, contains("flag")) %>%
+    distinct()
 }
 
 produce_knoedler_object_titles <- function(knoedler) {
