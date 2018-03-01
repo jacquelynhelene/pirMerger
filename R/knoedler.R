@@ -17,6 +17,8 @@ produce_knoedler_ids <- function(raw_knoedler, knoedler_stocknumber_concordance)
   knoedler <- raw_knoedler %>%
     # Convert numeric strings into integers
     mutate_at(vars(stock_book_no, page_number, row_number, dplyr::contains("entry_date"), dplyr::contains("sale_date")), funs(as.integer)) %>%
+    # Convert all "0" ULAN values to NA
+    null_ulan() %>%
     rename(transaction_type = transaction) %>%
     assert(not_na, star_record_no) %>%
     assert(is_uniq, star_record_no)

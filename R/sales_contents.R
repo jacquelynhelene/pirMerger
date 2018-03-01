@@ -3,6 +3,8 @@
 produce_sales_contents_ids <- function(raw_sales_contents) {
   raw_sales_contents %>%
     mutate_at(vars(lot_sale_year, lot_sale_month, lot_sale_day), funs(as.integer)) %>%
+    # Convert all "0" ULAN values to NA
+    null_ulan() %>%
     mutate(project = str_extract(catalog_number, "^[A-Za-z]{1,2}")) %>%
     # Lowercase all text fields that need to be used as joining keys
     mutate_at(vars(subject, genre, object_type, materials), funs(tolower)) %>%

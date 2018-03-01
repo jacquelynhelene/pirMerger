@@ -1,6 +1,8 @@
 produce_goupil_ids <- function(raw_goupil) {
   raw_goupil %>%
     mutate_at(vars(contains("stock_book"), page_number, row_number, contains("_date_")), funs(as.integer)) %>%
+    # Convert all "0" ULAN values to NA
+    null_ulan() %>%
     select(-persistent_uid, -original_file_name) %>%
     assert(not_na, star_record_no) %>%
     assert(is_uniq, star_record_no)

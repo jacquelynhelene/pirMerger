@@ -1,3 +1,8 @@
+# All ULAN values exported as 0 should instead be set to NA
+null_ulan <- function(df) {
+  mutate_at(df, vars(contains("ulan")), funs(na_if(., "0")))
+}
+
 # Artists ----
 
 #' Produce artist authority table from raw table.
