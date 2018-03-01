@@ -215,7 +215,7 @@ targets:
                                             sales_contents_hand_notes,
                                             sales_contents_sellers,
                                             sales_contents_buyers,
-                                            sales_contents_parsed_prices,
+                                            sales_contents_prices,
                                             sales_contents_prev_owners,
                                             sales_contents_post_owners,
                                             sales_contents_materials_classified_as_aat,
