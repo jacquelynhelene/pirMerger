@@ -329,8 +329,9 @@ produce_sales_contents_materials_classified_as_aat <- function(raw_sales_content
     single_separate("classified_as_2") %>%
     mutate_at(vars(contains("classified_as")), as.integer) %>%
     gather(ca_index, classified_as, contains("classified_as")) %>%
-    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
-    select(puri, object_type_classified_as_aat = classified_as) %>%
+    left_join(select(sales_contents_ids, puri, object_uid, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    select(object_uid, object_type_classified_as_aat = classified_as) %>%
+    distinct() %>%
     na.omit()
 }
 
@@ -340,8 +341,8 @@ produce_sales_contents_made_of_materials_aat <- function(raw_sales_contents_mate
     single_separate("made_of_materials") %>%
     mutate_at(vars(contains("made_of_materials")), as.integer) %>%
     gather(mo_index, made_of_aat, contains("made_of_materials")) %>%
-    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
-    select(puri, made_of_aat) %>%
+    left_join(select(sales_contents_ids, puri, object_uid, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    distinct(object_uid, made_of_aat) %>%
     na.omit()
 }
 
@@ -351,8 +352,8 @@ produce_sales_contents_support_materials_aat <- function(raw_sales_contents_mate
     single_separate("made_of_support") %>%
     mutate_at(vars(contains("made_of_support")), as.integer) %>%
     gather(mo_index, support_aat, contains("made_of_support")) %>%
-    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
-    select(puri, support_aat) %>%
+    left_join(select(sales_contents_ids, puri, object_uid, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    distinct(object_uid, support_aat) %>%
     na.omit()
 }
 
@@ -362,8 +363,9 @@ produce_sales_contents_technique_aat <- function(raw_sales_contents_materials_aa
     single_separate("technique") %>%
     mutate_at(vars(contains("technique")), as.integer) %>%
     gather(mo_index, technique, contains("technique")) %>%
-    left_join(select(sales_contents_ids, puri, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
-    select(puri, technique) %>%
+    left_join(select(sales_contents_ids, puri, object_uid, object_type, materials), by = c("sales_contents_object_type" = "object_type", "sales_contents_materials" = "materials")) %>%
+    select(object_uid, technique_aat = technique) %>%
+    distinct() %>%
     na.omit()
 }
 
@@ -375,8 +377,8 @@ produce_sales_contents_subject_aat <- function(raw_sales_contents_subject_aat, s
     single_separate("subject_aat") %>%
     mutate_at(vars(contains("subject_aat")), as.integer) %>%
     gather(mo_index, subject_aat, contains("subject_aat")) %>%
-    left_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
-    select(puri, subject_aat) %>%
+    left_join(select(sales_contents_ids, puri, object_uid, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    distinct(object_uid, subject_aat) %>%
     na.omit()
 }
 
@@ -386,8 +388,8 @@ produce_sales_contents_style_aat <- function(raw_sales_contents_subject_aat, sal
     single_separate("style_aat") %>%
     mutate_at(vars(contains("style_aat")), as.integer) %>%
     gather(mo_index, style_aat, contains("style_aat")) %>%
-    left_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
-    select(puri, style_aat) %>%
+    left_join(select(sales_contents_ids, puri, object_uid, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    distinct(object_uid, style_aat) %>%
     na.omit()
 }
 
@@ -397,8 +399,8 @@ produce_sales_contents_subject_classified_as_aat <- function(raw_sales_contents_
     single_separate("subject_classified_as_aat") %>%
     mutate_at(vars(contains("subject_classified_as_aat")), as.integer) %>%
     gather(mo_index, subject_classified_as_aat, contains("subject_classified_as_aat")) %>%
-    full_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
-    select(puri, subject_classified_as_aat) %>%
+    full_join(select(sales_contents_ids, puri, object_uid, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    distinct(object_uid, subject_classified_as_aat) %>%
     na.omit()
 }
 
@@ -408,8 +410,8 @@ produce_sales_contents_depicts_aat <- function(raw_sales_contents_subject_aat, s
     single_separate("depicts_aat") %>%
     mutate_at(vars(contains("depicts_aat")), as.integer) %>%
     gather(mo_index, depicts_aat, contains("depicts_aat")) %>%
-    full_join(select(sales_contents_ids, puri, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
-    select(puri, depicts_aat) %>%
+    full_join(select(sales_contents_ids, puri, object_uid, subject, genre), by = c("sales_contents_subject" = "subject", "sales_contents_genre" = "genre")) %>%
+    distinct(object_uid, depicts_aat) %>%
     na.omit()
 }
 
@@ -764,6 +766,9 @@ produce_sales_contents_sqlite <- function(dbpath,
   sc_key_single <- list(f_key = "puri", parent_f_key = "puri", parent_tbl_name = "sales_contents")
   sc_key = list(sc_key_single)
 
+  obj_key_single = list(f_key = "object_uid", parent_f_key = "object_uid", parent_tbl_name = "sales_contents_objects")
+  obj_key <- list(obj_key_single)
+
   write_tbl_key(scdb, sales_descriptions, "sales_descriptions", p_key = "catalog_number")
   write_tbl_key(scdb, sales_contents_objects, "sales_contents_objects", p_key = "object_uid")
 
@@ -794,14 +799,14 @@ produce_sales_contents_sqlite <- function(dbpath,
   write_tbl_key(scdb, sales_contents_prices, "sales_contents_prices")
   write_tbl_key(scdb, sales_contents_prev_owners, "sales_contents_prev_owners", f_keys = sc_key)
   write_tbl_key(scdb, sales_contents_post_owners, "sales_contents_post_owners", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_materials_classified_as_aat, "sales_contents_materials_classified_as_aat", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_made_of_materials_aat, "sales_contents_made_of_materials_aat", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_support_materials_aat, "sales_contents_support_materials_aat", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_technique_aat, "sales_contents_technique_aat", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_subject_aat, "sales_contents_subject_aat", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_subject_classified_as_aat, "sales_contents_subject_classified_as_aat", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_style_aat, "sales_contents_style_aat", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_depicts_aat, "sales_contents_depicts_aat", f_keys = sc_key)
+  write_tbl_key(scdb, sales_contents_materials_classified_as_aat, "sales_contents_materials_classified_as_aat", f_keys = obj_key)
+  write_tbl_key(scdb, sales_contents_made_of_materials_aat, "sales_contents_made_of_materials_aat", f_keys = obj_key)
+  write_tbl_key(scdb, sales_contents_support_materials_aat, "sales_contents_support_materials_aat", f_keys = obj_key)
+  write_tbl_key(scdb, sales_contents_technique_aat, "sales_contents_technique_aat", f_keys = obj_key)
+  write_tbl_key(scdb, sales_contents_subject_aat, "sales_contents_subject_aat", f_keys = obj_key)
+  write_tbl_key(scdb, sales_contents_subject_classified_as_aat, "sales_contents_subject_classified_as_aat", f_keys = obj_key)
+  write_tbl_key(scdb, sales_contents_style_aat, "sales_contents_style_aat", f_keys = obj_key)
+  write_tbl_key(scdb, sales_contents_depicts_aat, "sales_contents_depicts_aat", f_keys = obj_key)
   write_tbl_key(scdb, sales_contents_dimensions, "sales_contents_dimensions", f_keys = sc_key)
 
 
