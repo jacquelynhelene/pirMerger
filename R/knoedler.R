@@ -109,7 +109,7 @@ produce_knoedler_dimensions <- function(kdf, dimensions_aat, units_aat) {
     inner_join(dimensions_aat, by = c("dimension_type" = "dimension")) %>%
     inner_join(units_aat, by = c("dimension_unit" = "unit")) %>%
     group_by(object_id) %>%
-    mutate(dimension_is_preferred = row_number(desc(event_order)) == 1) %>%
+    mutate(dimension_is_preferred = min_rank(desc(event_order)) == 1) %>%
     ungroup() %>%
     # Return final table with dimension valu, unit, unit aat, dimension type,
     # and dimension aat, which can be joined to orginal records.
