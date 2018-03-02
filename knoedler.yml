@@ -16,6 +16,7 @@ targets:
       - processed_data/knoedler_purchase_info.rda
       - processed_data/knoedler_purchase_sellers.rda
       - processed_data/knoedler_purchase_buyers.rda
+      - processed_data/knoedler_object_titles.rda
       - ../pirdata/knoedler.sqlite
       - ../pirdata/knoedler_schema.pdf
 
@@ -142,6 +143,8 @@ targets:
     command: produce_knoedler_objects(knoedler_with_ids)
   knoedler_object_titles:
     command: produce_knoedler_object_titles(knoedler_with_ids)
+  processed_data/knoedler_object_titles.rda:
+    command: save(knoedler_object_titles, file = target_name)
 
   ../pirdata/knoedler.sqlite:
     command: produce_knoedler_sqlite(dbpath = target_name,
