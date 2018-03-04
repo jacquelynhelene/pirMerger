@@ -644,7 +644,7 @@ produce_knoedler_artists_preferred <- function(knoedler_artists, knoedler_with_i
   knoedler_artists %>%
     left_join(select(knoedler_with_ids, star_record_no, object_id, event_order), by = "star_record_no") %>%
     group_by(object_id) %>%
-    mutate(attribution_is_preferred = row_number(desc(event_order) == 1)) %>%
+    mutate(attribution_is_preferred = min_rank(desc(event_order)) == 1) %>%
     ungroup() %>%
     select(-event_order)
 }
@@ -831,7 +831,7 @@ produce_knoedler_object_titles <- function(knoedler) {
     filter(!is.na(title)) %>%
     select(object_id, star_record_no, title, event_order) %>%
     group_by(object_id) %>%
-    mutate(is_preferred_title = row_number(desc(event_order)) == 1) %>%
+    mutate(is_preferred_title = min_rank(desc(event_order)) == 1) %>%
     ungroup()
 }
 
