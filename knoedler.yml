@@ -16,8 +16,9 @@ targets:
       - processed_data/knoedler_purchase_info.rda
       - processed_data/knoedler_purchase_sellers.rda
       - processed_data/knoedler_purchase_buyers.rda
-      - processed_data/joined_knoedler.rda
-      - ../pirdata/knoedler_join.csv
+      - processed_data/knoedler_object_titles.rda
+      - ../pirdata/knoedler.sqlite
+      - ../pirdata/knoedler_schema.pdf
 
   knoedler_stocknumber_concordance:
     command: produce_knoedler_stocknumber_concordance(raw_knoedler_stocknumber_concordance)
@@ -38,6 +39,8 @@ targets:
     command: produce_knoedler_artists_lookup(knoedler_artists_tmp)
   knoedler_artists:
     command: produce_knoedler_artists(knoedler_artists_tmp, union_person_ids)
+  knoedler_artists_preferred:
+    command: produce_knoedler_artists_preferred(knoedler_artists, knoedler_with_ids)
   processed_data/knoedler_artists.rda:
     command: save(knoedler_artists, file = target_name)
 
@@ -72,7 +75,7 @@ targets:
   knoedler_present_owners_lookup:
     command: produce_knoedler_present_owners_lookup(knoedler_with_ids)
   knoedler_present_owners:
-    command: produce_knoedler_present_owners(knoedler_present_owners_lookup, union_person_ids)
+    command: produce_knoedler_present_owners(knoedler_present_owners_lookup, union_person_ids, knoedler_with_ids)
 
   knoedler_dimensions:
     command: produce_knoedler_dimensions(knoedler_with_ids, raw_dimensions_aat, raw_units_aat)
@@ -136,13 +139,43 @@ targets:
   knoedler_depicts_aat:
     command: produce_knoedler_depicts_aat(raw_knoedler_subject_aat, knoedler_with_ids)
 
-  joined_knoedler:
-    command: produce_joined_knoedler(knoedler, knoedler_artists, knoedler_buyers, knoedler_sellers, knoedler_joint_owners, knoedler_purchase_info, knoedler_purchase_buyers, knoedler_purchase_sellers, knoedler_inventory_events, knoedler_sale_info, knoedler_sale_buyers, knoedler_sale_sellers, knoedler_materials_classified_as_aat, knoedler_materials_object_aat, knoedler_materials_support_aat, knoedler_materials_technique_aat, knoedler_subject_aat, knoedler_style_aat, knoedler_subject_classified_as_aat, knoedler_depicts_aat, currency_aat, knoedler_dimensions, knoedler_present_owners)
-  processed_data/joined_knoedler.rda:
-    command: save(joined_knoedler, file = target_name)
+  knoedler_objects:
+    command: produce_knoedler_objects(knoedler_with_ids)
+  knoedler_object_titles:
+    command: produce_knoedler_object_titles(knoedler_with_ids)
+  processed_data/knoedler_object_titles.rda:
+    command: save(knoedler_object_titles, file = target_name)
 
-  ../pirdata/knoedler_join.csv:
-    command: write_csv(path = target_name, x = joined_knoedler, na = I(""))
+  ../pirdata/knoedler.sqlite:
+    command: produce_knoedler_sqlite(dbpath = target_name,
+                                      knoedler,
+                                      knoedler_artists,
+                                      knoedler_buyers,
+                                      knoedler_sellers,
+                                      knoedler_joint_owners,
+                                      knoedler_purchase_info,
+                                      knoedler_purchase_buyers,
+                                      knoedler_purchase_sellers,
+                                      knoedler_inventory_events,
+                                      knoedler_sale_info,
+                                      knoedler_sale_buyers,
+                                      knoedler_sale_sellers,
+                                      knoedler_materials_classified_as_aat,
+                                      knoedler_materials_object_aat,
+                                      knoedler_materials_support_aat,
+                                      knoedler_materials_technique_aat,
+                                      knoedler_subject_aat,
+                                      knoedler_style_aat,
+                                      knoedler_subject_classified_as_aat,
+                                      knoedler_depicts_aat,
+                                      knoedler_dimensions,
+                                      knoedler_present_owners,
+                                      knoedler_objects,
+                                      knoedler_artists_preferred,
+                                      knoedler_object_titles)
+
+  ../pirdata/knoedler_schema.pdf:
+    command: produce_db_schema(dbpath = "../pirdata/knoedler.sqlite", outpath = target_name)
 
   all_gh_knoedler:
     depends:
@@ -152,4 +185,3 @@ targets:
     command: produce_gh_knoedler(raw_knoedler)
   ../provenance-index-csv/knoedler/knoedler.csv:
     command: write_csv(gh_knoedler, path = target_name, na = I(""))
-

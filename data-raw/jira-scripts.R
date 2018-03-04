@@ -565,3 +565,15 @@ nrow(all_matches) - n_distinct(all_matches$sn_index)
 nrow(all_matches) - n_distinct(all_matches$sn_artist_index)
 nrow(all_matches) - n_distinct(all_matches$sn_artist_title_index)
 
+# 383 - Sales Contents Bad catalog numbers ----
+
+no_catalog_number_match <- sales_contents %>%
+  anti_join(sales_descriptions, by = "catalog_number") %>%
+  select(puri, catalog_number) %>%
+  arrange(catalog_number)
+
+make_report(no_catalog_number_match)
+
+missing_catalog_number <- sales_contents %>%
+  filter(is.na(catalog_number))
+

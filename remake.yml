@@ -6,6 +6,8 @@ packages:
   - rematch2
   - igraph
   - assertr
+  - DBI
+  - RSQLite
 
 include:
   - knoedler.yml

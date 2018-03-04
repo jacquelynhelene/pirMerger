@@ -26,6 +26,8 @@ targets:
       - processed_data/sales_contents_post_owners.rda
       - processed_data/sales_contents_auction_houses.rda
       - processed_data/sales_contents.rda
+      - ../pirdata/sales_contents.sqlite
+      - ../pirdata/sales_contents_schema.pdf
 
   # Sales Contents
 
@@ -171,22 +173,22 @@ targets:
     command: save(sales_catalogs_info, file = target_name)
 
   sales_contents_materials_classified_as_aat:
-    command: produce_sales_contents_materials_classified_as_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+    command: produce_sales_contents_materials_classified_as_aat(raw_sales_contents_materials_aat, sales_contents)
   sales_contents_made_of_materials_aat:
-    command: produce_sales_contents_made_of_materials_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+    command: produce_sales_contents_made_of_materials_aat(raw_sales_contents_materials_aat, sales_contents)
   sales_contents_support_materials_aat:
-    command: produce_sales_contents_support_materials_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+    command: produce_sales_contents_support_materials_aat(raw_sales_contents_materials_aat, sales_contents)
   sales_contents_technique_aat:
-    command: produce_sales_contents_technique_aat(raw_sales_contents_materials_aat, sales_contents_ids)
+    command: produce_sales_contents_technique_aat(raw_sales_contents_materials_aat, sales_contents)
 
   sales_contents_subject_aat:
-    command: produce_sales_contents_subject_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+    command: produce_sales_contents_subject_aat(raw_sales_contents_subject_aat, sales_contents)
   sales_contents_style_aat:
-    command: produce_sales_contents_style_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+    command: produce_sales_contents_style_aat(raw_sales_contents_subject_aat, sales_contents)
   sales_contents_subject_classified_as_aat:
-    command: produce_sales_contents_subject_classified_as_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+    command: produce_sales_contents_subject_classified_as_aat(raw_sales_contents_subject_aat, sales_contents)
   sales_contents_depicts_aat:
-    command: produce_sales_contents_depicts_aat(raw_sales_contents_subject_aat, sales_contents_ids)
+    command: produce_sales_contents_depicts_aat(raw_sales_contents_subject_aat, sales_contents)
 
   sales_contents_dimensions:
     command: produce_sales_contents_dimensions(sales_contents_ids)
@@ -198,6 +200,47 @@ targets:
 
   sales_contents_unparsed_dimensions:
     command: produce_sales_unparsed_dimensions(sales_contents_ids, sales_contents_dimensions)
+
+  sales_contents_objects:
+    command: produce_sales_contents_objects(sales_contents)
+
+  ../pirdata/sales_contents.sqlite:
+    command: produce_sales_contents_sqlite(dbpath = target_name,
+                                            sales_contents,
+                                            sales_contents_objects,
+                                            sales_contents_experts,
+                                            sales_contents_commissaire_pr,
+                                            sales_contents_auction_houses,
+                                            sales_contents_artists,
+                                            sales_contents_hand_notes,
+                                            sales_contents_sellers,
+                                            sales_contents_buyers,
+                                            sales_contents_prices,
+                                            sales_contents_prev_owners,
+                                            sales_contents_post_owners,
+                                            sales_contents_materials_classified_as_aat,
+                                            sales_contents_made_of_materials_aat,
+                                            sales_contents_support_materials_aat,
+                                            sales_contents_technique_aat,
+                                            sales_contents_subject_aat,
+                                            sales_contents_subject_classified_as_aat,
+                                            sales_contents_style_aat,
+                                            sales_contents_depicts_aat,
+                                            sales_contents_dimensions,
+                                            sales_descriptions_lugt_numbers,
+                                            sales_descriptions_title_seller,
+                                            sales_descriptions_auc_copy_seller,
+                                            sales_descriptions_other_seller,
+                                            sales_descriptions_auth_seller,
+                                            sales_descriptions_expert_auth,
+                                            sales_descriptions_commissaire_pr,
+                                            sales_descriptions_auction_house,
+                                            sales_descriptions_country,
+                                            sales_catalogs_info,
+                                            sales_descriptions)
+
+  ../pirdata/sales_contents_schema.pdf:
+    command: produce_db_schema(dbpath = "../pirdata/sales_contents.sqlite", outpath = target_name)
 
   all_gh_sales_catalogs:
     depends:
