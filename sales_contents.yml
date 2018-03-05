@@ -62,7 +62,7 @@ targets:
   sales_contents_artists_lookup:
     command: produce_sales_contents_artists_lookup(sales_contents_artists_tmp, sales_contents_ids, combined_authority)
   sales_contents_artists:
-    command: produce_sales_contents_artists(sales_contents_artists_tmp, union_person_ids)
+    command: produce_sales_contents_artists(sales_contents_artists_tmp, union_person_ids, sales_contents)
   processed_data/sales_contents_artists.rda:
     command: save(sales_contents_artists, file = target_name)
 

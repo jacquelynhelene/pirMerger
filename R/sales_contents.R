@@ -200,7 +200,7 @@ produce_sales_contents_artists_lookup <- function(sales_contents_artists_tmp, sa
     identify_sales_contents_id_process(combined_authority)
 }
 
-produce_sales_contents_artists <- function(sales_contents_artists_tmp, union_person_ids) {
+produce_sales_contents_artists <- function(sales_contents_artists_tmp, union_person_ids, sales_contents) {
   artists_ids <- union_person_ids %>%
     filter(source_db == "sales_contents_artists") %>%
     select(-source_db, -source_document_id) %>%
@@ -213,7 +213,11 @@ produce_sales_contents_artists <- function(sales_contents_artists_tmp, union_per
               "artist_name" = "person_name",
               "art_authority" = "person_auth",
               "artist_ulan" = "person_ulan")) %>%
-    distinct()
+    distinct() %>%
+    left_join(select(sales_contents, puri, object_uid, event_order), by = "puri") %>%
+    group_by(object_uid) %>%
+    mutate(is_preferred_attribution = min_rank(desc(event_order)) == 1) %>%
+    ungroup()
 }
 
 produce_sales_contents_hand_notes <- function(sales_contents) {
