@@ -577,3 +577,14 @@ make_report(no_catalog_number_match)
 missing_catalog_number <- sales_contents %>%
   filter(is.na(catalog_number))
 
+# 384 - Sales Contents NULL hand note with source ----
+
+null_hand_note <- sales_contents_hand_notes %>%
+  filter(is.na(hand_note))
+
+hand_notes_with_source_no_text <- raw_sales_contents %>%
+  select(persistent_puid, contains("hand_note")) %>%
+  semi_join(null_hand_note, by = c("persistent_puid" = "puri"))
+
+make_report(hand_notes_with_source_no_text)
+
