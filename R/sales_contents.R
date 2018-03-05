@@ -418,14 +418,18 @@ produce_sales_contents_depicts_aat <- function(raw_sales_contents_subject_aat, s
     na.omit()
 }
 
-produce_sales_contents_dimensions <- function(sales_contents_ids) {
-  sales_contents_ids %>%
+produce_sales_contents_dimensions <- function(sales_contents) {
+  sales_contents %>%
     mutate(exclude_dimension = case_when(
       project == "Br" & str_detect(dimensions, "bracci[oa]") ~ TRUE,
       TRUE ~ FALSE
     )) %>%
     general_dimension_extraction(dimcol = "dimensions", idcol = "puri", exclusion_col = "exclude_dimension") %>%
-    select(-.text, -.match)
+    select(-.text, -.match) %>%
+    left_join(select(sales_contents, puri, object_uid, event_order), by = "puri") %>%
+    group_by(object_uid) %>%
+    mutate(is_preferred_dimension = min_rank(desc(event_order)) == 1) %>%
+    ungroup()
 }
 
 produce_sales_contents_object_titles <- function() {}
@@ -819,7 +823,7 @@ produce_sales_contents_sqlite <- function(dbpath,
   write_tbl_key(scdb, sales_contents_subject_classified_as_aat, "sales_contents_subject_classified_as_aat", f_keys = obj_key)
   write_tbl_key(scdb, sales_contents_style_aat, "sales_contents_style_aat", f_keys = obj_key)
   write_tbl_key(scdb, sales_contents_depicts_aat, "sales_contents_depicts_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_dimensions, "sales_contents_dimensions", f_keys = sc_key)
+  write_tbl_key(scdb, sales_contents_dimensions, "sales_contents_dimensions", f_keys = list(obj_key_single, sc_key_single))
 
 
   dbDisconnect(scdb)
