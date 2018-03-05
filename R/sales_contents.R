@@ -684,17 +684,6 @@ identify_sales_transactions <- function(sales_contents_ids, sales_contents_price
     left_join(transaction_ids, by = "puri")
 }
 
-# Sales Contents Joined Table
-
-produce_joined_sales_contents <- function(sales_contents,
-                                          sales_contents_dimensions,
-                                          sales_contents_parsed_prices) {
-  sales_contents %>%
-    pipe_message(" - Joining sales_contents_dimensions") %>%
-    left_join(spread_out(sales_contents_dimensions, "puri")) %>%
-    left_join(spread_out(sales_contents_parsed_prices, "puri"))
-}
-
 # Upstream Error Fixes
 
 produce_sales_unparsed_dimensions <- function(sales_contents_ids, sales_contents_dimensions) {
