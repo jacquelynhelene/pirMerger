@@ -164,6 +164,7 @@ produce_knoedler_purchase_sellers <- function(knoedler, knoedler_sellers) {
     select(star_record_no, purchase_event_id) %>%
     left_join(knoedler_sellers, by = "star_record_no") %>%
     select(-star_record_no) %>%
+    filter(!is.na(seller_uid)) %>%
     distinct() %>%
     select(purchase_event_id,
            purchase_seller_name = seller_name,
@@ -265,6 +266,7 @@ produce_knoedler_sale_buyers <- function(knoedler_sales, knoedler_buyers) {
     select(star_record_no, sale_event_id) %>%
     left_join(knoedler_buyers, by = "star_record_no") %>%
     select(-star_record_no) %>%
+    filter(!is.na(buyer_uid)) %>%
     distinct() %>%
     select(sale_event_id,
            sale_buyer_name = buyer_name,
@@ -886,40 +888,112 @@ produce_knoedler_sqlite <- function(dbpath,
   obj_pointer_single <- list(f_key = "object_id", parent_f_key = "object_id", parent_tbl_name = "knoedler_objects")
   obj_pointer <- list(obj_pointer_single)
 
-  write_tbl_key(kdb, knoedler_objects, "knoedler_objects", p_key = "object_id")
-  write_tbl_key(kdb, knoedler_purchase_info, "knoedler_purchase_info", p_key = "purchase_event_id")
-  write_tbl_key(kdb, knoedler_purchase_buyers, "knoedler_purchase_buyers", f_keys = list(list(f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info")))
-  write_tbl_key(kdb, knoedler_purchase_sellers, "knoedler_purchase_sellers", f_keys = list(list(f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info")))
-  write_tbl_key(kdb, knoedler_inventory_events, "knoedler_inventory_events", p_key = "inventory_event_id")
-  write_tbl_key(kdb, knoedler_sale_info, "knoedler_sale_info", p_key = "sale_event_id")
-  write_tbl_key(kdb, knoedler_sale_buyers, "knoedler_sale_buyers", f_keys = list(list(f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info")))
-  write_tbl_key(kdb, knoedler_sale_sellers, "knoedler_sale_sellers", f_keys = list(list(f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info")))
+  write_tbl_key(kdb, knoedler_objects, "knoedler_objects",
+                p_key = "object_id")
+
+  write_tbl_key(kdb, knoedler_purchase_info, "knoedler_purchase_info",
+                p_key = "purchase_event_id")
+
+  write_tbl_key(kdb, knoedler_purchase_buyers, "knoedler_purchase_buyers",
+                nn_keys = c("purchase_event_id", "purchase_buyer_uid"),
+                f_keys = list(
+                  list(f_key = "purchase_event_id",
+                       parent_f_key = "purchase_event_id",
+                       parent_tbl_name = "knoedler_purchase_info")))
+
+  write_tbl_key(kdb, knoedler_purchase_sellers, "knoedler_purchase_sellers",
+                nn_keys = c("purchase_event_id", "purchase_seller_uid"),
+                f_keys = list(
+                  list(f_key = "purchase_event_id",
+                       parent_f_key = "purchase_event_id",
+                       parent_tbl_name = "knoedler_purchase_info")))
+
+  write_tbl_key(kdb, knoedler_inventory_events, "knoedler_inventory_events",
+                p_key = "inventory_event_id")
+
+  write_tbl_key(kdb, knoedler_sale_info, "knoedler_sale_info",
+                p_key = "sale_event_id")
+
+  write_tbl_key(kdb, knoedler_sale_buyers, "knoedler_sale_buyers",
+                nn_keys = c("sale_event_id", "sale_buyer_uid"),
+                f_keys = list(
+                  list(f_key = "sale_event_id",
+                       parent_f_key = "sale_event_id",
+                       parent_tbl_name = "knoedler_sale_info")))
+
+  write_tbl_key(kdb, knoedler_sale_sellers, "knoedler_sale_sellers",
+                nn_keys = c("sale_event_id", "sale_seller_uid"),
+                f_keys = list(
+                  list(f_key = "sale_event_id",
+                       parent_f_key = "sale_event_id",
+                       parent_tbl_name = "knoedler_sale_info")))
 
   # Create knoedler records
-  write_tbl_key(kdb, knoedler, tbl_name = "knoedler", p_key = "star_record_no", f_keys = list(
-    list(f_key = "purchase_event_id", parent_f_key = "purchase_event_id", parent_tbl_name = "knoedler_purchase_info"),
-    list(f_key = "sale_event_id", parent_f_key = "sale_event_id", parent_tbl_name = "knoedler_sale_info"),
-    list(f_key = "inventory_event_id", parent_f_key = "inventory_event_id", parent_tbl_name = "knoedler_inventory_events"),
-    obj_pointer_single
-    )
+  write_tbl_key(kdb, knoedler, tbl_name = "knoedler",
+                p_key = "star_record_no",
+                nn_keys = "object_id",
+                f_keys = list(
+                  list(f_key = "purchase_event_id",
+                       parent_f_key = "purchase_event_id",
+                       parent_tbl_name = "knoedler_purchase_info"),
+                  list(f_key = "sale_event_id",
+                       parent_f_key = "sale_event_id",
+                       parent_tbl_name = "knoedler_sale_info"),
+                  list(f_key = "inventory_event_id",
+                       parent_f_key = "inventory_event_id",
+                       parent_tbl_name = "knoedler_inventory_events"),
+                  obj_pointer_single
+                )
   )
 
   # Tables that rely on both objects and records (aka all reified statements)
-  write_tbl_key(kdb, knoedler_dimensions, "knoedler_dimensions", f_keys = list(obj_pointer_single, k_srn_pointer_single))
+  write_tbl_key(kdb, knoedler_dimensions, "knoedler_dimensions",
+                nn_keys = c("object_id", "star_record_no"),
+                f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
-  write_tbl_key(kdb, knoedler_artists_preferred, "knoedler_artists", f_keys = list(obj_pointer_single, k_srn_pointer_single))
+  write_tbl_key(kdb, knoedler_artists_preferred, "knoedler_artists",
+                nn_keys = c("object_id", "star_record_no"),
+                f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
-  write_tbl_key(kdb, knoedler_object_titles, "knoedler_object_titles", f_keys = list(obj_pointer_single, k_srn_pointer_single))
+  write_tbl_key(kdb, knoedler_object_titles, "knoedler_object_titles",
+                nn_keys = c("object_id", "star_record_no"),
+                f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
-  write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_materials_object_aat, "knoedler_materials_object_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_materials_support_aat, "knoedler_materials_support_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_materials_technique_aat, "knoedler_materials_technique_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_subject_aat, "knoedler_subject_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_style_aat, "knoedler_style_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_subject_classified_as_aat, "knoedler_subject_classified_as_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat", f_keys = obj_pointer)
-  write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners", f_keys = obj_pointer)
+  write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_materials_object_aat, "knoedler_materials_object_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_materials_support_aat, "knoedler_materials_support_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_materials_technique_aat, "knoedler_materials_technique_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_subject_aat, "knoedler_subject_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_style_aat, "knoedler_style_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_subject_classified_as_aat, "knoedler_subject_classified_as_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
+
+  write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners",
+                nn_keys = "object_id",
+                f_keys = obj_pointer)
 
   dbDisconnect(kdb)
 }
