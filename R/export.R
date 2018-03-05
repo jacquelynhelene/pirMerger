@@ -95,3 +95,23 @@ produce_db_schema <- function(dbpath, outpath) {
             "-password",
             "-infolevel maximum"))
 }
+
+db_setup <- function(dbpath, foreign_key_check = TRUE) {
+  unlink(dbpath)
+  db <- dbConnect(RSQLite::SQLite(), dbpath)
+
+  if (foreign_key_check) {
+    # Enforce foreign key constraints
+    dbExecute(db, "PRAGMA foreign_keys = ON")
+    stopifnot(dbGetQuery(db, "PRAGMA foreign_keys")[["foreign_keys"]][1] == 1)
+  }
+
+  return(db)
+}
+
+# Cleanup the db before finishing
+db_cleanup <- function(db) {
+  message("Vacuuming database...")
+  dbExecute(db, "VACUUM")
+  dbDisconnect(db)
+}

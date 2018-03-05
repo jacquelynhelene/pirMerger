@@ -877,12 +877,8 @@ produce_knoedler_sqlite <- function(dbpath,
                                     knoedler_objects,
                                     knoedler_artists_preferred,
                                     knoedler_object_titles) {
-  unlink(dbpath)
-  kdb <- dbConnect(RSQLite::SQLite(), dbpath)
 
-  # Enforce foreign key constraints
-  dbExecute(kdb, "PRAGMA foreign_keys = ON")
-  stopifnot(dbGetQuery(kdb, "PRAGMA foreign_keys")[["foreign_keys"]][1] == 1)
+  kdb <- db_setup(dbpath)
 
   k_srn_pointer_single <- list(f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "knoedler")
   k_srn_pointer <- list(k_srn_pointer_single)
@@ -997,5 +993,5 @@ produce_knoedler_sqlite <- function(dbpath,
                 nn_keys = "object_id",
                 f_keys = obj_pointer)
 
-  dbDisconnect(kdb)
+  db_cleanup(kdb)
 }

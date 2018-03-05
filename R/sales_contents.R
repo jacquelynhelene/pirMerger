@@ -771,12 +771,7 @@ produce_sales_contents_sqlite <- function(dbpath,
                                           sales_catalogs_info,
                                           sales_descriptions) {
 
-  unlink(dbpath)
-  scdb <- dbConnect(RSQLite::SQLite(), dbpath)
-
-  # Enforce foreign key constraints
-  # dbExecute(scdb, "PRAGMA foreign_keys = ON")
-  # stopifnot(dbGetQuery(scdb, "PRAGMA foreign_keys")[["foreign_keys"]][1] == 1)
+  scdb <- db_setup(dbpath, foreign_key_check = FALSE)
 
   desc_key_single <- list(f_key = "description_puri", parent_f_key = "description_puri", parent_tbl_name = "sales_descriptions")
   desc_key = list(desc_key_single)
@@ -926,5 +921,5 @@ produce_sales_contents_sqlite <- function(dbpath,
                 nn_keys = c("object_uid", "puri"),
                 f_keys = list(obj_key_single, sc_key_single))
 
-  dbDisconnect(scdb)
+  db_cleanup(scdb)
 }
