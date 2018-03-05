@@ -50,13 +50,24 @@ format_pf_key <- function(db, df, tbl_name, p_key, f_keys) {
     }), collapse = ",\n"))
   }
 
-  str_interp("CREATE TABLE ${tbl_name} (${all_fields}${primary_key}${foreign_key})")
+  str_interp("CREATE TABLE ${tbl_name}\n(\n${all_fields}${primary_key}${foreign_key}\n)")
+}
+
+# Builds indexes on foreign keys
+build_indexes <- function(tbl_name, f_keys) {
+  index_calls <- f_keys %>%
+    map("f_key") %>%
+    map_chr(function(key) str_interp("CREATE INDEX index_${tbl_name}_${key} on ${tbl_name}(${key})"))
+  walk(index_calls, message)
+  index_calls
 }
 
 write_tbl_key <- function(db, df, tbl_name, p_key = NULL, f_keys = NULL) {
   command <- format_pf_key(db, df, tbl_name, p_key, f_keys)
   message(command)
   dbExecute(db, command)
+  build_indexes(tbl_name, f_keys) %>%
+    walk(~ dbExecute(db, .x))
   dbWriteTable(db, tbl_name, df, append = TRUE, overwrite = FALSE)
 }
 
