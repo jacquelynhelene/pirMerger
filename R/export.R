@@ -34,7 +34,7 @@ format_pf_key <- function(db, df, tbl_name, p_key, f_keys) {
   cnames <-  names(df)
   ctypes <- map_chr(df, dbDataType, db = db)
 
-  all_fields <- paste0(cnames, " ", ctypes, collapse = ",")
+  all_fields <- paste0("\t", cnames, " ", ctypes, collapse = ",\n")
   primary_key <- ""
   if (!is.null(p_key)) {
     primary_key <- str_interp(",PRIMARY KEY (${p_key})")
@@ -46,8 +46,8 @@ format_pf_key <- function(db, df, tbl_name, p_key, f_keys) {
       f_key <- x$f_key
       parent_tbl_name <- x$parent_tbl_name
       parent_f_key <- x$parent_f_key
-      str_interp("FOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${parent_f_key})")
-    }), collapse = ","))
+      str_interp("\n\tFOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${parent_f_key})")
+    }), collapse = ",\n"))
   }
 
   str_interp("CREATE TABLE ${tbl_name} (${all_fields}${primary_key}${foreign_key})")
