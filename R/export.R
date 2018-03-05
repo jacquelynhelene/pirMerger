@@ -29,16 +29,25 @@ produce_union_aat <- function(source_dir) {
 
 # SQL Export helpers ----
 
-format_pf_key <- function(db, df, tbl_name, p_key, f_keys) {
+handle_column <- function(name, type, is_p, is_u, is_nn) {
+  p <- if_else(is_p, " PRIMARY KEY", "")
+  u <- if_else(is_u, " UNIQUE", "")
+  nn <- if_else(is_nn, " NOT NULL", "")
+  str_interp("${name} ${type}${p}${u}${nn}")
+}
+
+format_pf_key <- function(db, df, tbl_name, p_key, u_keys, nn_keys, f_keys) {
 
   cnames <-  names(df)
   ctypes <- map_chr(df, dbDataType, db = db)
 
-  all_fields <- paste0("\t", cnames, " ", ctypes, collapse = ",\n")
-  primary_key <- ""
-  if (!is.null(p_key)) {
-    primary_key <- str_interp(",PRIMARY KEY (${p_key})")
-  }
+  all_fields <- map2_chr(cnames, ctypes, function(name, type) {
+    handle_column(name, type,
+                  is_p = name %in% p_key,
+                  is_u = name %in% u_keys,
+                  is_nn = name %in% nn_keys)
+  }) %>%
+    paste0("\t", ., collapse = ",\n")
 
   foreign_key <- ""
   if (!is.null(f_keys)) {
@@ -50,7 +59,7 @@ format_pf_key <- function(db, df, tbl_name, p_key, f_keys) {
     }), collapse = ",\n"))
   }
 
-  str_interp("CREATE TABLE ${tbl_name}\n(\n${all_fields}${primary_key}${foreign_key}\n)")
+  str_interp("CREATE TABLE ${tbl_name}\n(\n${all_fields}${foreign_key}\n)")
 }
 
 # Builds indexes on foreign keys
@@ -62,8 +71,8 @@ build_indexes <- function(tbl_name, f_keys) {
   index_calls
 }
 
-write_tbl_key <- function(db, df, tbl_name, p_key = NULL, f_keys = NULL) {
-  command <- format_pf_key(db, df, tbl_name, p_key, f_keys)
+write_tbl_key <- function(db, df, tbl_name, p_key = NULL, u_keys = NULL, nn_keys = NULL, f_keys = NULL) {
+  command <- format_pf_key(db, df, tbl_name, p_key, u_keys, nn_keys, f_keys)
   message(command)
   dbExecute(db, command)
   build_indexes(tbl_name, f_keys) %>%
