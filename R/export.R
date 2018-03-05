@@ -73,7 +73,10 @@ build_indexes <- function(tbl_name, f_keys) {
   index_calls
 }
 
-write_tbl_key <- function(db, df, tbl_name, p_key = NULL, u_keys = NULL, nn_keys = NULL, f_keys = NULL) {
+write_tbl_key <- function(db, df, tbl_name, p_key = NULL, u_keys = NULL, nn_keys = NULL, no_null = FALSE, f_keys = NULL) {
+  if (no_null)
+    nn_keys <- names(df)
+
   command <- format_pf_key(db, df, tbl_name, p_key, u_keys, nn_keys, f_keys)
   message(command)
   dbExecute(db, command)

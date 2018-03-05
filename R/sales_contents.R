@@ -806,19 +806,19 @@ produce_sales_contents_sqlite <- function(dbpath,
                 f_keys = list(obj_key_single, sc_key_single))
 
   write_tbl_key(scdb, sales_descriptions_lugt_numbers, "sales_descriptions_lugt_numbers",
-                nn_keys = "description_puri",
+                no_null = TRUE,
                 f_keys = desc_key)
 
   write_tbl_key(scdb, sales_descriptions_title_seller, "sales_descriptions_title_seller",
-                nn_keys = "description_puri",
+                no_null = TRUE,
                 f_keys = desc_key)
 
   write_tbl_key(scdb, sales_descriptions_auc_copy_seller, "sales_descriptions_auc_copy_seller",
-                nn_keys = "description_puri",
+                no_null = TRUE,
                 f_keys = desc_key)
 
   write_tbl_key(scdb, sales_descriptions_other_seller, "sales_descriptions_other_seller",
-                nn_keys = "description_puri",
+                no_null = TRUE,
                 f_keys = desc_key)
 
   write_tbl_key(scdb, sales_descriptions_auth_seller, "sales_descriptions_auth_seller",
@@ -842,19 +842,19 @@ produce_sales_contents_sqlite <- function(dbpath,
                 f_keys = desc_key)
 
   write_tbl_key(scdb, sales_catalogs_info, "sales_catalogs_info",
-                nn_keys = "catalog_number",
+                nn_keys = c("catalog_number", "star_record_no"),
                 f_keys = list(cat_key_single))
 
   write_tbl_key(scdb, sales_contents_experts, "sales_contents_experts",
-                nn_keys = "puri",
+                nn_keys = c("puri", "expert_uid"),
                 f_keys = sc_key)
 
   write_tbl_key(scdb, sales_contents_commissaire_pr, "sales_contents_commissaire_pr",
-                nn_keys = "puri",
+                nn_keys = c("puri", "comm_uid"),
                 f_keys = sc_key)
 
   write_tbl_key(scdb, sales_contents_auction_houses, "sales_contents_auction_houses",
-                nn_keys = "puri",
+                nn_keys = c("puri", "auction_house_uid"),
                 f_keys = sc_key)
 
   write_tbl_key(scdb, sales_contents_artists, "sales_contents_artists",
@@ -862,18 +862,19 @@ produce_sales_contents_sqlite <- function(dbpath,
                 f_keys = list(obj_key_single, sc_key_single))
 
   write_tbl_key(scdb, sales_contents_hand_notes, "sales_contents_hand_notes",
-                nn_keys = "puri",
+                nn_keys = c("puri"),
                 f_keys = sc_key)
 
   write_tbl_key(scdb, sales_contents_sellers, "sales_contents_sellers",
-                nn_keys = "puri",
+                nn_keys = c("puri", "seller_uid"),
                 f_keys = sc_key)
 
   write_tbl_key(scdb, sales_contents_buyers, "sales_contents_buyers",
-                nn_keys = "puri",
+                nn_keys = c("puri", "buyer_uid"),
                 f_keys = sc_key)
 
   write_tbl_key(scdb, sales_contents_prices, "sales_contents_prices",
+                p_key = "price_id",
                 nn_keys = "puri",
                 f_keys = sc_key)
 
@@ -886,35 +887,35 @@ produce_sales_contents_sqlite <- function(dbpath,
                 f_keys = sc_key)
 
   write_tbl_key(scdb, sales_contents_materials_classified_as_aat, "sales_contents_materials_classified_as_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_made_of_materials_aat, "sales_contents_made_of_materials_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_support_materials_aat, "sales_contents_support_materials_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_technique_aat, "sales_contents_technique_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_subject_aat, "sales_contents_subject_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_subject_classified_as_aat, "sales_contents_subject_classified_as_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_style_aat, "sales_contents_style_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_depicts_aat, "sales_contents_depicts_aat",
-                nn_keys = "object_uid",
+                no_null = TRUE,
                 f_keys = obj_key)
 
   write_tbl_key(scdb, sales_contents_dimensions, "sales_contents_dimensions",

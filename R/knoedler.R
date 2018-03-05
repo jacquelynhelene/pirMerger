@@ -958,39 +958,39 @@ produce_knoedler_sqlite <- function(dbpath,
                 f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
   write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_materials_object_aat, "knoedler_materials_object_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_materials_support_aat, "knoedler_materials_support_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_materials_technique_aat, "knoedler_materials_technique_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_subject_aat, "knoedler_subject_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_style_aat, "knoedler_style_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_subject_classified_as_aat, "knoedler_subject_classified_as_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat",
-                nn_keys = "object_id",
+                no_null = TRUE,
                 f_keys = obj_pointer)
 
   write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners",
-                nn_keys = "object_id",
+                nn_keys = c("object_id", "person_uid"),
                 f_keys = obj_pointer)
 
   db_cleanup(kdb)
