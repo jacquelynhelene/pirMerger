@@ -778,46 +778,139 @@ produce_sales_contents_sqlite <- function(dbpath,
   obj_key_single = list(f_key = "object_uid", parent_f_key = "object_uid", parent_tbl_name = "sales_contents_objects")
   obj_key <- list(obj_key_single)
 
-  write_tbl_key(scdb, sales_descriptions, "sales_descriptions", p_key = "catalog_number")
-  write_tbl_key(scdb, sales_contents_objects, "sales_contents_objects", p_key = "object_uid")
+  write_tbl_key(scdb, sales_descriptions, "sales_descriptions",
+                p_key = "description_puri",
+                u_keys = "catalog_number",
+                nn_keys = "catalog_number")
 
-  write_tbl_key(scdb, sales_contents, "sales_contents", p_key = "puri", f_keys = list(
-    cat_key,
-    list(f_key = "object_uid", parent_f_key = "object_uid", parent_tbl_name = "sales_contents_objects")
-  ))
+  write_tbl_key(scdb, sales_contents_objects, "sales_contents_objects",
+                p_key = "object_uid")
 
+  write_tbl_key(scdb, sales_contents, "sales_contents",
+                p_key = "puri",
+                nn_keys = c("object_uid", "catalog_number"),
+                f_keys = list(
+                  cat_key,
+                  list(f_key = "object_uid",
+                       parent_f_key = "object_uid",
+                       parent_tbl_name = "sales_contents_objects")
+                ))
 
-  write_tbl_key(scdb, sales_descriptions_lugt_numbers, "sales_descriptions_lugt_numbers", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_title_seller, "sales_descriptions_title_seller", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_auc_copy_seller, "sales_descriptions_auc_copy_seller", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_other_seller, "sales_descriptions_other_seller", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_auth_seller, "sales_descriptions_auth_seller", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_expert_auth, "sales_descriptions_expert_auth", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_commissaire_pr, "sales_descriptions_commissaire_pr", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_auction_house, "sales_descriptions_auction_house", f_keys = desc_key)
-  write_tbl_key(scdb, sales_descriptions_country, "sales_descriptions_country", f_keys = desc_key)
-  write_tbl_key(scdb, sales_catalogs_info, "sales_catalogs_info", f_keys = list(cat_key))
+  write_tbl_key(scdb, sales_descriptions_lugt_numbers, "sales_descriptions_lugt_numbers",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
 
-  write_tbl_key(scdb, sales_contents_experts, "sales_contents_experts", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_commissaire_pr, "sales_contents_commissaire_pr", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_auction_houses, "sales_contents_auction_houses", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_artists, "sales_contents_artists", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_hand_notes, "sales_contents_hand_notes", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_sellers, "sales_contents_sellers", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_buyers, "sales_contents_buyers", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_prices, "sales_contents_prices")
-  write_tbl_key(scdb, sales_contents_prev_owners, "sales_contents_prev_owners", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_post_owners, "sales_contents_post_owners", f_keys = sc_key)
-  write_tbl_key(scdb, sales_contents_materials_classified_as_aat, "sales_contents_materials_classified_as_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_made_of_materials_aat, "sales_contents_made_of_materials_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_support_materials_aat, "sales_contents_support_materials_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_technique_aat, "sales_contents_technique_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_subject_aat, "sales_contents_subject_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_subject_classified_as_aat, "sales_contents_subject_classified_as_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_style_aat, "sales_contents_style_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_depicts_aat, "sales_contents_depicts_aat", f_keys = obj_key)
-  write_tbl_key(scdb, sales_contents_dimensions, "sales_contents_dimensions", f_keys = list(obj_key_single, sc_key_single))
+  write_tbl_key(scdb, sales_descriptions_title_seller, "sales_descriptions_title_seller",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
 
+  write_tbl_key(scdb, sales_descriptions_auc_copy_seller, "sales_descriptions_auc_copy_seller",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
+
+  write_tbl_key(scdb, sales_descriptions_other_seller, "sales_descriptions_other_seller",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
+
+  write_tbl_key(scdb, sales_descriptions_auth_seller, "sales_descriptions_auth_seller",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
+
+  write_tbl_key(scdb, sales_descriptions_expert_auth, "sales_descriptions_expert_auth",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
+
+  write_tbl_key(scdb, sales_descriptions_commissaire_pr, "sales_descriptions_commissaire_pr",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
+
+  write_tbl_key(scdb, sales_descriptions_auction_house, "sales_descriptions_auction_house",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
+
+  write_tbl_key(scdb, sales_descriptions_country, "sales_descriptions_country",
+                nn_keys = "description_puri",
+                f_keys = desc_key)
+
+  write_tbl_key(scdb, sales_catalogs_info, "sales_catalogs_info",
+                nn_keys = "catalog_number",
+                f_keys = list(cat_key))
+
+  write_tbl_key(scdb, sales_contents_experts, "sales_contents_experts",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_commissaire_pr, "sales_contents_commissaire_pr",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_auction_houses, "sales_contents_auction_houses",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_artists, "sales_contents_artists",
+                nn_keys = c("object_uid", "puri", "artist_uid"),
+                f_keys = list(obj_key_single, sc_key_single))
+
+  write_tbl_key(scdb, sales_contents_hand_notes, "sales_contents_hand_notes",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_sellers, "sales_contents_sellers",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_buyers, "sales_contents_buyers",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_prices, "sales_contents_prices",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_prev_owners, "sales_contents_prev_owners",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_post_owners, "sales_contents_post_owners",
+                nn_keys = "puri",
+                f_keys = sc_key)
+
+  write_tbl_key(scdb, sales_contents_materials_classified_as_aat, "sales_contents_materials_classified_as_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_made_of_materials_aat, "sales_contents_made_of_materials_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_support_materials_aat, "sales_contents_support_materials_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_technique_aat, "sales_contents_technique_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_subject_aat, "sales_contents_subject_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_subject_classified_as_aat, "sales_contents_subject_classified_as_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_style_aat, "sales_contents_style_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_depicts_aat, "sales_contents_depicts_aat",
+                nn_keys = "object_uid",
+                f_keys = obj_key)
+
+  write_tbl_key(scdb, sales_contents_dimensions, "sales_contents_dimensions",
+                nn_keys = c("object_uid", "puri"),
+                f_keys = list(obj_key_single, sc_key_single))
 
   dbDisconnect(scdb)
 }
