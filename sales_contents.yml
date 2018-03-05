@@ -203,11 +203,14 @@ targets:
 
   sales_contents_objects:
     command: produce_sales_contents_objects(sales_contents)
+  sales_contents_object_titles:
+    command: produce_sales_contents_object_titles(sales_contents)
 
   ../pirdata/sales_contents.sqlite:
     command: produce_sales_contents_sqlite(dbpath = target_name,
                                             sales_contents,
                                             sales_contents_objects,
+                                            sales_contents_object_titles,
                                             sales_contents_experts,
                                             sales_contents_commissaire_pr,
                                             sales_contents_auction_houses,

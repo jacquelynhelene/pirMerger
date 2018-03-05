@@ -436,7 +436,15 @@ produce_sales_contents_dimensions <- function(sales_contents) {
     ungroup()
 }
 
-produce_sales_contents_object_titles <- function() {}
+produce_sales_contents_object_titles <- function(sales_contents) {
+  sales_contents %>%
+    select(puri, object_uid, title, event_order) %>%
+    mutate(title_id = paste("sc-title", group_indices(., object_uid, title), sep = "-")) %>%
+    group_by(object_uid) %>%
+    mutate(is_title_preferred = min_rank(desc(event_order)) == 1) %>%
+    ungroup()
+}
+
 produce_sales_contents_object_attributions <- function() {}
 produce_sales_contents_other_owners <- function() {}
 
@@ -731,6 +739,7 @@ produce_gh_sales_catalogs_info <- function(raw_sales_catalogs_info, raw_sales_ca
 produce_sales_contents_sqlite <- function(dbpath,
                                           sales_contents,
                                           sales_contents_objects,
+                                          sales_contents_object_titles,
                                           sales_contents_experts,
                                           sales_contents_commissaire_pr,
                                           sales_contents_auction_houses,
@@ -771,7 +780,8 @@ produce_sales_contents_sqlite <- function(dbpath,
 
   desc_key_single <- list(f_key = "description_puri", parent_f_key = "description_puri", parent_tbl_name = "sales_descriptions")
   desc_key = list(desc_key_single)
-  cat_key <- list(f_key = "catalog_number", parent_f_key = "catalog_number", parent_tbl_name = "sales_descriptions")
+  cat_key_single <- list(f_key = "catalog_number", parent_f_key = "catalog_number", parent_tbl_name = "sales_descriptions")
+  cat_key = list(cat_key_single)
   sc_key_single <- list(f_key = "puri", parent_f_key = "puri", parent_tbl_name = "sales_contents")
   sc_key = list(sc_key_single)
 
@@ -790,11 +800,15 @@ produce_sales_contents_sqlite <- function(dbpath,
                 p_key = "puri",
                 nn_keys = c("object_uid", "catalog_number"),
                 f_keys = list(
-                  cat_key,
+                  cat_key_single,
                   list(f_key = "object_uid",
                        parent_f_key = "object_uid",
                        parent_tbl_name = "sales_contents_objects")
                 ))
+
+  write_tbl_key(scdb, sales_contents_object_titles, "sales_contents_objects_titles",
+                nn_keys = c("object_uid", "puri", "title_id"),
+                f_keys = list(obj_key_single, sc_key_single))
 
   write_tbl_key(scdb, sales_descriptions_lugt_numbers, "sales_descriptions_lugt_numbers",
                 nn_keys = "description_puri",
@@ -834,7 +848,7 @@ produce_sales_contents_sqlite <- function(dbpath,
 
   write_tbl_key(scdb, sales_catalogs_info, "sales_catalogs_info",
                 nn_keys = "catalog_number",
-                f_keys = list(cat_key))
+                f_keys = list(cat_key_single))
 
   write_tbl_key(scdb, sales_contents_experts, "sales_contents_experts",
                 nn_keys = "puri",

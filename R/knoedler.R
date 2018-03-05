@@ -834,7 +834,9 @@ produce_knoedler_object_titles <- function(knoedler) {
     select(object_id, star_record_no, title, event_order) %>%
     group_by(object_id) %>%
     mutate(is_preferred_title = min_rank(desc(event_order)) == 1) %>%
-    ungroup()
+    ungroup() %>%
+    # Unique titles should have the same Resource id
+    mutate(title_id = paste("k-title", group_indices(., title, object_id), sep = "-"))
 }
 
 # GH Export ----
@@ -956,7 +958,7 @@ produce_knoedler_sqlite <- function(dbpath,
                 f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
   write_tbl_key(kdb, knoedler_object_titles, "knoedler_object_titles",
-                nn_keys = c("object_id", "star_record_no"),
+                nn_keys = c("object_id", "star_record_no", "title_id"),
                 f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
   write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat",
