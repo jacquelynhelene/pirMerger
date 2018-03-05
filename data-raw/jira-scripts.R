@@ -588,3 +588,10 @@ hand_notes_with_source_no_text <- raw_sales_contents %>%
 
 make_report(hand_notes_with_source_no_text)
 
+# 385 - Sales Catalogs Info mismatched catalog nubmers ----
+
+bad_catno_catalogs_info <- raw_sales_catalogs_info %>%
+  anti_join(sales_descriptions, by = "catalog_number") %>%
+  count(catalog_number)
+
+make_report(bad_catno_catalogs_info)
