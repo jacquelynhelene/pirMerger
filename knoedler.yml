@@ -140,7 +140,7 @@ targets:
     command: produce_knoedler_depicts_aat(raw_knoedler_subject_aat, knoedler_with_ids)
 
   knoedler_objects:
-    command: produce_knoedler_objects(knoedler_with_ids)
+    command: produce_knoedler_objects(knoedler_with_ids, knoedler_present_owners)
   knoedler_object_titles:
     command: produce_knoedler_object_titles(knoedler_with_ids)
   processed_data/knoedler_object_titles.rda:
@@ -169,7 +169,6 @@ targets:
                                       knoedler_subject_classified_as_aat,
                                       knoedler_depicts_aat,
                                       knoedler_dimensions,
-                                      knoedler_present_owners,
                                       knoedler_objects,
                                       knoedler_artists_preferred,
                                       knoedler_object_titles)

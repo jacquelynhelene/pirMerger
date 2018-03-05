@@ -70,7 +70,8 @@ produce_knoedler <- function(knoedler_tmp) {
     select(-(sale_date_year:knoedshare_note), -transaction_type) %>%
     select(-title) %>%
     select(-(contains("flag"))) %>%
-    select(-original_file_name)
+    select(-original_file_name) %>%
+    select(-(contains("present_loc")), -pres_own_ulan_id)
 }
 
 # Returns the ULAN ID for knoedler
@@ -817,15 +818,35 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
     present_ids, by = c("star_record_no" = "source_record_id")) %>%
     assert(is_uniq, star_record_no) %>%
     left_join(select(knoedler_with_ids, star_record_no, object_id), by = "star_record_no") %>%
-    select(-c(source_db:id_process), -star_record_no)
+    select(-c(source_db:id_process), -star_record_no) %>%
+    select(
+      object_id,
+      present_owner_name = person_auth,
+      present_owner_ulan = person_ulan,
+      present_owner_uid = person_uid
+    ) %>%
+    distinct() %>%
+    # REMOVE THIS LATER
+    ungroup() %>%
+    add_count(object_id) %>%
+    filter(n == 1) %>%
+    select(-n)
 }
 
 # Objects ----
 
-produce_knoedler_objects <- function(knoedler) {
-  knoedler %>%
+produce_knoedler_objects <- function(knoedler_with_ids, knoedler_present_owners) {
+  acnos <- knoedler_with_ids %>%
+    group_by(object_id) %>%
+    summarise(
+      present_owner_acc_nos = rollup(present_loc_acc),
+      present_owner_notes = rollup(present_loc_note))
+
+  knoedler_with_ids %>%
     select(object_id, contains("flag")) %>%
-    distinct()
+    distinct() %>%
+    left_join(knoedler_present_owners, by = "object_id") %>%
+    left_join(acnos, by = "object_id")
 }
 
 produce_knoedler_object_titles <- function(knoedler) {
@@ -873,7 +894,6 @@ produce_knoedler_sqlite <- function(dbpath,
                                     knoedler_subject_classified_as_aat,
                                     knoedler_depicts_aat,
                                     knoedler_dimensions,
-                                    knoedler_present_owners,
                                     knoedler_objects,
                                     knoedler_artists_preferred,
                                     knoedler_object_titles) {
@@ -987,10 +1007,6 @@ produce_knoedler_sqlite <- function(dbpath,
 
   write_tbl_key(kdb, knoedler_depicts_aat, "knoedler_depicts_aat",
                 no_null = TRUE,
-                f_keys = obj_pointer)
-
-  write_tbl_key(kdb, knoedler_present_owners, "knoedler_present_owners",
-                nn_keys = c("object_id", "person_uid"),
                 f_keys = obj_pointer)
 
   db_cleanup(kdb)
