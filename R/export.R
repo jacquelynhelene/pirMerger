@@ -51,12 +51,14 @@ format_pf_key <- function(db, df, tbl_name, p_key, u_keys, nn_keys, f_keys) {
 
   foreign_key <- ""
   if (!is.null(f_keys)) {
-    foreign_key <- paste0(",", paste0(map_chr(f_keys, function(x) {
+    foreign_key <- map_chr(f_keys, function(x) {
       f_key <- x$f_key
       parent_tbl_name <- x$parent_tbl_name
       parent_f_key <- x$parent_f_key
-      str_interp("\n\tFOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${parent_f_key})")
-    }), collapse = ",\n"))
+      str_interp("\tFOREIGN KEY (${f_key}) REFERENCES ${parent_tbl_name}(${parent_f_key})")
+    }) %>%
+      paste0(collapse = ",\n") %>%
+      paste0(",\n", .)
   }
 
   str_interp("CREATE TABLE ${tbl_name}\n(\n${all_fields}${foreign_key}\n)")
