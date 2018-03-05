@@ -32,6 +32,7 @@ produce_sales_contents <- function(sales_contents, sales_contents_prev_sales, sa
     select(-(post_own_1:post_own_ulan_6)) %>%
     identify_sales_unique_objects(sales_contents_prev_sales, sales_contents_post_sales) %>%
     identify_sales_transactions(sales_contents_prices) %>%
+    identify_sales_contents_order() %>%
     assert(not_na, puri, catalog_number) %>%
     assert(is_uniq, puri) %>%
     no_dots()
@@ -523,6 +524,15 @@ produce_sales_catalogs_info <- function(raw_sales_catalogs_info, raw_sales_catal
 }
 
 # Sales Contents Computations ----
+
+identify_sales_contents_order <- function(sales_contents) {
+  message("- Compute event order per object")
+  sales_contents %>%
+    group_by(object_uid) %>%
+    arrange(lot_sale_year, lot_sale_month, lot_sale_day) %>%
+    mutate(event_order = row_number()) %>%
+    ungroup()
+}
 
 identify_sales_unique_objects <- function(scdf, prev_sales, post_sales) {
   # Produce an easily-inspected set of sales_contents that has a sale_loc
