@@ -120,6 +120,11 @@ targets:
   processed_data/knoedler_sale_sellers.rda:
     command: save(knoedler_sale_sellers, file = target_name)
 
+  knoedler_consigners_lookup:
+    command: produce_knoedler_consigners_lookup(knoedler_with_ids)
+  knoedler_consigners:
+    command: produce_knoedler_consigners(knoedler_consigners_lookup, union_person_ids, knoedler_with_ids)
+
   knoedler_materials_object_aat:
     command: produce_knoedler_materials_object_aat(raw_knoedler_materials_aat, knoedler_with_ids)
 
@@ -171,7 +176,8 @@ targets:
                                       knoedler_dimensions,
                                       knoedler_objects,
                                       knoedler_artists_preferred,
-                                      knoedler_object_titles)
+                                      knoedler_object_titles,
+                                      knoedler_consigners)
 
   ../pirdata/knoedler_schema.pdf:
     command: produce_db_schema(dbpath = "../pirdata/knoedler.sqlite", outpath = target_name)

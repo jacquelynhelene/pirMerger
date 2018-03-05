@@ -71,7 +71,8 @@ produce_knoedler <- function(knoedler_tmp) {
     select(-title) %>%
     select(-(contains("flag"))) %>%
     select(-original_file_name) %>%
-    select(-(contains("present_loc")), -pres_own_ulan_id)
+    select(-(contains("present_loc")), -pres_own_ulan_id) %>%
+    select(-(contains("consign")), -cons_ulan_id)
 }
 
 # Returns the ULAN ID for knoedler
@@ -833,6 +834,30 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
     select(-n)
 }
 
+produce_knoedler_consigners_lookup <- function(knoedler_with_ids) {
+  cons_ppl <- knoedler_with_ids %>%
+    filter(!is.na(consign_name)) %>%
+    select(
+      source_record_id = star_record_no,
+      person_auth = consign_name,
+      person_ulan = cons_ulan_id) %>%
+    mutate(person_name = NA_character_, person_ulan = as.integer(person_ulan)) %>%
+    add_column(source_document_id = "KNOEDLER") %>%
+    identify_knoedler_id_process()
+}
+
+produce_knoedler_consigners <- function(knoedler_consigners_lookup, union_person_ids, knoedler_with_ids) {
+  union_person_ids %>%
+    filter(source_db == "knoedler_consigners") %>%
+    select(
+      star_record_no = source_record_id,
+      consign_name = person_auth,
+      cons_ulan_id = person_ulan,
+      consign_uid = person_uid
+    ) %>%
+    left_join(select(knoedler_with_ids, star_record_no, object_id), by = "star_record_no")
+}
+
 # Objects ----
 
 produce_knoedler_objects <- function(knoedler_with_ids, knoedler_present_owners) {
@@ -896,7 +921,8 @@ produce_knoedler_sqlite <- function(dbpath,
                                     knoedler_dimensions,
                                     knoedler_objects,
                                     knoedler_artists_preferred,
-                                    knoedler_object_titles) {
+                                    knoedler_object_titles,
+                                    knoedler_consigners) {
 
   kdb <- db_setup(dbpath)
 
@@ -975,6 +1001,10 @@ produce_knoedler_sqlite <- function(dbpath,
 
   write_tbl_key(kdb, knoedler_object_titles, "knoedler_object_titles",
                 nn_keys = c("object_id", "star_record_no", "title_id"),
+                f_keys = list(obj_pointer_single, k_srn_pointer_single))
+
+  write_tbl_key(kdb, knoedler_consigners, "knoedler_consigners",
+                nn_keys = c("object_id", "star_record_no", "consign_uid"),
                 f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
   write_tbl_key(kdb, knoedler_materials_classified_as_aat, "knoedler_materials_classified_as_aat",

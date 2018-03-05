@@ -60,6 +60,7 @@ targets:
       knoedler_sellers = knoedler_sellers_lookup,
       knoedler_joint_owners = knoedler_joint_owners_lookup,
       knoedler_present_owners = knoedler_present_owners_lookup,
+      knoedler_consigners = knoedler_consigners_lookup,
       sales_contents_artists = sales_contents_artists_lookup,
       sales_contents_buyers = sales_contents_buyers_lookup,
       sales_contents_sellers = sales_contents_sellers_lookup,
