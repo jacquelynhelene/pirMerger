@@ -30,7 +30,7 @@ produce_union_aat <- function(source_dir) {
 # SQL Export helpers ----
 
 handle_column <- function(name, type, is_p, is_u, is_nn) {
-  p <- if_else(is_p, " PRIMARY KEY", "")
+  p <- if_else(is_p, " PRIMARY KEY UNIQUE NOT NULL", "")
   u <- if_else(is_u, " UNIQUE", "")
   nn <- if_else(is_nn, " NOT NULL", "")
   str_interp("${name} ${type}${p}${u}${nn}")
