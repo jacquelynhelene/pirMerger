@@ -2,15 +2,31 @@ targets:
 
   all_archives:
     depends:
+      - processed_data/archival_descriptions.rda
       - ../pirdata/archives.sqlite
       - ../pirdata/archives_schema.pdf
 
+  archival_descriptions_ids:
+    command: produce_archival_descriptions_ids(raw_archival_descriptions)
+
   archival_descriptions:
-    command: produce_archival_descriptions(raw_archival_descriptions)
+    command: produce_archival_descriptions(archival_descriptions_ids)
+  processed_data/archival_descriptions.rda:
+    command: save(archival_descriptions, file = target_name)
+
+  archival_descriptions_owner_names:
+    command: produce_archival_descriptions_owner_names(archival_descriptions_ids)
+  archival_descriptions_benefactors:
+    command: produce_archival_descriptions_benefactors(archival_descriptions_ids)
+  archival_descriptions_rel_docs:
+    command: produce_archival_descriptions_rel_docs(archival_descriptions_ids)
 
   ../pirdata/archives.sqlite:
     command: produce_archives_sqlite(dbpath = target_name,
-                                      archival_descriptions)
+                                      archival_descriptions,
+                                      archival_descriptions_owner_names,
+                                      archival_descriptions_benefactors,
+                                      archival_descriptions_rel_docs)
 
   ../pirdata/archives_schema.pdf:
     command: produce_db_schema(dbpath = "../pirdata/archives.sqlite", outpath = target_name)
