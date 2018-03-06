@@ -34,6 +34,15 @@ targets:
   processed_data/knoedler.rda:
     command: save(knoedler, file = target_name)
 
+  knoedler_people_lookup:
+    command: produce_knoedler_people_lookup(union_person_ids)
+  knoedler_people:
+    command: produce_knoedler_people(knoedler_people_lookup)
+  knoedler_people_names:
+    command: produce_knoedler_people_names(knoedler_people_lookup)
+  knoedler_people_name_references:
+    command: produce_knoedler_people_name_references(knoedler_people_lookup)
+
   knoedler_artists_tmp:
     command: produce_knoedler_artists_tmp(knoedler_with_ids, generic_artists)
   knoedler_artists_lookup:
@@ -157,6 +166,9 @@ targets:
   ../pirdata/knoedler.sqlite:
     command: produce_knoedler_sqlite(dbpath = target_name,
                                       knoedler,
+                                      knoedler_people,
+                                      knoedler_people_names,
+                                      knoedler_people_name_references,
                                       knoedler_artists,
                                       knoedler_buyers,
                                       knoedler_sellers,

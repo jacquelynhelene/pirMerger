@@ -169,21 +169,11 @@ produce_knoedler_purchase_sellers <- function(knoedler, knoedler_sellers) {
     filter(!is.na(seller_uid)) %>%
     distinct() %>%
     select(purchase_event_id,
-           purchase_seller_name = seller_name,
            purchase_seller_loc = seller_loc,
-           purchase_seller_auth_name = sell_auth_name,
            purchase_seller_auth_loc = sell_auth_loc,
-           purchase_seller_ulan_id = seller_ulan_id,
            purchase_seller_uid = seller_uid,
            purchase_seller_mod = seller_mod,
-           purchase_seller_auth_mod = sell_auth_mod,
-           purchase_seller_birth_date = seller_birth_date,
-           purchase_seller_death_date = seller_death_date,
-           purchase_seller_active_early = seller_active_early,
-           purchase_seller_active_late = seller_active_late,
-           purchase_seller_aat_nationality_1 = seller_aat_nationality_1,
-           purchase_seller_aat_nationality_2 = seller_aat_nationality_2,
-           purchase_seller_aat_nationality_3 = seller_aat_nationality_3)
+           purchase_seller_auth_mod = sell_auth_mod)
 }
 
 # Identify to whom custody is being transferred (includes share information)
@@ -201,16 +191,7 @@ produce_knoedler_purchase_buyers <- function(knoedler, knoedler_joint_owners) {
       full_parsed_share = if_else(is.na(parsed_share), remainder, parsed_share)) %>%
     ungroup() %>%
     select(purchase_event_id,
-           purchase_buyer_name = joint_own,
-           purchase_buyer_ulan_id = joint_ulan_id,
            purchase_buyer_uid = joint_owner_uid,
-           purchase_buyer_birth_date = joint_owner_person_birth_date,
-           purchase_buyer_death_date = joint_owner_person_death_date,
-           purchase_buyer_active_early = joint_owner_person_active_early,
-           purchase_buyer_active_late = joint_owner_person_active_late,
-           purchase_buyer_aat_nationality_1 = joint_owner_aat_nationality_1,
-           purchase_buyer_aat_nationality_2 = joint_owner_aat_nationality_2,
-           purchase_buyer_aat_nationality_3 = joint_owner_aat_nationality_3,
            purchase_buyer_share = full_parsed_share)
 }
 
@@ -271,21 +252,11 @@ produce_knoedler_sale_buyers <- function(knoedler_sales, knoedler_buyers) {
     filter(!is.na(buyer_uid)) %>%
     distinct() %>%
     select(sale_event_id,
-           sale_buyer_name = buyer_name,
            sale_buyer_loc = buyer_loc,
-           sale_buyer_auth_name = buy_auth_name,
            sale_buyer_auth_loc = buy_auth_addr,
-           sale_buyer_ulan_id = buyer_ulan_id,
            sale_buyer_uid = buyer_uid,
            sale_buyer_mod = buyer_mod,
-           sale_buyer_auth_mod = buy_auth_mod,
-           sale_buyer_birth_date = buyer_birth_date,
-           sale_buyer_death_date = buyer_death_date,
-           sale_buyer_active_early = buyer_active_early,
-           sale_buyer_active_late = buyer_active_late,
-           sale_buyer_aat_nationality_1 = buyer_aat_nationality_1,
-           sale_buyer_aat_nationality_2 = buyer_aat_nationality_2,
-           sale_buyer_aat_nationality_3 = buyer_aat_nationality_3)
+           sale_buyer_auth_mod = buy_auth_mod)
 }
 
 # Identify from whom custody is being transferred (includes share information)
@@ -303,16 +274,7 @@ produce_knoedler_sale_sellers <- function(knoedler_sales, knoedler_joint_owners)
       full_parsed_share = if_else(is.na(parsed_share), remainder, parsed_share)) %>%
     ungroup() %>%
     select(sale_event_id,
-           sale_seller_name = joint_own,
-           sale_seller_ulan_id = joint_ulan_id,
            sale_seller_uid = joint_owner_uid,
-           sale_seller_person_birth_date = joint_owner_person_birth_date,
-           sale_seller_person_death_date = joint_owner_person_death_date,
-           sale_seller_person_active_early = joint_owner_person_active_early,
-           sale_seller_person_active_late = joint_owner_person_active_late,
-           sale_seller_aat_nationality_1 = joint_owner_aat_nationality_1,
-           sale_seller_aat_nationality_2 = joint_owner_aat_nationality_2,
-           sale_seller_aat_nationality_3 = joint_owner_aat_nationality_3,
            sale_seller_share = full_parsed_share)
 }
 
@@ -586,6 +548,28 @@ identify_knoedler_id_process <- function(person_df) {
            assertr::assert(assertr::not_na, id_process)
 }
 
+produce_knoedler_people_lookup <- function(union_person_ids) {
+  knoedler_people_lookup <- union_person_ids %>%
+    filter(str_detect(source_db, "knoedler")) %>%
+    select(-source_db, -source_document_id, -id_process)
+}
+
+produce_knoedler_people <- function(knoedler_people_lookup) {
+  knoedler_people <- knoedler_people_lookup %>%
+    group_by(person_uid) %>%
+    summarize_at(vars(person_auth, person_ulan, person_birth_date, person_death_date, person_active_early, person_active_late, person_nationality, aat_nationality_1, aat_nationality_2, aat_nationality_3), funs(pick))
+}
+
+produce_knoedler_people_names <- function(knoedler_people_lookup) {
+  knoedler_people_names <- knoedler_people_lookup %>%
+    distinct(person_uid, person_name_id, person_name)
+}
+
+produce_knoedler_people_name_references <- function(knoedler_people_lookup) {
+  knoedler_people_name_references <- knoedler_people_lookup %>%
+    distinct(source_record_id, person_name_id)
+}
+
 produce_knoedler_artists_tmp <- function(raw_knoedler, generic_artists) {
   provisional_knoedler_artists <- raw_knoedler %>%
     norm_vars(base_names = c("artist_name", "art_authority", "nationality", "attrib_mod", "attrib_mod_auth", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
@@ -628,20 +612,9 @@ produce_knoedler_artists <- function(knoedler_artists_tmp, union_person_ids) {
                    "artist_authority" = "person_auth",
                    "artist_ulan_id" = "person_ulan")) %>%
     select(star_record_no,
-           artist_name,
-           artist_authority,
            artist_attribution_mod,
            artist_attribution_mod_auth,
-           artist_ulan_id,
-           artist_uid,
-           artist_nationality,
-           artist_birth_date = person_birth_date,
-           artist_death_date = person_death_date,
-           artist_active_early = person_active_early,
-           artist_active_late = person_active_late,
-           artist_aat_nationality_1 = aat_nationality_1,
-           artist_aat_nationality_2 = aat_nationality_2,
-           artist_aat_nationality_3 = aat_nationality_3)
+           artist_uid)
 }
 
 produce_knoedler_artists_preferred <- function(knoedler_artists, knoedler_with_ids) {
@@ -683,21 +656,11 @@ produce_knoedler_sellers <- function(knoedler_sellers_tmp, union_person_ids) {
               "seller_ulan_id" = "person_ulan"
             )) %>%
     select(star_record_no,
-           seller_name,
            seller_loc,
-           sell_auth_name,
            sell_auth_loc,
            seller_mod,
            sell_auth_mod,
-           seller_ulan_id,
-           seller_uid,
-           seller_birth_date = person_birth_date,
-           seller_death_date = person_death_date,
-           seller_active_early = person_active_early,
-           seller_active_late = person_active_late,
-           seller_aat_nationality_1 = aat_nationality_1,
-           seller_aat_nationality_2 = aat_nationality_2,
-           seller_aat_nationality_3 = aat_nationality_3)
+           seller_uid)
 }
 
 produce_knoedler_buyers_tmp <- function(raw_knoedler) {
@@ -732,21 +695,11 @@ produce_knoedler_buyers <- function(knoedler_buyers_tmp, union_person_ids) {
               "buyer_ulan_id" = "person_ulan"
             )) %>%
     select(star_record_no,
-           buyer_name,
            buyer_loc,
-           buy_auth_name,
            buy_auth_addr,
            buyer_mod,
            buy_auth_mod,
-           buyer_ulan_id,
-           buyer_uid,
-           buyer_birth_date = person_birth_date,
-           buyer_death_date = person_death_date,
-           buyer_active_early = person_active_early,
-           buyer_active_late = person_active_late,
-           buyer_aat_nationality_1 = aat_nationality_1,
-           buyer_aat_nationality_2 = aat_nationality_2,
-           buyer_aat_nationality_3 = aat_nationality_3)
+           buyer_uid)
 }
 
 produce_knoedler_joint_owners_tmp <- function(raw_knoedler) {
@@ -785,17 +738,8 @@ produce_knoedler_joint_owners <- function(knoedler_joint_owners_tmp, union_perso
               "joint_ulan_id" = "person_ulan"
             )) %>%
     select(star_record_no,
-           joint_own,
            joint_own_sh,
-           joint_ulan_id,
-           joint_owner_uid,
-           joint_owner_person_birth_date = person_birth_date,
-           joint_owner_person_death_date = person_death_date,
-           joint_owner_person_active_early = person_active_early,
-           joint_owner_person_active_late = person_active_late,
-           joint_owner_aat_nationality_1 = aat_nationality_1,
-           joint_owner_aat_nationality_2 = aat_nationality_2,
-           joint_owner_aat_nationality_3 = aat_nationality_3)
+           joint_owner_uid)
 }
 
 produce_knoedler_present_owners_lookup <- function(knoedler_with_ids) {
@@ -822,8 +766,6 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
     select(-c(source_db:id_process), -star_record_no) %>%
     select(
       object_id,
-      present_owner_name = person_auth,
-      present_owner_ulan = person_ulan,
       present_owner_uid = person_uid
     ) %>%
     distinct() %>%
@@ -851,8 +793,6 @@ produce_knoedler_consigners <- function(knoedler_consigners_lookup, union_person
     filter(source_db == "knoedler_consigners") %>%
     select(
       star_record_no = source_record_id,
-      consign_name = person_auth,
-      cons_ulan_id = person_ulan,
       consign_uid = person_uid
     ) %>%
     left_join(select(knoedler_with_ids, star_record_no, object_id), by = "star_record_no")
@@ -899,6 +839,9 @@ produce_gh_knoedler <- function(raw_knoedler) {
 
 produce_knoedler_sqlite <- function(dbpath,
                                     knoedler,
+                                    knoedler_people,
+                                    knoedler_people_names,
+                                    knoedler_people_name_references,
                                     knoedler_artists,
                                     knoedler_buyers,
                                     knoedler_sellers,
@@ -935,6 +878,18 @@ produce_knoedler_sqlite <- function(dbpath,
   write_tbl_key(kdb, knoedler_objects, "knoedler_objects",
                 p_key = "object_id")
 
+  write_tbl_key(kdb, knoedler_people, "knoedler_people",
+                p_key = "person_uid")
+
+  write_tbl_key(kdb, knoedler_people_names, "knoedler_people_names",
+                p_key = "person_name_id",
+                nn_keys = "person_uid",
+                f_keys = list(
+                  list(f_key = "person_uid",
+                       parent_f_key = "person_uid",
+                       parent_tbl_name = "knoedler_people")
+                ))
+
   write_tbl_key(kdb, knoedler_purchase_info, "knoedler_purchase_info",
                 p_key = "purchase_event_id")
 
@@ -943,14 +898,20 @@ produce_knoedler_sqlite <- function(dbpath,
                 f_keys = list(
                   list(f_key = "purchase_event_id",
                        parent_f_key = "purchase_event_id",
-                       parent_tbl_name = "knoedler_purchase_info")))
+                       parent_tbl_name = "knoedler_purchase_info"),
+                  list(f_key = "purchase_buyer_uid",
+                       parent_f_key = "person_uid",
+                       parent_tbl_name = "knoedler_people")))
 
   write_tbl_key(kdb, knoedler_purchase_sellers, "knoedler_purchase_sellers",
                 nn_keys = c("purchase_event_id", "purchase_seller_uid"),
                 f_keys = list(
                   list(f_key = "purchase_event_id",
                        parent_f_key = "purchase_event_id",
-                       parent_tbl_name = "knoedler_purchase_info")))
+                       parent_tbl_name = "knoedler_purchase_info"),
+                  list(f_key = "purchase_seller_uid",
+                       parent_f_key = "person_uid",
+                       parent_tbl_name = "knoedler_people")))
 
   write_tbl_key(kdb, knoedler_inventory_events, "knoedler_inventory_events",
                 p_key = "inventory_event_id")
@@ -963,14 +924,20 @@ produce_knoedler_sqlite <- function(dbpath,
                 f_keys = list(
                   list(f_key = "sale_event_id",
                        parent_f_key = "sale_event_id",
-                       parent_tbl_name = "knoedler_sale_info")))
+                       parent_tbl_name = "knoedler_sale_info"),
+                  list(f_key = "sale_buyer_uid",
+                       parent_f_key = "person_uid",
+                       parent_tbl_name = "knoedler_people")))
 
   write_tbl_key(kdb, knoedler_sale_sellers, "knoedler_sale_sellers",
                 nn_keys = c("sale_event_id", "sale_seller_uid"),
                 f_keys = list(
                   list(f_key = "sale_event_id",
                        parent_f_key = "sale_event_id",
-                       parent_tbl_name = "knoedler_sale_info")))
+                       parent_tbl_name = "knoedler_sale_info"),
+                  list(f_key = "sale_seller_uid",
+                       parent_f_key = "person_uid",
+                       parent_tbl_name = "knoedler_people")))
 
   # Create knoedler records
   write_tbl_key(kdb, knoedler, tbl_name = "knoedler",
@@ -991,13 +958,28 @@ produce_knoedler_sqlite <- function(dbpath,
   )
 
   # Tables that rely on both objects and records (aka all reified statements)
+  write_tbl_key(kdb, knoedler_people_name_references, "knoedler_people_name_references",
+                no_null = TRUE,
+                f_keys = list(
+                  list(f_key = "source_record_id",
+                       parent_f_key = "star_record_no",
+                       parent_tbl_name = "knoedler"),
+                  list(f_key = "person_name_id",
+                       parent_f_key = "person_name_id",
+                       parent_tbl_name = "knoedler_people_names")))
+
   write_tbl_key(kdb, knoedler_dimensions, "knoedler_dimensions",
                 nn_keys = c("object_id", "star_record_no"),
                 f_keys = list(obj_pointer_single, k_srn_pointer_single))
 
   write_tbl_key(kdb, knoedler_artists_preferred, "knoedler_artists",
                 nn_keys = c("object_id", "star_record_no"),
-                f_keys = list(obj_pointer_single, k_srn_pointer_single))
+                f_keys = list(
+                  obj_pointer_single,
+                  k_srn_pointer_single,
+                  list(f_key = "artist_uid",
+                       parent_f_key = "person_uid",
+                       parent_tbl_name = "knoedler_people")))
 
   write_tbl_key(kdb, knoedler_object_titles, "knoedler_object_titles",
                 nn_keys = c("object_id", "star_record_no", "title_id"),
