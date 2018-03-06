@@ -17,6 +17,7 @@ targets:
       - processed_data/knoedler_purchase_sellers.rda
       - processed_data/knoedler_purchase_buyers.rda
       - processed_data/knoedler_object_titles.rda
+      - processed_data/knoedler_consigners.rda
       - ../pirdata/knoedler.sqlite
       - ../pirdata/knoedler_schema.pdf
 
@@ -124,6 +125,8 @@ targets:
     command: produce_knoedler_consigners_lookup(knoedler_with_ids)
   knoedler_consigners:
     command: produce_knoedler_consigners(knoedler_consigners_lookup, union_person_ids, knoedler_with_ids)
+  processed_data/knoedler_consigners.rda:
+    command: save(knoedler_consigners, file = target_name)
 
   knoedler_materials_object_aat:
     command: produce_knoedler_materials_object_aat(raw_knoedler_materials_aat, knoedler_with_ids)

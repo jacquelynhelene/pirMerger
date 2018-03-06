@@ -4,6 +4,7 @@ produce_goupil_ids <- function(raw_goupil) {
     # Convert all "0" ULAN values to NA
     null_ulan() %>%
     select(-persistent_uid, -original_file_name) %>%
+    rename(transaction_type = transaction) %>%
     assert(not_na, star_record_no) %>%
     assert(is_uniq, star_record_no)
 }
@@ -56,18 +57,39 @@ produce_goupil_depicts_aat <- function(raw_goupil_subject_genre_aat, goupil_with
     select(-goupil_subject, -goupil_genre, -depicts_aat_index)
 }
 
-produce_joined_goupil <- function(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, goupil_present_location_ulan, goupil_classified_as_aat, goupil_depicts_aat) {
-  goupil %>%
-    pipe_message("- Joining goupil_artists to goupil") %>%
-    left_join(spread_out(goupil_artists, "star_record_no"), by = "star_record_no") %>%
-    pipe_message("- Joining goupil_buyers to goupil") %>%
-    left_join(spread_out(goupil_buyers, "star_record_no"), by = "star_record_no") %>%
-    pipe_message("- Joining goupil_previous_owners to goupil") %>%
-    left_join(spread_out(goupil_previous_owners, "star_record_no"), by = "star_record_no") %>%
-    pipe_message("- Joining goupil_present_location_ulan to goupil") %>%
-    left_join(spread_out(goupil_present_location_ulan, "star_record_no"), by = "star_record_no") %>%
-    pipe_message("- Joining goupil_classified_as_aat to goupil") %>%
-    left_join(spread_out(goupil_classified_as_aat, "star_record_no"), by = "star_record_no") %>%
-    pipe_message("- Joining goupil_depicts_aat to goupil") %>%
-    left_join(spread_out(goupil_depicts_aat, "star_record_no"), by = "star_record_no")
+produce_goupil_sqlite <- function(dbpath,
+                                  goupil,
+                                  goupil_artists,
+                                  goupil_buyers,
+                                  goupil_previous_owners,
+                                  goupil_classified_as_aat,
+                                  goupil_depicts_aat) {
+
+  gdb <- db_setup(dbpath)
+
+  g_srn_single <- list(f_key = "star_record_no", parent_f_key = "star_record_no", parent_tbl_name = "goupil")
+  g_srn <- list(g_srn_single)
+
+  write_tbl_key(gdb, goupil, "goupil",
+                p_key = "star_record_no")
+
+  write_tbl_key(gdb, goupil_artists, "goupil_artists",
+                nn_keys = "star_record_no",
+                f_keys = g_srn)
+
+  write_tbl_key(gdb, goupil_buyers, "goupil_buyers",
+                nn_keys = "star_record_no",
+                f_keys = g_srn)
+
+  write_tbl_key(gdb, goupil_previous_owners, "goupil_previous_owners",
+                nn_keys = "star_record_no",
+                f_keys = g_srn)
+
+  write_tbl_key(gdb, goupil_classified_as_aat, "goupil_classified_as_aat",
+                f_keys = g_srn)
+
+  write_tbl_key(gdb, goupil_depicts_aat, "goupil_depicts_aat",
+                f_keys = g_srn)
+
+  db_cleanup(gdb)
 }

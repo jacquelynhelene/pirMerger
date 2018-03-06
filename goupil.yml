@@ -7,6 +7,8 @@ targets:
       - processed_data/goupil_stock_book_nos.rda
       - processed_data/goupil_buyers.rda
       - processed_data/goupil_previous_owners.rda
+      - ../pirdata/goupil.sqlite
+      - ../pirdata/goupil_schema.pdf
 
   goupil_with_ids:
     command: produce_goupil_ids(raw_goupil)
@@ -41,6 +43,18 @@ targets:
 
   goupil_depicts_aat:
     command: produce_goupil_depicts_aat(raw_goupil_subject_genre_aat, goupil_with_ids)
+
+  ../pirdata/goupil.sqlite:
+    command: produce_goupil_sqlite(dbpath = target_name,
+                                    goupil,
+                                    goupil_artists,
+                                    goupil_buyers,
+                                    goupil_previous_owners,
+                                    goupil_classified_as_aat,
+                                    goupil_depicts_aat)
+
+  ../pirdata/goupil_schema.pdf:
+    command: produce_db_schema(dbpath = "../pirdata/goupil.sqlite", outpath = target_name)
 
   joined_goupil:
     command: produce_joined_goupil(goupil, goupil_artists, goupil_buyers, goupil_previous_owners, raw_goupil_present_location_ulan, goupil_classified_as_aat, goupil_depicts_aat)
