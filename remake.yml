@@ -14,6 +14,7 @@ include:
   - raw_data.yml
   - sales_contents.yml
   - goupil.yml
+  - archives.yml
 
 targets:
   all:

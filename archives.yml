@@ -1,0 +1,16 @@
+targets:
+
+  all_archives:
+    depends:
+      - ../pirdata/archives.sqlite
+      - ../pirdata/archives_schema.pdf
+
+  archival_descriptions:
+    command: produce_archival_descriptions(raw_archival_descriptions)
+
+  ../pirdata/archives.sqlite:
+    command: produce_archives_sqlite(dbpath = target_name,
+                                      archival_descriptions)
+
+  ../pirdata/archives_schema.pdf:
+    command: produce_db_schema(dbpath = "../pirdata/archives.sqlite", outpath = target_name)
