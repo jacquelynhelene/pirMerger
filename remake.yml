@@ -24,6 +24,7 @@ targets:
       - all_knoedler
       - all_goupil
       - all_raw_data
+      - all_archives
 
   all_authorities:
     depends:
