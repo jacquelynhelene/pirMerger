@@ -551,13 +551,14 @@ identify_knoedler_id_process <- function(person_df) {
 produce_knoedler_people_lookup <- function(union_person_ids) {
   knoedler_people_lookup <- union_person_ids %>%
     filter(str_detect(source_db, "knoedler")) %>%
-    select(-source_db, -source_document_id, -id_process)
+    select(-source_db, -source_document_id, -id_process) %>%
+    mutate(person_label = if_else(is.na(person_auth), person_name, person_auth))
 }
 
 produce_knoedler_people <- function(knoedler_people_lookup) {
   knoedler_people <- knoedler_people_lookup %>%
     group_by(person_uid) %>%
-    summarize_at(vars(person_auth, person_ulan, person_birth_date, person_death_date, person_active_early, person_active_late, person_nationality, aat_nationality_1, aat_nationality_2, aat_nationality_3), funs(pick))
+    summarize_at(vars(person_label, person_auth, person_ulan, person_birth_date, person_death_date, person_active_early, person_active_late, person_nationality, aat_nationality_1, aat_nationality_2, aat_nationality_3), funs(pick))
 }
 
 produce_knoedler_people_names <- function(knoedler_people_lookup) {
