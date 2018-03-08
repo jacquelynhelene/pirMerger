@@ -307,12 +307,6 @@ produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
            person_active_late = active_late,
            person_nationality = joining_nationality,
            contains("aat_nationality")) %>%
-    mutate_at(vars(person_birth_date,
-                   person_death_date,
-                   person_active_early,
-                   person_active_late,
-                   person_nationality),
-              funs(case_when(id_process == "from_ulan" ~ NA_character_, TRUE ~ .))) %>%
     distinct() %>%
     mutate(person_name_id = group_indices(., person_name, person_uid))
 }
