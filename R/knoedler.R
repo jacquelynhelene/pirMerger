@@ -770,11 +770,9 @@ produce_knoedler_present_owners <- function(knoedler_present_owners_lookup, unio
       present_owner_uid = person_uid
     ) %>%
     distinct() %>%
-    # REMOVE THIS LATER
-    ungroup() %>%
-    add_count(object_id) %>%
-    filter(n == 1) %>%
-    select(-n)
+    # Esnure that no spurious, multiple entries for present owner are created by
+    # bad object identifications.
+    assert(is_uniq, object_id)
 }
 
 produce_knoedler_consigners_lookup <- function(knoedler_with_ids) {
