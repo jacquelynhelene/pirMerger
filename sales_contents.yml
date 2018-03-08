@@ -2,6 +2,30 @@ targets:
 
   all_sales_contents:
     depends:
+      - ../pirdata/sales_contents.sqlite
+      - ../pirdata/sales_contents_schema.pdf
+      - processed_data/sales_contents.rda
+      - processed_data/sales_contents_objects.rda
+      - processed_data/sales_contents_object_titles.rda
+      - processed_data/sales_contents_experts.rda
+      - processed_data/sales_contents_commissaire_pr.rda
+      - processed_data/sales_contents_auction_houses.rda
+      - processed_data/sales_contents_artists.rda
+      - processed_data/sales_contents_hand_notes.rda
+      - processed_data/sales_contents_sellers.rda
+      - processed_data/sales_contents_buyers.rda
+      - processed_data/sales_contents_prices.rda
+      - processed_data/sales_contents_prev_owners.rda
+      - processed_data/sales_contents_post_owners.rda
+      - processed_data/sales_contents_materials_classified_as_aat.rda
+      - processed_data/sales_contents_made_of_materials_aat.rda
+      - processed_data/sales_contents_support_materials_aat.rda
+      - processed_data/sales_contents_technique_aat.rda
+      - processed_data/sales_contents_subject_aat.rda
+      - processed_data/sales_contents_subject_classified_as_aat.rda
+      - processed_data/sales_contents_style_aat.rda
+      - processed_data/sales_contents_depicts_aat.rda
+      - processed_data/sales_contents_dimensions.rda
       - processed_data/sales_descriptions_lugt_numbers.rda
       - processed_data/sales_descriptions_title_seller.rda
       - processed_data/sales_descriptions_auc_copy_seller.rda
@@ -13,21 +37,73 @@ targets:
       - processed_data/sales_descriptions_country.rda
       - processed_data/sales_catalogs_info.rda
       - processed_data/sales_descriptions.rda
-      - processed_data/sales_contents_experts.rda
-      - processed_data/sales_contents_commissaire_pr.rda
-      - processed_data/sales_contents_artists.rda
-      - processed_data/sales_contents_hand_notes.rda
-      - processed_data/sales_contents_sellers.rda
-      - processed_data/sales_contents_buyers.rda
-      - processed_data/sales_contents_prices.rda
-      - processed_data/sales_contents_prev_owners.rda
-      - processed_data/sales_contents_prev_sales.rda
-      - processed_data/sales_contents_post_sales.rda
-      - processed_data/sales_contents_post_owners.rda
-      - processed_data/sales_contents_auction_houses.rda
-      - processed_data/sales_contents.rda
-      - ../pirdata/sales_contents.sqlite
-      - ../pirdata/sales_contents_schema.pdf
+
+  processed_data/sales_contents.rda:
+    command: save(sales_contents, file = target_name)
+  processed_data/sales_contents_objects.rda:
+    command: save(sales_contents_objects, file = target_name)
+  processed_data/sales_contents_object_titles.rda:
+    command: save(sales_contents_object_titles, file = target_name)
+  processed_data/sales_contents_experts.rda:
+    command: save(sales_contents_experts, file = target_name)
+  processed_data/sales_contents_commissaire_pr.rda:
+    command: save(sales_contents_commissaire_pr, file = target_name)
+  processed_data/sales_contents_auction_houses.rda:
+    command: save(sales_contents_auction_houses, file = target_name)
+  processed_data/sales_contents_artists.rda:
+    command: save(sales_contents_artists, file = target_name)
+  processed_data/sales_contents_hand_notes.rda:
+    command: save(sales_contents_hand_notes, file = target_name)
+  processed_data/sales_contents_sellers.rda:
+    command: save(sales_contents_sellers, file = target_name)
+  processed_data/sales_contents_buyers.rda:
+    command: save(sales_contents_buyers, file = target_name)
+  processed_data/sales_contents_prices.rda:
+    command: save(sales_contents_prices, file = target_name)
+  processed_data/sales_contents_prev_owners.rda:
+    command: save(sales_contents_prev_owners, file = target_name)
+  processed_data/sales_contents_post_owners.rda:
+    command: save(sales_contents_post_owners, file = target_name)
+  processed_data/sales_contents_materials_classified_as_aat.rda:
+    command: save(sales_contents_materials_classified_as_aat, file = target_name)
+  processed_data/sales_contents_made_of_materials_aat.rda:
+    command: save(sales_contents_made_of_materials_aat, file = target_name)
+  processed_data/sales_contents_support_materials_aat.rda:
+    command: save(sales_contents_support_materials_aat, file = target_name)
+  processed_data/sales_contents_technique_aat.rda:
+    command: save(sales_contents_technique_aat, file = target_name)
+  processed_data/sales_contents_subject_aat.rda:
+    command: save(sales_contents_subject_aat, file = target_name)
+  processed_data/sales_contents_subject_classified_as_aat.rda:
+    command: save(sales_contents_subject_classified_as_aat, file = target_name)
+  processed_data/sales_contents_style_aat.rda:
+    command: save(sales_contents_style_aat, file = target_name)
+  processed_data/sales_contents_depicts_aat.rda:
+    command: save(sales_contents_depicts_aat, file = target_name)
+  processed_data/sales_contents_dimensions.rda:
+    command: save(sales_contents_dimensions, file = target_name)
+  processed_data/sales_descriptions_lugt_numbers.rda:
+    command: save(sales_descriptions_lugt_numbers, file = target_name)
+  processed_data/sales_descriptions_title_seller.rda:
+    command: save(sales_descriptions_title_seller, file = target_name)
+  processed_data/sales_descriptions_auc_copy_seller.rda:
+    command: save(sales_descriptions_auc_copy_seller, file = target_name)
+  processed_data/sales_descriptions_other_seller.rda:
+    command: save(sales_descriptions_other_seller, file = target_name)
+  processed_data/sales_descriptions_auth_seller.rda:
+    command: save(sales_descriptions_auth_seller, file = target_name)
+  processed_data/sales_descriptions_expert_auth.rda:
+    command: save(sales_descriptions_expert_auth, file = target_name)
+  processed_data/sales_descriptions_commissaire_pr.rda:
+    command: save(sales_descriptions_commissaire_pr, file = target_name)
+  processed_data/sales_descriptions_auction_house.rda:
+    command: save(sales_descriptions_auction_house, file = target_name)
+  processed_data/sales_descriptions_country.rda:
+    command: save(sales_descriptions_country, file = target_name)
+  processed_data/sales_catalogs_info.rda:
+    command: save(sales_catalogs_info, file = target_name)
+  processed_data/sales_descriptions.rda:
+    command: save(sales_descriptions, file = target_name)
 
   # Sales Contents
 
@@ -36,8 +112,6 @@ targets:
 
   sales_contents:
     command: produce_sales_contents(sales_contents_ids, sales_contents_prev_sales, sales_contents_post_sales, sales_contents_prices)
-  processed_data/sales_contents.rda:
-    command: save(sales_contents, file = target_name)
 
   sales_contents_experts_tmp:
     command: produce_sales_contents_experts_tmp(sales_contents_ids)
@@ -45,8 +119,6 @@ targets:
     command: produce_sales_contents_experts_lookup(sales_contents_experts_tmp, sales_contents_ids, combined_authority)
   sales_contents_experts:
     command: produce_sales_contents_experts(sales_contents_experts_tmp, union_person_ids)
-  processed_data/sales_contents_experts.rda:
-    command: save(sales_contents_experts, file = target_name)
 
   sales_contents_commissaire_pr_tmp:
     command: produce_sales_contents_commissaire_pr_tmp(sales_contents_ids)
@@ -54,8 +126,6 @@ targets:
     command: produce_sales_contents_commissaire_pr_lookup(sales_contents_commissaire_pr_tmp, sales_contents_ids, combined_authority)
   sales_contents_commissaire_pr:
     command: produce_sales_contents_commissaire_pr(sales_contents_commissaire_pr_tmp, union_person_ids)
-  processed_data/sales_contents_commissaire_pr.rda:
-    command: save(sales_contents_commissaire_pr, file = target_name)
 
   sales_contents_artists_tmp:
     command: produce_sales_contents_artists_tmp(sales_contents_ids, generic_artists)
@@ -63,13 +133,9 @@ targets:
     command: produce_sales_contents_artists_lookup(sales_contents_artists_tmp, sales_contents_ids, combined_authority)
   sales_contents_artists:
     command: produce_sales_contents_artists(sales_contents_artists_tmp, union_person_ids, sales_contents)
-  processed_data/sales_contents_artists.rda:
-    command: save(sales_contents_artists, file = target_name)
 
   sales_contents_hand_notes:
     command: produce_sales_contents_hand_notes(sales_contents_ids)
-  processed_data/sales_contents_hand_notes.rda:
-    command: save(sales_contents_hand_notes, file = target_name)
 
   sales_contents_sellers_tmp:
     command: produce_sales_contents_sellers_tmp(sales_contents_ids)
@@ -77,8 +143,6 @@ targets:
     command: produce_sales_contents_sellers_lookup(sales_contents_sellers_tmp, sales_contents_ids, combined_authority)
   sales_contents_sellers:
     command: produce_sales_contents_sellers(sales_contents_sellers_tmp, union_person_ids)
-  processed_data/sales_contents_sellers.rda:
-    command: save(sales_contents_sellers, file = target_name)
 
   sales_contents_buyers_tmp:
     command: produce_sales_contents_buyers_tmp(sales_contents_ids)
@@ -86,8 +150,6 @@ targets:
     command: produce_sales_contents_buyers_lookup(sales_contents_buyers_tmp, sales_contents_ids, combined_authority)
   sales_contents_buyers:
     command: produce_sales_contents_buyers(sales_contents_buyers_tmp, union_person_ids)
-  processed_data/sales_contents_buyers.rda:
-    command: save(sales_contents_buyers, file = target_name)
 
   sales_contents_prices_tmp:
     command: produce_sales_contents_prices_tmp(sales_contents_ids)
@@ -95,28 +157,18 @@ targets:
     command: produce_sales_contents_parsed_prices(sales_contents_prices_tmp, currency_aat)
   sales_contents_prices:
     command: produce_sales_contents_prices(sales_contents_prices_tmp, sales_contents_parsed_prices)
-  processed_data/sales_contents_prices.rda:
-    command: save(sales_contents_prices, file = target_name)
 
   sales_contents_prev_owners:
     command: produce_sales_contents_prev_owners(sales_contents_ids)
-  processed_data/sales_contents_prev_owners.rda:
-    command: save(sales_contents_prev_owners, file = target_name)
 
   sales_contents_prev_sales:
     command: produce_sales_contents_prev_sales(sales_contents_ids)
-  processed_data/sales_contents_prev_sales.rda:
-    command: save(sales_contents_prev_sales, file = target_name)
 
   sales_contents_post_sales:
     command: proudce_sales_contents_post_sales(sales_contents_ids)
-  processed_data/sales_contents_post_sales.rda:
-    command: save(sales_contents_post_sales, file = target_name)
 
   sales_contents_post_owners:
     command: proudce_sales_contents_post_owners(sales_contents_ids)
-  processed_data/sales_contents_post_owners.rda:
-    command: save(sales_contents_post_owners, file = target_name)
 
   sales_contents_auction_houses_tmp:
     command: produce_sales_contents_auction_houses_tmp(sales_contents_ids)
@@ -124,8 +176,6 @@ targets:
     command: produce_sales_contents_auction_houses_lookup(sales_contents_auction_houses_tmp, sales_contents_ids, combined_authority)
   sales_contents_auction_houses:
     command: produce_sales_contents_auction_houses(sales_contents_auction_houses_tmp, union_person_ids)
-  processed_data/sales_contents_auction_houses.rda:
-    command: save(sales_contents_auction_houses, file = target_name)
 
   # Sales Descriptions
 
@@ -133,44 +183,24 @@ targets:
     command: produce_sales_descriptions_ids(raw_sales_descriptions)
   sales_descriptions_lugt_numbers:
     command: produce_sales_descriptions_lugt_numbers(sales_descriptions_ids)
-  processed_data/sales_descriptions_lugt_numbers.rda:
-    command: save(sales_descriptions_lugt_numbers, file = target_name)
   sales_descriptions_title_seller:
     command: produce_sales_descriptions_title_seller(sales_descriptions_ids)
-  processed_data/sales_descriptions_title_seller.rda:
-    command: save(sales_descriptions_title_seller, file = target_name)
   sales_descriptions_auc_copy_seller:
     command: produce_sales_descriptions_auc_copy_seller(sales_descriptions_ids)
-  processed_data/sales_descriptions_auc_copy_seller.rda:
-    command: save(sales_descriptions_auc_copy_seller, file = target_name)
   sales_descriptions_other_seller:
     command: produce_sales_descriptions_other_seller(sales_descriptions_ids)
-  processed_data/sales_descriptions_other_seller.rda:
-    command: save(sales_descriptions_other_seller, file = target_name)
   sales_descriptions_auth_seller:
     command: produce_sales_descriptions_auth_seller(sales_descriptions_ids)
-  processed_data/sales_descriptions_auth_seller.rda:
-    command: save(sales_descriptions_auth_seller, file = target_name)
   sales_descriptions_expert_auth:
     command: produce_sales_descriptions_expert_auth(sales_descriptions_ids)
-  processed_data/sales_descriptions_expert_auth.rda:
-    command: save(sales_descriptions_expert_auth, file = target_name)
   sales_descriptions_commissaire_pr:
     command: produce_sales_descriptions_commissaire_pr(sales_descriptions_ids)
-  processed_data/sales_descriptions_commissaire_pr.rda:
-    command: save(sales_descriptions_commissaire_pr, file = target_name)
   sales_descriptions_auction_house:
     command: produce_sales_descriptions_auction_house(sales_descriptions_ids)
-  processed_data/sales_descriptions_auction_house.rda:
-    command: save(sales_descriptions_auction_house, file = target_name)
   sales_descriptions_country:
     command: produce_sales_descriptions_country(sales_descriptions_ids)
-  processed_data/sales_descriptions_country.rda:
-    command: save(sales_descriptions_country, file = target_name)
   sales_catalogs_info:
     command: produce_sales_catalogs_info(raw_sales_catalogs_info, raw_sales_catalogs_loccodes)
-  processed_data/sales_catalogs_info.rda:
-    command: save(sales_catalogs_info, file = target_name)
 
   sales_contents_materials_classified_as_aat:
     command: produce_sales_contents_materials_classified_as_aat(raw_sales_contents_materials_aat, sales_contents)
@@ -195,8 +225,6 @@ targets:
 
   sales_descriptions:
     command: produce_sales_descriptions(sales_descriptions_ids)
-  processed_data/sales_descriptions.rda:
-    command: save(sales_descriptions, file = target_name)
 
   sales_contents_unparsed_dimensions:
     command: produce_sales_unparsed_dimensions(sales_contents_ids, sales_contents_dimensions)

@@ -2,41 +2,46 @@ targets:
 
   all_goupil:
     depends:
-      - processed_data/goupil.rda
-      - processed_data/goupil_artists.rda
-      - processed_data/goupil_stock_book_nos.rda
-      - processed_data/goupil_buyers.rda
-      - processed_data/goupil_previous_owners.rda
       - ../pirdata/goupil.sqlite
       - ../pirdata/goupil_schema.pdf
+      - processed_data/goupil.rda
+      - processed_data/goupil_artists.rda
+      - processed_data/goupil_buyers.rda
+      - processed_data/goupil_previous_owners.rda
+      - processed_data/goupil_classified_as_aat.rda
+      - processed_data/goupil_depicts_aat.rda
+
+
+  processed_data/goupil.rda:
+    command: save(goupil, file = target_name)
+  processed_data/goupil_artists.rda:
+    command: save(goupil_artists, file = target_name)
+  processed_data/goupil_buyers.rda:
+    command: save(goupil_buyers, file = target_name)
+  processed_data/goupil_previous_owners.rda:
+    command: save(goupil_previous_owners, file = target_name)
+  processed_data/goupil_classified_as_aat.rda:
+    command: save(goupil_classified_as_aat, file = target_name)
+  processed_data/goupil_depicts_aat.rda:
+    command: save(goupil_depicts_aat, file = target_name)
 
   goupil_with_ids:
     command: produce_goupil_ids(raw_goupil)
 
   goupil:
     command: produce_goupil(goupil_with_ids)
-  processed_data/goupil.rda:
-    command: save(goupil, file = target_name)
 
   goupil_artists:
     command: produce_goupil_artists(goupil_with_ids)
-  processed_data/goupil_artists.rda:
-    command: save(goupil_artists, file = target_name)
 
   goupil_stock_book_nos:
     command: produce_goupil_stock_book_nos(goupil_with_ids)
-  processed_data/goupil_stock_book_nos.rda:
-    command: save(goupil_stock_book_nos, file = target_name)
 
   goupil_buyers:
     command: produce_goupil_buyers(goupil_with_ids)
-  processed_data/goupil_buyers.rda:
-    command: save(goupil_buyers, file = target_name)
 
   goupil_previous_owners:
     command: produce_goupil_previous_owners(goupil_with_ids)
-  processed_data/goupil_previous_owners.rda:
-    command: save(goupil_previous_owners, file = target_name)
 
   goupil_classified_as_aat:
     command: produce_goupil_classified_as_aat(raw_goupil_subject_genre_aat, goupil_with_ids)
