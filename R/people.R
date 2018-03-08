@@ -286,7 +286,7 @@ produce_union_person_ids <- function(..., combined_authority, nationality_aat) {
         id_process == "from_auth" ~ paste0("known-person-", group_indices(., person_auth)),
         id_process == "from_auth_grouped" ~ paste0("known-person-indoc-", group_indices(., person_auth, source_document_id)))) %>%
     left_join(select(combined_authority, authority_name, birth_date, death_date, early_date, late_date, nationality), by = c("person_auth" = "authority_name")) %>%
-    mutate(joining_nationality = if_else(is.na(nationality), person_auth, nationality)) %>%
+    mutate(joining_nationality = if_else(is.na(nationality), if_else(person_auth %in% nationality_aat[["nationality_name"]], person_auth, NA_character_), nationality)) %>%
     left_join(nationality_aat, by = c("joining_nationality" = "nationality_name")) %>%
     mutate_at(vars(contains("date")), as.character) %>%
     mutate(
