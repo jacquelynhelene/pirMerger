@@ -11,3 +11,4 @@ data_definitions.yml
 .remake/
 raw_data.yml
 *.sqlite
+bash.exe.stackdump
