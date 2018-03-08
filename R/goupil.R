@@ -21,6 +21,8 @@ produce_goupil_stock_book_nos <- function(goupil) {
   norm_vars(goupil, base_names = c("other_stock_book_no", "other_stock_book_goupil_no", "other_stock_book_page", "other_stock_book_row"), n_reps = 14, idcols = "star_record_no")
 }
 
+# Goupil People ----
+
 produce_goupil_artists <- function(goupil) {
   norm_vars(goupil, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "attribution_mod_auth", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     # Join ulan ids to this list
@@ -33,6 +35,22 @@ produce_goupil_buyers <- function(goupil) {
 
 produce_goupil_previous_owners <- function(goupil) {
   norm_vars(goupil, base_names = c("previous_owner"), n_reps = 2, idcols = "star_record_no")
+}
+
+# Goupil Transactions ----
+
+identify_goupil_purchases <- function(goupil) {
+
+}
+
+identify_goupil_sales <- function(goupil) {
+
+}
+
+# Goupil Objects ----
+
+identify_goupil_objects <- function(goupil) {
+
 }
 
 produce_goupil_classified_as_aat <- function(raw_goupil_subject_genre_aat, goupil_with_ids) {
