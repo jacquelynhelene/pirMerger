@@ -23,6 +23,28 @@ produce_goupil_stock_book_nos <- function(goupil) {
 
 # Goupil People ----
 
+identify_goupil_artists <- function(goupil) {
+  goupil_artist_ids <- goupil %>%
+    mutate(artist_id = "A")
+
+  joined_artists <- goupil_artists %>%
+    group_by(star_record_no) %>%
+    summarize(artist_string = paste(artist_authority, collapse = ";"))
+
+  goupil_ided_artists <- goupil %>%
+    left_join(joined_artists, by = "star_record_no") %>%
+    mutate(dummy_artist_string = if_else(is.na(artist_string) | artist_string == "[ANONYMOUS]" | artist_string == "[ANONYMOUS - 18TH C.]" | artist_string == "[ANONYMOUS - ANTIQUE]" | artist_string == "[BRITISH]" | artist_string == "[DUTCH - 17TH C.]" | artist_string == "[FLEMISH]" | artist_string == "[FRENCH - 18TH C.]" | artist_string == "[FRENCH]" | artist_string == "[GERMAN]" | artist_string == "[ITALIAN]", paste("missing", star_record_no), artist_string)) %>%
+    mutate(artist_id = group_indices(., dummy_artist_string, artist_string))
+
+  count_artist_ids <- goupil_ided_artists %>%
+    count(artist_id)
+
+  check_artist_ids <- goupil_ided_artists %>%
+    filter(artist_id == "505")
+
+  return(goupil_artists_ids)
+}
+
 produce_goupil_artists <- function(goupil) {
   norm_vars(goupil, base_names = c("artist_name", "art_authority", "nationality", "attribution_mod", "attribution_mod_auth", "star_rec_no", "artist_ulan_id"), n_reps = 2, idcols = "star_record_no") %>%
     # Join ulan ids to this list
@@ -50,8 +72,22 @@ identify_goupil_sales <- function(goupil) {
 # Goupil Objects ----
 
 identify_goupil_objects <- function(goupil) {
+  goupil_objects <- goupil %>%
+    mutate(object_id = "A")
 
+  joined_artists <- goupil_artists %>%
+    group_by(star_record_no) %>%
+    summarize(artist_string = paste(artist_authority, collapse = ";"))
+
+  goupil_object_ids <- goupil %>%
+    left_join(joined_artists, by = "star_record_no") %>%
+    mutate(dummy_goupil_number = if_else(is.na(goupil_number) | goupil_number == "[Aucun]" | goupil_number == "unknown", paste("missing", star_record_no), goupil_number)) %>%
+    mutate(object_id = group_indices(., dummy_goupil_number, artist_string))
+
+  return(goupil_objects)
 }
+
+
 
 produce_goupil_classified_as_aat <- function(raw_goupil_subject_genre_aat, goupil_with_ids) {
   tt <- raw_goupil_subject_genre_aat %>%
