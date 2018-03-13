@@ -40,9 +40,9 @@ identify_goupil_artists <- function(goupil) {
     count(artist_id)
 
   check_artist_ids <- goupil_ided_artists %>%
-    filter(artist_id == "505")
+    filter(artist_id == "258")
 
-  return(goupil_artists_ids)
+  return(goupil_artist_ids)
 }
 
 produce_goupil_artists <- function(goupil) {
